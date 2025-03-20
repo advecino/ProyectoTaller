@@ -2,7 +2,8 @@
 // Created by advecino on 20/03/2025.
 //
 //
-#include "Matrix.h"
+#include"../include/Matrix.h"
+#include "../include/Matrix.h"
 
 void Matrix::initMatrix(){
     matrix = new double*[fil];
