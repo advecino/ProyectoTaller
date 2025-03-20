@@ -23,6 +23,9 @@ public:
 
 private:
     void initMatrix();
+private:
+    int fil,col,n;
+    double** matrix;
 
 };
 
