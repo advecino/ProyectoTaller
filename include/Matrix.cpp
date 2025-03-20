@@ -9,4 +9,9 @@ void Matrix::initMatrix(){
     for(int i=0;i<fil;i++){
         matrix[i] = new double[col];
     }
+    for (int i=0; i<fil;i++){
+        for(int j = 0; j<col;j++){
+            matrix[i][j]= 0.0;
+        }
+    }
 }
