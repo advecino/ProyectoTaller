@@ -1,0 +1,136 @@
+{
+	"kind" : "toolchains",
+	"toolchains" : 
+	[
+		{
+			"compiler" : 
+			{
+				"id" : "GNU",
+				"implicit" : 
+				{
+					"includeDirectories" : 
+					[
+						"C:/URApps/MinGW/lib/gcc/mingw32/6.3.0/include",
+						"C:/URApps/MinGW/include",
+						"C:/URApps/MinGW/lib/gcc/mingw32/6.3.0/include-fixed",
+						"C:/URApps/MinGW/mingw32/include"
+					],
+					"linkDirectories" : 
+					[
+						"C:/URApps/MinGW/lib/gcc/mingw32/6.3.0",
+						"C:/URApps/MinGW/lib/gcc",
+						"C:/URApps/MinGW/mingw32/lib",
+						"C:/URApps/MinGW/lib"
+					],
+					"linkFrameworkDirectories" : [],
+					"linkLibraries" : 
+					[
+						"mingw32",
+						"gcc",
+						"moldname",
+						"mingwex",
+						"advapi32",
+						"shell32",
+						"user32",
+						"kernel32",
+						"mingw32",
+						"gcc",
+						"moldname",
+						"mingwex"
+					]
+				},
+				"path" : "C:/URApps/MinGW/bin/gcc.exe",
+				"version" : "6.3.0"
+			},
+			"language" : "C",
+			"sourceFileExtensions" : 
+			[
+				"c",
+				"m"
+			]
+		},
+		{
+			"compiler" : 
+			{
+				"id" : "GNU",
+				"implicit" : 
+				{
+					"includeDirectories" : 
+					[
+						"C:/URApps/MinGW/lib/gcc/mingw32/6.3.0/include/c++",
+						"C:/URApps/MinGW/lib/gcc/mingw32/6.3.0/include/c++/mingw32",
+						"C:/URApps/MinGW/lib/gcc/mingw32/6.3.0/include/c++/backward",
+						"C:/URApps/MinGW/lib/gcc/mingw32/6.3.0/include",
+						"C:/URApps/MinGW/include",
+						"C:/URApps/MinGW/lib/gcc/mingw32/6.3.0/include-fixed",
+						"C:/URApps/MinGW/mingw32/include"
+					],
+					"linkDirectories" : 
+					[
+						"C:/URApps/MinGW/lib/gcc/mingw32/6.3.0",
+						"C:/URApps/MinGW/lib/gcc",
+						"C:/URApps/MinGW/mingw32/lib",
+						"C:/URApps/MinGW/lib"
+					],
+					"linkFrameworkDirectories" : [],
+					"linkLibraries" : 
+					[
+						"stdc++",
+						"mingw32",
+						"gcc_s",
+						"gcc",
+						"moldname",
+						"mingwex",
+						"advapi32",
+						"shell32",
+						"user32",
+						"kernel32",
+						"mingw32",
+						"gcc_s",
+						"gcc",
+						"moldname",
+						"mingwex"
+					]
+				},
+				"path" : "C:/URApps/MinGW/bin/c++.exe",
+				"version" : "6.3.0"
+			},
+			"language" : "CXX",
+			"sourceFileExtensions" : 
+			[
+				"C",
+				"M",
+				"c++",
+				"cc",
+				"cpp",
+				"cxx",
+				"mm",
+				"mpp",
+				"CPP",
+				"ixx",
+				"cppm",
+				"ccm",
+				"cxxm",
+				"c++m"
+			]
+		},
+		{
+			"compiler" : 
+			{
+				"implicit" : {},
+				"path" : "C:/URApps/MinGW/bin/windres.exe"
+			},
+			"language" : "RC",
+			"sourceFileExtensions" : 
+			[
+				"rc",
+				"RC"
+			]
+		}
+	],
+	"version" : 
+	{
+		"major" : 1,
+		"minor" : 0
+	}
+}
