@@ -20,7 +20,7 @@
 %--------------------------------------------------------------------------*/
 
 
-double Mjday(int yr, int mon, int day, int hr, int min, int sec) {
+double Mjday(int yr, int mon, int day, int hr, int min, double sec) {
     double jd = 367.0 * yr
                 - std::floor((7 * (yr + std::floor((mon + 9) / 12.0))) * 0.25)
                 + std::floor(275 * mon / 9.0)
