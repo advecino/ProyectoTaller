@@ -7,4 +7,8 @@ include_directories(src)
 
 add_executable(ProyectoTaller
         src/Matrix.cpp
-        include/Matrix.h)
+        include/Matrix.h
+        src/Accel.cpp
+        include/Accel.h
+        src/Mjday.cpp
+        include/Mjday.h)
