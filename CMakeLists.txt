@@ -8,7 +8,15 @@ include_directories(src)
 add_executable(ProyectoTaller
         src/Matrix.cpp
         include/Matrix.h
-        src/Accel.cpp
-        include/Accel.h
         src/Mjday.cpp
-        include/Mjday.h)
+        include/Mjday.h
+        src/Frac.cpp
+        include/Frac.h
+        src/gmst.cpp
+        include/gmst.h
+        EKF_Test.cpp
+        src/R_x.cpp
+        include/R_x.h
+        include/Sat_const.h
+        EKF_GEOS3.cpp
+)
