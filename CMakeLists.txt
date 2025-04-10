@@ -19,4 +19,10 @@ add_executable(ProyectoTaller
         include/R_x.h
         include/Sat_const.h
         EKF_GEOS3.cpp
+        src/R_y.cpp
+        include/R_y.h
+        src/R_z.cpp
+        include/R_z.h
+        src/Legendre.cpp
+        include/Legendre.h
 )
