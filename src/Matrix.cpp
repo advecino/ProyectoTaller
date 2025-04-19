@@ -7,6 +7,7 @@
 #include "../include/Matrix.h"
 #include <iostream>
 #include <iomanip>
+#include <cmath>
 
 /**
  * @brief Constructor de la matriz con dimensiones especificadas.
@@ -165,4 +166,75 @@ void Matrix::print()
         std::cout << std::endl;
     }
     std::cout << std::endl;
+}
+
+
+
+/**
+ * @brief Obtiene el número de filas de la matriz
+ * @return Número de filas
+ */
+int Matrix::getFilas() const {
+    return fil;
+}
+
+/**
+ * @brief Obtiene el número de columnas de la matriz
+ * @return Número de columnas
+ */
+int Matrix::getColumnas() const {
+    return col;
+}
+
+/**
+ * @brief Calcula la matriz transpuesta
+ * @return Nueva matriz que es la transpuesta de la original
+ */
+Matrix Matrix::transpuesta() const {
+    Matrix result(col, fil);
+    for(int i = 1; i <= fil; ++i) {
+        for(int j = 1; j <= col; ++j) {
+            result(j,i) = (*this)(i,j);
+        }
+    }
+    return result;
+}
+
+/**
+ * @brief Calcula la matriz inversa (solo para matrices 1x1 y 2x2)
+ * @return Matriz inversa
+ * @throw std::runtime_error Si la matriz no es cuadrada o es singular
+ */
+Matrix Matrix::inversa() const {
+    if(fil != col) {
+        throw std::runtime_error("Matrix no es cuadrada");
+    }
+
+    // Caso 1x1
+    if(fil == 1) {
+        if(fabs((*this)(1,1)) < 1e-15) {
+            throw std::runtime_error("Matrix es singular (determinante cero)");
+        }
+        Matrix inv(1,1);
+        inv(1,1) = 1.0 / (*this)(1,1);
+        return inv;
+    }
+        // Caso 2x2
+    else if(fil == 2) {
+        double det = (*this)(1,1)*(*this)(2,2) - (*this)(1,2)*(*this)(2,1);
+        if(fabs(det) < 1e-15) {
+            throw std::runtime_error("Matrix es singular (determinante cero)");
+        }
+
+        Matrix inv(2,2);
+        inv(1,1) = (*this)(2,2)/det;
+        inv(1,2) = -(*this)(1,2)/det;
+        inv(2,1) = -(*this)(2,1)/det;
+        inv(2,2) = (*this)(1,1)/det;
+        return inv;
+    }
+        // Matrices más grandes no soportadas
+    else {
+        throw std::runtime_error("Inversa no implementada para matrices >2x2");
+    }
 }

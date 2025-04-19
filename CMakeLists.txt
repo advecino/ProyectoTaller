@@ -25,4 +25,24 @@ add_executable(ProyectoTaller
         include/R_z.h
         src/Legendre.cpp
         include/Legendre.h
+        src/TimeUpdate.cpp
+        include/TimeUpdate.h
+        src/Position.cpp
+        include/Position.h
+        include/MeasUpdate.cpp
+        include/MeasUpdate.h
+        src/sign_.cpp
+        include/sign_.h
+        src/AccelPointMass.cpp
+        include/AccelPointMass.h
+        src/Mjday_TDB.cpp
+        include/Mjday_TDB.h
+        src/angl.cpp
+        include/angl.h
+        src/Cheb3D.cpp
+        include/Cheb3D.h
+        src/MeanObliquity.cpp
+        include/MeanObliquity.h
+        MatLab/NutAngles.cpp
+        include/NutAngles.h
 )

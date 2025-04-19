@@ -1,3 +1,13 @@
+/*HECHO!!!!!!!!!!*/s
+
+
+
+
+
+
+
+
+
 % fi [rad]
 function [pnm, dpnm] = Legendre(n,m,fi)
 

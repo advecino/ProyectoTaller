@@ -80,13 +80,20 @@ public:
     */
     void print();
 
+
+
+
+    int getFilas() const;
+    int getColumnas() const;
+    Matrix transpuesta() const;
+    Matrix inversa() const;
+
+
 private:
     /**
      * @brief Inicializa la matriz con valores en cero.
      */
     void initMatrix();
-
-private:
     int fil;  ///< Número de filas de la matriz.
     int col; ///< Número de columnas de la matriz.
     double** matrix; ///< Puntero a la memoria donde se almacenan los valores de la matriz.
