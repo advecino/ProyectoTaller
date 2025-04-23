@@ -24,6 +24,7 @@
 %--------------------------------------------------------------------------*/
 
 
+
 Matrix AccelHarmonic(const Matrix& r, Matrix E, int n_max, int m_max) {
     const double r_ref = 6378.1363e3;   //Earth's radius [m]; GGM03S
     const double gm = 398600.4415e9;    // [m^3/s^2]; GGM03S
