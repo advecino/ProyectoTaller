@@ -49,7 +49,7 @@ Matrix AccelHarmonic(const Matrix& r, Matrix E, int n_max, int m_max) {
     for(int n = 0; n <= n_max; n++) {
         double b1 = (-gm/pow(d,2)) * pow(r_ref/d,n) * (n+1);
         double b2 = (gm/d) * pow(r_ref/d,n);
-        double b3 = (gm/d) * pow(r_ref/d,n);;
+        double b3 = (gm/d) * pow(r_ref/d,n);
 
         for(int m = 0; m <= m_max; m++) {
             q1 += pnm(n+1,m+1) * (Cnm[n+1][m+1]*cos(m*lon) + Snm[n+1][m+1]*sin(m*lon));
