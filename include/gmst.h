@@ -10,6 +10,7 @@
 #ifndef PROYECTOTALLER_GMST_H
 #define PROYECTOTALLER_GMST_H
 
+#include "../include/Frac.h"
 
 /**
  * @brief Calcula el Tiempo Sidéreo Medio de Greenwich

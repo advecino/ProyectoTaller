@@ -19,7 +19,7 @@
  */
 
 #include "../include/gmst.h"
-#include "../include/Frac.h"
+
 #include <cmath>
 
 const double Secs = 86400.0;         // Seconds per day

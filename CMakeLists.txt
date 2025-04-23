@@ -43,6 +43,9 @@ add_executable(ProyectoTaller
         include/Cheb3D.h
         src/MeanObliquity.cpp
         include/MeanObliquity.h
-        MatLab/NutAngles.cpp
+        src/NutAngles.cpp
         include/NutAngles.h
+        include/AccelHrmonic.cpp
+        include/AccelHrmonic.h
+        include/global.h
 )

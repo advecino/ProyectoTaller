@@ -238,3 +238,15 @@ Matrix Matrix::inversa() const {
         throw std::runtime_error("Inversa no implementada para matrices >2x2");
     }
 }
+
+double Matrix::norm() const {
+    if (col != 1) {
+        throw std::invalid_argument("norm() solo aplicable a vectores columna");
+    }
+
+    double sum = 0.0;
+    for (int i = 0; i < fil; ++i) {
+        sum += matrix[i][0] * matrix[i][0];
+    }
+    return sqrt(sum);
+}

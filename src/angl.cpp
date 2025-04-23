@@ -23,7 +23,6 @@ double angl(const Matrix& vec1, const Matrix& vec2)
     const double small = 0.00000001;
     const double undefined = 999999.1;
 
-    // Calcular magnitudes de los vectores
     double magv1 = 0.0;
     double magv2 = 0.0;
     double dot_product = 0.0;
@@ -37,11 +36,9 @@ double angl(const Matrix& vec1, const Matrix& vec2)
     magv1 = sqrt(magv1);
     magv2 = sqrt(magv2);
 
-    // Verificar vectores no nulos
     if(magv1 * magv2 > small * small) {
         double temp = dot_product / (magv1 * magv2);
 
-        // Asegurar que el valor está en el rango [-1, 1]
         if(temp > 1.0) temp = 1.0;
         if(temp < -1.0) temp = -1.0;
 

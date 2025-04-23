@@ -79,6 +79,7 @@ public:
     * @brief Imprime la matriz en la consola.
     */
     void print();
+    double norm() const;
 
 
 
