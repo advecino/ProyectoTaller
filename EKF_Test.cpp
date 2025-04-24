@@ -15,6 +15,7 @@
 #include "include/Cheb3D.h"
 #include "include/MeanObliquity.h"
 #include "include/NutAngles.h"
+#include "include/AccelHarmonic.h"
 
 #define TOL_ 10e-14
 
@@ -325,6 +326,71 @@ int NutAngles_01() {
     }
 }
 
+int AccelHarmonic_01() {
+    try {
+        // 1. Configuración del test
+        cout << "Iniciando test de AccelHarmonic..." << endl;
+
+        // Posición del satélite (vector columna)
+        double r_data[] = {7000.0e3, 100.0e3, 50.0e3}; // [m]
+        Matrix r(3, 1, r_data, 3);
+
+        // Matriz de transformación identidad
+        Matrix E(3, 3);
+        E(1,1) = 1.0; E(1,2) = 0.0; E(1,3) = 0.0;
+        E(2,1) = 0.0; E(2,2) = 1.0; E(2,3) = 0.0;
+        E(3,1) = 0.0; E(3,2) = 0.0; E(3,3) = 1.0;
+
+        // Grados máximos
+        int n_max = 4;
+        int m_max = 4;
+
+        // 2. Llamada a la función
+        cout << "Calculando aceleración..." << endl;
+        Matrix a = AccelHarmonic(r, E, n_max, m_max);
+
+        // 3. Verificación de resultados
+        cout << "Resultado obtenido:" << endl;
+        a.print();
+
+        // Valores esperados aproximados (puedes ajustarlos según tus necesidades)
+        double expected_data[] = {-7.9, -0.1, -0.05}; // [m/s^2]
+        Matrix expected(3, 1, expected_data, 3);
+
+        // Tolerancia para la comparación
+        double tol = 0.2;
+
+        // 4. Comparación usando el operador de asignación
+        Matrix diff = a;  // Usamos el operador de asignación
+        diff = diff - expected;  // Sobrecarga del operador -
+
+        cout << "Diferencia con valores esperados:" << endl;
+        diff.print();
+
+        // 5. Comprobación de cada componente
+        bool test_passed = true;
+        for (int i = 1; i <= 3; ++i) {
+            if (fabs(diff(i,1)) > tol) {
+                cout << "Componente " << i << " fuera de tolerancia: "
+                     << fabs(diff(i,1)) << " > " << tol << endl;
+                test_passed = false;
+            }
+        }
+
+        if (test_passed) {
+            cout << "Test AccelHarmonic PASADO" << endl;
+            return 0;
+        } else {
+            cout << "Test AccelHarmonic FALLADO" << endl;
+            return 1;
+        }
+
+    } catch(const exception& e) {
+        cerr << "Excepción en AccelHarmonic_Test: " << e.what() << endl;
+        return 1;
+    }
+}
+
 int all_tests()
 {
    //_verify(Mjday_01);
@@ -342,7 +408,7 @@ int all_tests()
     //_verify(Cheb3D_02);
     //_verify(MeanObliquity_01);//Modificar test, sale fail, pero el resultado es el esperado
     //_verify(NutAngles_01);//Creo que bien, pero hay que evrlo a mano
-
+    _verify(AccelHarmonic_01);
     
     return 0;
 }

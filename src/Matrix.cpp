@@ -191,7 +191,7 @@ int Matrix::getColumnas() const {
  * @return Nueva matriz que es la transpuesta de la original
  */
 Matrix Matrix::transpuesta() const {
-    Matrix result(col, fil);
+    Matrix result(fil, col);
     for(int i = 1; i <= fil; ++i) {
         for(int j = 1; j <= col; ++j) {
             result(j,i) = (*this)(i,j);
@@ -199,6 +199,7 @@ Matrix Matrix::transpuesta() const {
     }
     return result;
 }
+
 
 /**
  * @brief Calcula la matriz inversa (solo para matrices 1x1 y 2x2)

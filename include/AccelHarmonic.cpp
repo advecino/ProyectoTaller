@@ -1,4 +1,4 @@
-#include "AccelHrmonic.h"
+#include "AccelHarmonic.h"
 #include "global.h"
 #include <cmath>
 
