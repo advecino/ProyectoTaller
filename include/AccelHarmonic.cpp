@@ -79,6 +79,3 @@ Matrix AccelHarmonic(const Matrix& r, Matrix E, int n_max, int m_max) {
     // Inertial acceleration
     return E.transpuesta() * a_bf;
 }
-
-
-
