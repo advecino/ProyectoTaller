@@ -11,8 +11,6 @@
 /**
  * @file angl.cpp
  * @brief Implementación de la función angl
- * @author [Tu Nombre]
- * @date [Fecha]
  */
 
 #include "../include/angl.h"

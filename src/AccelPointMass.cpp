@@ -23,8 +23,6 @@
 %--------------------------------------------------------------------------*//**
  * @file AccelPointMass.cpp
  * @brief Implementación de la función AccelPointMass
- * @author [Tu Nombre]
- * @date [Fecha]
  */
 
 Matrix AccelPointMass( Matrix& r, const Matrix& s, double GM)
