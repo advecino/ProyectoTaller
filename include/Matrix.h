@@ -8,6 +8,8 @@
 #ifndef PROYECTOTALLER_MATRIX_H
 #define PROYECTOTALLER_MATRIX_H
 
+#include <vector>
+
 /**
  * @class Matrix
  * @brief Clase para representar y manipular matrices.
@@ -36,6 +38,8 @@ public:
     * @param m Objeto Matrix a copiar.
     */
     Matrix(const Matrix& m);
+
+    explicit Matrix(const std::vector<double>& values);
 
     /**
     * @brief Destructor de la matriz.

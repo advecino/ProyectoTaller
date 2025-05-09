@@ -22,17 +22,15 @@
  */
 
 #include "../include/MeanObliquity.h"
-#include <cmath>
+#include "../include/Sat_const.h"
 
-double MeanObliquity(double Mjd_TT, double MJD_J2000, double Rad)
-{
-    // Tiempo en siglos julianos desde J2000
+double MeanObliquity(double Mjd_TT) {
+    // Calcular tiempo en siglos julianos desde J2000
     double T = (Mjd_TT - MJD_J2000) / 36525.0;
 
-    // Cálculo de la oblicuidad media (arcosegundos -> radianes)
+    // Calcular oblicuidad media (en segundos de arco)
     double MOblq_arcsec = 84381.448 - (46.8150 + (0.00059 - 0.001813 * T) * T) * T;
 
-    // Convertir a radianes
-    return Rad * (MOblq_arcsec / 3600.0);
+    // Convertir a radianes y devolver
+    return MOblq_arcsec / 3600.0 * Rad;
 }
-

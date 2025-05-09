@@ -19,6 +19,5 @@
  * @param n Dimensión del estado
  * @return K Ganancia de Kalman
  */
-Matrix MeasUpdate(Matrix& x,  Matrix& z,  Matrix& g, Matrix& s,  Matrix& G, Matrix& P, int n,Matrix& K_out);
-
+void MeasUpdate(Matrix& x,  Matrix z,  Matrix g,  Matrix s,  Matrix G, Matrix& P, int n, Matrix& K);
 #endif //PROYECTOTALLER_MEASUPDATE_H

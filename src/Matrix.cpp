@@ -48,10 +48,10 @@ Matrix::Matrix(int fil, int col, double v[], int n): fil(fil), col(col)
  * @brief Constructor de copia.
  * @param m Objeto Matrix a copiar.
  */
-Matrix::Matrix(const Matrix& m)
-{
-    initMatrix();
+Matrix::Matrix(const Matrix& m) : fil(m.fil), col(m.col) {
+    matrix = new double*[fil];
     for (int i = 0; i < fil; i++) {
+        matrix[i] = new double[col];
         for (int j = 0; j < col; j++) {
             matrix[i][j] = m.matrix[i][j];
         }
@@ -74,6 +74,18 @@ void Matrix::initMatrix()
 }
 
 /**
+ * @brief Constructor que crea una matriz de 1 fila a partir de un vector de valores.
+ * @param values Vector de valores a usar como fila.
+ */
+Matrix::Matrix(const std::vector<double>& values) : fil(1), col(values.size())
+{
+    initMatrix();
+    for (int j = 0; j < col; ++j) {
+        matrix[0][j] = values[j];
+    }
+}
+
+/**
  * @brief Destructor de la matriz.
  */
 Matrix::~Matrix()
@@ -91,30 +103,24 @@ Matrix::~Matrix()
  */
 Matrix& Matrix::operator=(const Matrix& matrix2)
 {
-    if (this == &matrix2) {
-        return *this;
-    }
+    if (this == &matrix2) return *this; // Evitar auto-asignación
 
-    // Liberar memoria existente
+    // Liberar memoria actual
     for (int i = 0; i < fil; i++) {
         delete[] matrix[i];
     }
     delete[] matrix;
 
-    // Copiar dimensiones
+    // Copiar datos de other
     fil = matrix2.fil;
     col = matrix2.col;
-
-    // Reservar nueva memoria
-    initMatrix();
-
-    // Copiar datos
+    matrix = new double*[fil];
     for (int i = 0; i < fil; i++) {
+        matrix[i] = new double[col];
         for (int j = 0; j < col; j++) {
             matrix[i][j] = matrix2.matrix[i][j];
         }
     }
-
     return *this;
 }
 
@@ -345,37 +351,82 @@ Matrix Matrix::transpuesta() const {
  * @throw std::runtime_error Si la matriz no es cuadrada o es singular
  */
 Matrix Matrix::inversa() const {
-    if(fil != col) {
-        throw std::runtime_error("Matrix no es cuadrada");
+    if (fil != col) {
+        throw std::runtime_error("La matriz debe ser cuadrada para calcular su inversa");
     }
 
-    // Caso 1x1
-    if(fil == 1) {
-        if(fabs((*this)(1,1)) < 1e-15) {
-            throw std::runtime_error("Matrix es singular (determinante cero)");
+    const int n = fil;
+    Matrix result(n, n);
+    Matrix temp(n, 2*n); // Matriz aumentada
+
+    // Construir matriz aumentada [A|I]
+    for (int i = 0; i < n; i++) {
+        // Copiar la matriz original
+        for (int j = 0; j < n; j++) {
+            temp(i+1, j+1) = (*this)(i+1, j+1);
         }
-        Matrix inv(1,1);
-        inv(1,1) = 1.0 / (*this)(1,1);
-        return inv;
+        // Añadir matriz identidad
+        for (int j = n; j < 2*n; j++) {
+            temp(i+1, j+1) = (j - n == i) ? 1.0 : 0.0;
+        }
     }
-        // Caso 2x2
-    else if(fil == 2) {
-        double det = (*this)(1,1)*(*this)(2,2) - (*this)(1,2)*(*this)(2,1);
-        if(fabs(det) < 1e-15) {
-            throw std::runtime_error("Matrix es singular (determinante cero)");
+
+    // Eliminación hacia adelante
+    for (int i = 1; i <= n; i++) {
+        // Pivoteo parcial
+        int maxRow = i;
+        for (int k = i+1; k <= n; k++) {
+            if (fabs(temp(k, i)) > fabs(temp(maxRow, i))) {
+                maxRow = k;
+            }
         }
 
-        Matrix inv(2,2);
-        inv(1,1) = (*this)(2,2)/det;
-        inv(1,2) = -(*this)(1,2)/det;
-        inv(2,1) = -(*this)(2,1)/det;
-        inv(2,2) = (*this)(1,1)/det;
-        return inv;
+        // Intercambiar filas si es necesario
+        if (maxRow != i) {
+            for (int j = 1; j <= 2*n; j++) {
+                std::swap(temp(i, j), temp(maxRow, j));
+            }
+        }
+
+        // Verificar si la matriz es singular
+        if (fabs(temp(i, i)) < 1e-12) {
+            throw std::runtime_error("Matriz singular, no se puede calcular la inversa");
+        }
+
+        // Hacer ceros debajo del pivote
+        for (int k = i+1; k <= n; k++) {
+            double factor = temp(k, i) / temp(i, i);
+            for (int j = i; j <= 2*n; j++) {
+                temp(k, j) -= factor * temp(i, j);
+            }
+        }
     }
-        // Matrices más grandes no soportadas
-    else {
-        throw std::runtime_error("Inversa no implementada para matrices >2x2");
+
+    // Eliminación hacia atrás
+    for (int i = n; i >= 1; i--) {
+        // Normalizar la fila del pivote
+        double pivot = temp(i, i);
+        for (int j = i; j <= 2*n; j++) {
+            temp(i, j) /= pivot;
+        }
+
+        // Hacer ceros arriba del pivote
+        for (int k = i-1; k >= 1; k--) {
+            double factor = temp(k, i);
+            for (int j = i; j <= 2*n; j++) {
+                temp(k, j) -= factor * temp(i, j);
+            }
+        }
     }
+
+    // Extraer la matriz inversa (parte derecha de la matriz aumentada)
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= n; j++) {
+            result(i, j) = temp(i, j + n);
+        }
+    }
+
+    return result;
 }
 
 double Matrix::norm() const {

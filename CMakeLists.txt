@@ -53,4 +53,10 @@ add_executable(ProyectoTaller
         include/G_AccelHarmonic.h
         include/JPL_Eph_DE430.cpp
         include/JPL_Eph_DE430.h
+        src/EqnEquinox.cpp
+        include/EqnEquinox.h
+        src/gast.cpp
+        include/gast.h
+        include/unit.cpp
+        include/unit.h
 )
