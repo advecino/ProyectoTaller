@@ -9,6 +9,9 @@
 #include <iomanip>
 #include <cmath>
 
+
+
+
 /**
  * @brief Constructor de la matriz con dimensiones especificadas.
  * @param fil Número de filas.
@@ -47,7 +50,12 @@ Matrix::Matrix(int fil, int col, double v[], int n): fil(fil), col(col)
  */
 Matrix::Matrix(const Matrix& m)
 {
-    *this = m;
+    initMatrix();
+    for (int i = 0; i < fil; i++) {
+        for (int j = 0; j < col; j++) {
+            matrix[i][j] = m.matrix[i][j];
+        }
+    }
 }
 
 
@@ -83,9 +91,29 @@ Matrix::~Matrix()
  */
 Matrix& Matrix::operator=(const Matrix& matrix2)
 {
-    for (int i = 0; i < fil; i++)
-        for (int j = 0; j < col; j++)
-            this->matrix[i][j] = matrix2.matrix[i][j];
+    if (this == &matrix2) {
+        return *this;
+    }
+
+    // Liberar memoria existente
+    for (int i = 0; i < fil; i++) {
+        delete[] matrix[i];
+    }
+    delete[] matrix;
+
+    // Copiar dimensiones
+    fil = matrix2.fil;
+    col = matrix2.col;
+
+    // Reservar nueva memoria
+    initMatrix();
+
+    // Copiar datos
+    for (int i = 0; i < fil; i++) {
+        for (int j = 0; j < col; j++) {
+            matrix[i][j] = matrix2.matrix[i][j];
+        }
+    }
 
     return *this;
 }
@@ -127,7 +155,7 @@ Matrix Matrix::operator-(const Matrix& matrix2)
  * @param matrix2 Matriz a multiplicar.
  * @return Matriz resultante de la multiplicación.
  */
-Matrix Matrix::operator*(const Matrix& matrix2)
+Matrix Matrix::operator*(const Matrix& matrix2) const
 {
     Matrix result(fil, col);
 
@@ -149,15 +177,125 @@ Matrix Matrix::operator*(const Matrix& matrix2)
  * @param j Índice de la columna.
  * @return Referencia al valor en la posición (i, j).
  */
-double& Matrix::operator()(const int i, const int j) const
+double& Matrix::operator()( int i,  int j) const
 {
     return matrix[i-1][j-1];
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Suma por escalar (modifica la matriz actual)
+Matrix& Matrix::operator+=(double scalar) {
+    for (int i = 0; i < fil; i++) {
+        for (int j = 0; j < col; j++) {
+            matrix[i][j] += scalar;
+        }
+    }
+    return *this;
+}
+
+Matrix& Matrix::operator-=(double scalar) {
+    for (int i = 0; i < fil; ++i) {
+        for (int j = 0; j < col; ++j) {
+            matrix[i][j] -= scalar;
+        }
+    }
+    return *this;
+}
+
+
+// Versiones no-miembro para suma
+Matrix operator+(const Matrix& m, double scalar) {
+    Matrix result(m.fil, m.col);
+    for (int i = 0; i < m.fil; i++) {
+        for (int j = 0; j < m.col; j++) {
+            result.matrix[i][j] = m.matrix[i][j] + scalar;
+        }
+    }
+    return result;
+}
+
+Matrix operator+(double scalar, const Matrix& m) {
+    return m + scalar; // Conmutativa
+}
+
+Matrix operator-(const Matrix& m, double scalar) {
+    Matrix result(m);
+    return result -= scalar;
+}
+
+
+Matrix operator-(double scalar, const Matrix& m) {
+    Matrix result(m.fil, m.col);
+    for (int i = 0; i < m.fil; ++i) {
+        for (int j = 0; j < m.col; ++j) {
+            result.matrix[i][j] = scalar - m.matrix[i][j];
+        }
+    }
+    return result;
+}
+
+Matrix& Matrix::operator*=(double scalar) {
+    for (int i = 0; i < fil; i++) {
+        for (int j = 0; j < col; j++) {
+            matrix[i][j] *= scalar;
+        }
+    }
+    return *this;
+}
+
+// Versión no-miembro (scalar * matrix)
+Matrix operator*(double scalar, const Matrix& m) {
+    Matrix result(m.fil, m.col);
+    for (int i = 0; i < m.fil; i++) {
+        for (int j = 0; j < m.col; j++) {
+            result.matrix[i][j] = scalar * m.matrix[i][j];
+        }
+    }
+    return result;
+}
+
+// Versión no-miembro (matrix * scalar)
+Matrix operator*(const Matrix& m, double scalar) {
+    return scalar * m; // Reutiliza la implementación anterior
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /**
  * @brief Imprime la matriz en la consola.
  */
-void Matrix::print()
+void Matrix::print() const
 {
     for (int i = 0; i < fil; i++){
         for (int j = 0; j < col; j++){
