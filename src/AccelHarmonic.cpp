@@ -1,6 +1,7 @@
-#include "AccelHarmonic.h"
-#include "global.h"
+#include "../include/AccelHarmonic.h"
+#include "../include/global.h"
 #include <cmath>
+#include <stdexcept>
 
 /*%--------------------------------------------------------------------------
 %
@@ -24,14 +25,17 @@
 %--------------------------------------------------------------------------*/
 
 
-
 Matrix AccelHarmonic(const Matrix& r, Matrix E, int n_max, int m_max) {
     const double r_ref = 6378.1363e3;   //Earth's radius [m]; GGM03S
     const double gm = 398600.4415e9;    // [m^3/s^2]; GGM03S
 
     // Body-fixed position
-    Matrix r_bf = E.operator*(r);
+    Matrix r_bf = E * r;
 
+
+    if(r_bf.getFilas() < 3 || r_bf.getColumnas() < 1) {
+        throw std::runtime_error("r_bf debe ser al menos 3x1");
+    }
     // Cantidades auxiliares
     double d = r_bf.norm();                     // distance
     double latgc = asin(r_bf(2,0)/d);
@@ -57,15 +61,15 @@ Matrix AccelHarmonic(const Matrix& r, Matrix E, int n_max, int m_max) {
             q3 += m * pnm(n+1,m+1) * (Snm[n+1][m+1]*cos(m*lon) - Cnm[n+1][m+1]*sin(m*lon));
         }
 
-        dUdr += q1 * b1;
-        dUdlatgc += q2 * b2;
-        dUdlon += q3 * b3;
-
-        q3 = q2 = q1 = 0;
+        dUdr     = dUdr     + q1*b1;
+        dUdlatgc = dUdlatgc + q2*b2;
+        dUdlon   = dUdlon   + q3*b3;
+        q3 = 0; q2 = q3; q1 = q2;
     }
 
     // Body-fixed acceleration
-    double r2xy = pow(r_bf(0,0), 2) + pow(r_bf(1,0), 2);
+    double r2xy = r_bf(0, 0) * r_bf(0, 0) + r_bf(1, 0) * r_bf(1, 0);
+
 
     double ax = (1/d*dUdr - r_bf(2,0)/(pow(d,2)*sqrt(r2xy))*dUdlatgc)*r_bf(0,0) - (1/r2xy*dUdlon)*r_bf(1,0);
     double ay = (1/d*dUdr - r_bf(2,0)/(pow(d,2)*sqrt(r2xy))*dUdlatgc)*r_bf(1,0) + (1/r2xy*dUdlon)*r_bf(0,0);

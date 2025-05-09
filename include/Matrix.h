@@ -66,19 +66,67 @@ public:
     * @param matrix2 Matriz a multiplicar.
     * @return Matriz resultante de la multiplicación.
     */
-    Matrix operator* (const Matrix& matrix2);
+    Matrix operator* (const Matrix& matrix2) const;
     /**
      * @brief Sobrecarga del operador de acceso a elementos de la matriz.
      * @param i Índice de la fila.
      * @param j Índice de la columna.
      * @return Referencia al valor en la posición (i, j).
      */
-    double& operator()(const int i, const int j) const;
+    double& operator()( int i,  int j) const;
+
+
+
+
+
+
+
+
+
+
+
+
+
+    /**
+     * @brief Suma un escalar a la matriz (modifica la matriz actual)
+     * @param scalar El valor escalar a sumar
+     * @return Referencia a la matriz resultante
+     */
+    Matrix& operator+=(double scalar);
+
+    /**
+     * @brief Resta un escalar a la matriz (modifica la matriz actual)
+     * @param scalar El valor escalar a restar
+     * @return Referencia a la matriz resultante
+     */
+    Matrix& operator-=(double scalar);
+    /**
+    * @brief Multiplica la matriz por un escalar
+    * @param scalar El valor escalar a multiplicar
+    * @return Referencia a la matriz resultante (para encadenar operaciones)
+    */
+    Matrix& operator*=(double scalar);
+    /**
+     * @brief Versiones no-miembro para suma/resta con escalar
+     */
+
+
+
+    friend Matrix operator+(const Matrix& m, double scalar);
+    friend Matrix operator+(double scalar, const Matrix& m);
+    friend Matrix operator-(const Matrix& m, double scalar);
+    friend Matrix operator-(double scalar, const Matrix& m);
+    friend Matrix operator*(const Matrix& m, double scalar);
+    friend Matrix operator*(double scalar, const Matrix& m);
+
+
+
+
 
     /**
     * @brief Imprime la matriz en la consola.
     */
-    void print();
+    void print() const;
     double norm() const;
 
 

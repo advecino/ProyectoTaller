@@ -45,7 +45,12 @@ add_executable(ProyectoTaller
         include/MeanObliquity.h
         src/NutAngles.cpp
         include/NutAngles.h
-        include/AccelHarmonic.cpp
+        src/AccelHarmonic.cpp
         include/AccelHarmonic.h
         include/global.h
+        src/global.cpp
+        src/G_AccelHarmonic.cpp
+        include/G_AccelHarmonic.h
+        include/JPL_Eph_DE430.cpp
+        include/JPL_Eph_DE430.h
 )

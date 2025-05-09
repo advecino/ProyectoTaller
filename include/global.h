@@ -7,7 +7,7 @@
 
 #include "Matrix.h"
 
-double Cnm[300][300];
-double Snm[200][200];
+extern double Cnm[300][300];
+extern double Snm[300][300];
 
 #endif //PROYECTOTALLER_GLOBAL_H

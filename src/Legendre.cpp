@@ -7,8 +7,8 @@
 // fi [rad]
 void Legendre(int n, int m, double fi, Matrix& pnm, Matrix& dpnm) {
 
-    pnm = Matrix(n+1, m+1);
-    dpnm = Matrix(n+1, m+1);
+    pnm = Matrix(n, m);
+    dpnm = Matrix(n, m);
 
 
     pnm(0, 0) = 1.0;
