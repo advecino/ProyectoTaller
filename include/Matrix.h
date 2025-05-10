@@ -163,6 +163,16 @@ public:
      */
     static Matrix cross(const Matrix& a, const Matrix& b);
 
+    /**
+    * @brief Obtiene una submatriz de la matriz actual
+    * @param startRow Fila inicial (1-based)
+    * @param endRow Fila final (1-based)
+    * @param startCol Columna inicial (1-based)
+    * @param endCol Columna final (1-based)
+    * @return Nueva matriz con la submatriz extraída
+    */
+    Matrix getSubMatrix(int startRow, int endRow, int startCol, int endCol) const;
+
 
 private:
     /**

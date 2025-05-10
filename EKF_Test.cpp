@@ -23,6 +23,7 @@
 #include "include/unit.h"
 #include "include/gibbs.h"
 #include "include/hgibbs.h"
+#include "include/elements.h"
 
 #define TOL_ 10e-14
 
@@ -107,9 +108,9 @@ int Position_01()
 
     for(int i = 1; i <= 3; ++i) {
         if(fabs(r(i,1) - expected(i,1)) > TOL_) {
-           /* std::cout << "Position_01 failed at element " << i
-                      << ": expected " << expected(i,1)
-                      << ", got " << r(i,1) << std::endl;*/
+            /* std::cout << "Position_01 failed at element " << i
+                       << ": expected " << expected(i,1)
+                       << ", got " << r(i,1) << std::endl;*/
             return 1;
         }
     }
@@ -141,10 +142,10 @@ int Mjday_01()
 {
     _assert(fabs(Mjday(2025,4,3,15,37,5)-60768.6507523148) < pow(10,-10));
 
- /*   cout << setprecision(20);
-    cout << Mjday(2025,4,3,15,37,5) << endl;
-    cout << 60768.6507523148;
-   */
+    /*   cout << setprecision(20);
+       cout << Mjday(2025,4,3,15,37,5) << endl;
+       cout << 60768.6507523148;
+      */
     return 0;
 }
 
@@ -678,18 +679,18 @@ int MeasUpdate_01() {
         const double TOL = 0.1;
 
         // Verificar estado actualizado
-       /* for (int i = 1; i <= n; ++i) {
-            double diff = fabs(x(i,1) - expected_x[i-1]);
-            _assert(diff < TOL);
-        }
+        /* for (int i = 1; i <= n; ++i) {
+             double diff = fabs(x(i,1) - expected_x[i-1]);
+             _assert(diff < TOL);
+         }
 
-        // Verificar covarianza
-        for (int i = 1; i <= n; ++i) {
-            for (int j = 1; j <= n; ++j) {
-                double diff = fabs(P(i,j) - expected_P[(i-1)*n + (j-1)]);
-                _assert(diff < TOL);
-            }
-        }*/
+         // Verificar covarianza
+         for (int i = 1; i <= n; ++i) {
+             for (int j = 1; j <= n; ++j) {
+                 double diff = fabs(P(i,j) - expected_P[(i-1)*n + (j-1)]);
+                 _assert(diff < TOL);
+             }
+         }*/
 
         // Verificar ganancia de Kalman
         for (int i = 1; i <= n; ++i) {
@@ -935,9 +936,6 @@ int Gibbs_02() {
     std::cout << "Prueba 2 pasada!\n" << std::endl;
 }
 
-
-
-
 int HGibbs_01() {
     try {
         std::cout << "\n=== Test HGibbs_SmallAngles: Ángulos <= 1 grado ===" << std::endl;
@@ -1068,6 +1066,91 @@ int HGibbs_04() {
     }
 }
 
+int elements_01() {
+    try {
+        std::cout << "\n=== Test 1: Órbita elíptica ===\n";
+
+        Matrix y1(6, 1);
+        y1(1,1) = 7000e3; y1(2,1) = 1000e3; y1(3,1) = 2000e3;
+        y1(4,1) = 4e3; y1(5,1) = 5e3; y1(6,1) = 1e3;
+
+        KeplerianElements el = elements(y1);
+
+        // Valores esperados
+        const double TOL = 1e-4;
+        _assert(fabs(el.p - 2616655.403817) < TOL);
+        _assert(fabs(el.a - 5995316.950134) < TOL);
+        _assert(fabs(el.e - 0.750700) < TOL);
+        _assert(fabs(el.i - 0.284202) < TOL);
+        _assert((fabs(el.Omega - 4.601732) < TOL) || (fabs(el.Omega - 4.601732 + 2*M_PI) < TOL));
+        _assert((fabs(el.omega - 5.495119) < TOL) || (fabs(el.omega - 5.495119 + 2*M_PI) < TOL));
+        _assert(fabs(el.M - 1.160208) < TOL);
+
+        std::cout << "Test 1 pasado: Órbita elíptica calculada correctamente.\n";
+        return 0;
+    } catch(const std::exception& e) {
+        std::cerr << "Error en elements_test_01: " << e.what() << std::endl;
+        return 1;
+    }
+}
+
+int elements_02() {
+    try {
+        std::cout << "\n=== Test 2: Órbita con mayor inclinación ===\n";
+
+        Matrix y2(6, 1);
+        y2(1,1) = 8000e3; y2(2,1) = 0; y2(3,1) = 0;
+        y2(4,1) = 0; y2(5,1) = 7e3; y2(6,1) = 2e3;
+
+        KeplerianElements el = elements(y2);
+
+        // Valores esperados
+        const double TOL = 1e-6;
+        _assert(fabs(el.p - 8509774.812799) < TOL);
+        _assert(fabs(el.a - 8544469.411862) < TOL);
+        _assert(fabs(el.e - 0.063722) < TOL);
+        _assert(fabs(el.i - 0.278300) < TOL);
+        _assert(fabs(el.Omega) < TOL);
+        _assert(fabs(el.omega) < TOL);
+        _assert(fabs(el.M) < TOL);
+
+        std::cout << "Test 2 pasado: Órbita con inclinación calculada correctamente.\n";
+        return 0;
+    } catch(const std::exception& e) {
+        std::cerr << "Error en elements_test_02: " << e.what() << std::endl;
+        return 1;
+    }
+}
+
+int elements_03() {
+    try {
+        std::cout << "\n=== Test 3: Órbita casi circular ===\n";
+
+        Matrix y3(6, 1);
+        y3(1,1) = 7000e3; y3(2,1) = 100e3; y3(3,1) = 50e3;
+        y3(4,1) = 0.1e3; y3(5,1) = 7.5e3; y3(6,1) = 0.05e3;
+
+        KeplerianElements el = elements(y3);
+
+        // Valores esperados
+        const double TOL = 1e-6;
+        _assert(fabs(el.p - 6912827.322912) < TOL);
+        _assert(fabs(el.a - 6919087.429595) < TOL);
+        _assert(fabs(el.e - 0.030079) < TOL);
+        _assert(fabs(el.i - 0.009638) < TOL);
+        _assert((fabs(el.Omega - 5.462836) < TOL) || (fabs(el.Omega - 5.462836 + 2 * M_PI) < TOL));
+        _assert((fabs(el.omega - 5.115581) < TOL) || (fabs(el.omega - 5.115581 + 2 * M_PI) < TOL));
+        _assert(fabs(el.M - 1.947103) < TOL);
+
+        std::cout << "Test 3 pasado: Órbita casi circular calculada correctamente.\n";
+        return 0;
+    } catch(const std::exception& e) {
+        std::cerr << "Error en elements_test_03: " << e.what() << std::endl;
+        return 1;
+    }
+}
+
+
 
 
 
@@ -1100,7 +1183,9 @@ int all_tests()
     //_verify(unit_01);_verify(unit_02);_verify(unit_03);
     //_verify(Gibbs_01);
     //_verify(Gibbs_02);
-    _verify(HGibbs_01);
+    //_verify(HGibbs_01);
+    //_verify(elements_02);
+    _verify(elements_03);
 
 
     return 0;

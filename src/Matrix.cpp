@@ -585,3 +585,24 @@ Matrix Matrix::cross(const Matrix& a, const Matrix& b) {
 
     return result;
 }
+
+
+Matrix Matrix::getSubMatrix(int startRow, int endRow, int startCol, int endCol) const {
+    // Validar índices
+    if (startRow < 1 || endRow > fil || startCol < 1 || endCol > col ||
+        startRow > endRow || startCol > endCol) {
+        throw std::out_of_range("Índices de submatriz inválidos");
+    }
+
+    int newFil = endRow - startRow + 1;
+    int newCol = endCol - startCol + 1;
+    Matrix sub(newFil, newCol);
+
+    for (int i = 1; i <= newFil; i++) {
+        for (int j = 1; j <= newCol; j++) {
+            sub(i, j) = (*this)(startRow + i - 1, startCol + j - 1);
+        }
+    }
+
+    return sub;
+}
