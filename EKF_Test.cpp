@@ -22,6 +22,7 @@
 #include "include/gast.h"
 #include "include/unit.h"
 #include "include/gibbs.h"
+#include "include/hgibbs.h"
 
 #define TOL_ 10e-14
 
@@ -937,6 +938,139 @@ int Gibbs_02() {
 
 
 
+int HGibbs_01() {
+    try {
+        std::cout << "\n=== Test HGibbs_SmallAngles: Ángulos <= 1 grado ===" << std::endl;
+
+        // Configurar vectores con ángulos pequeños (0.5 grados)
+        Matrix r1(3, 1), r2(3, 1), r3(3, 1);
+
+        // Vector base
+        r1(1,1) = 7000e3; r1(2,1) = 0; r1(3,1) = 0;
+
+        // Segundo vector con 0.5 grados de diferencia
+        double angle = 0.5 * M_PI/180.0; // 0.5 grados en radianes
+        r2(1,1) = 7000e3 * cos(angle);
+        r2(2,1) = 7000e3 * sin(angle);
+        r2(3,1) = 0;
+
+        // Tercer vector con 0.5 grados de diferencia del segundo
+        r3(1,1) = 7000e3 * cos(2*angle);
+        r3(2,1) = 7000e3 * sin(2*angle);
+        r3(3,1) = 0;
+
+        // Fechas julianas (observaciones cercanas en el tiempo)
+        double Mjd1 = 60000.0;
+        double Mjd2 = Mjd1 + 1.0/(60.0*24.0); // 1 minuto después
+        double Mjd3 = Mjd2 + 1.0/(60.0*24.0); // 2 minutos después del primero
+
+        // Ejecutar método
+        HGibbsResult result = hgibbs(r1, r2, r3, Mjd1, Mjd2, Mjd3);
+
+        double TOL = 1e-6;
+
+        // Verificaciones principales
+        _assert(result.error == "          ok"); // Debe pasar sin error de ángulo
+        _assert(result.theta * 180.0/M_PI <= 1.0 + TOL); // <= 1 grado
+        _assert(result.theta1 * 180.0/M_PI <= 1.0 + TOL); // <= 1 grado
+
+        // Verificación adicional de que el cálculo de velocidad no es cero
+        _assert(fabs(result.v2(1,1)) > 1.0);
+        _assert(fabs(result.v2(2,1)) > 1.0);
+        _assert(fabs(result.v2(3,1)) < TOL);
+
+        std::cout << "Test HGibbs_01 pasado: Ángulos pequeños aceptados correctamente.\n";
+        return 0;
+    } catch(const std::exception& e) {
+        std::cerr << "Error en HGibbs_01: " << e.what() << std::endl;
+        return 1;
+    }
+}
+
+int HGibbs_02() {
+    try {
+        std::cout << "\n=== Test HGibbs_02: Vectores no coplanares ===" << std::endl;
+
+        Matrix r1(3, 1), r2(3, 1), r3(3, 1);
+        r1(1,1) = 7000e3; r1(2,1) = 0;    r1(3,1) = 0;
+        r2(1,1) = 0;      r2(2,1) = 7000e3; r2(3,1) = 0;
+        r3(1,1) = 0;      r3(2,1) = 0;     r3(3,1) = 7000e3;
+
+        double Mjd1 = 60000.0;
+        double Mjd2 = Mjd1 + 5.0/(60.0*24.0);
+        double Mjd3 = Mjd2 + 5.0/(60.0*24.0);
+
+        HGibbsResult result = hgibbs(r1, r2, r3, Mjd1, Mjd2, Mjd3);
+
+        _assert(result.error == "not coplanar");
+
+        std::cout << "Test HGibbs_02 pasado: Detecta vectores no coplanares.\n";
+        return 0;
+    } catch(const std::exception& e) {
+        std::cerr << "Error en test_HGibbs_02: " << e.what() << std::endl;
+        return 1;
+    }
+}
+
+int HGibbs_03() {
+    try {
+        std::cout << "\n=== Test HGibbs_03: Angulos > 1 grado ===" << std::endl;
+
+        Matrix r1(3, 1), r2(3, 1), r3(3, 1);
+        r1(1,1) = 7000e3; r1(2,1) = 0;      r1(3,1) = 0;
+        r2(1,1) = 5000e3; r2(2,1) = 5000e3; r2(3,1) = 0;
+        r3(1,1) = 0;      r3(2,1) = 7000e3; r3(3,1) = 0;
+
+        double Mjd1 = 60000.0;
+        double Mjd2 = Mjd1 + 5.0/(60.0*24.0);
+        double Mjd3 = Mjd2 + 5.0/(60.0*24.0);
+
+        HGibbsResult result = hgibbs(r1, r2, r3, Mjd1, Mjd2, Mjd3);
+
+        _assert(result.error == "   angl > 1ø");
+
+        std::cout << "Test HGibbs_03 pasado: Detecta angulos grandes.\n";
+        return 0;
+    } catch(const std::exception& e) {
+        std::cerr << "Error en test_HGibbs_03: " << e.what() << std::endl;
+        return 1;
+    }
+}
+
+int HGibbs_04() {
+    try {
+        std::cout << "\n=== Test HGibbs_04: Orbita eliptica ===" << std::endl;
+
+        Matrix r1(3, 1), r2(3, 1), r3(3, 1);
+        r1(1,1) = 7000e3; r1(2,1) = 0;      r1(3,1) = 0;
+        r2(1,1) = 0;      r2(2,1) = 8000e3; r2(3,1) = 0;
+        r3(1,1) = -9000e3; r3(2,1) = 0;     r3(3,1) = 0;
+
+        // Tiempos más espaciados para órbita elíptica
+        double Mjd1 = 60000.0;
+        double Mjd2 = Mjd1 + 30.0/(60.0*24.0);
+        double Mjd3 = Mjd2 + 30.0/(60.0*24.0);
+
+        HGibbsResult result = hgibbs(r1, r2, r3, Mjd1, Mjd2, Mjd3);
+
+        double TOL = 1e-6;
+        // Verificaciones básicas
+        _assert(result.error == "   angl > 1ø");
+        _assert(fabs(result.theta - 1.570796) < TOL);
+        _assert(fabs(result.theta1 - 1.570796) < TOL);
+        _assert(fabs(result.copa - 0.0) < TOL);
+
+        std::cout << "Test HGibbs_04 pasado: Orbita eliptica calculada.\n";
+        return 0;
+    } catch(const std::exception& e) {
+        std::cerr << "Error en test_HGibbs_04: " << e.what() << std::endl;
+        return 1;
+    }
+}
+
+
+
+
 int all_tests()
 {
     /*
@@ -964,8 +1098,10 @@ int all_tests()
     //_verify(MeasUpdate_01);_verify(MeasUpdate_02);
     //_verify(gstime_01);
     //_verify(unit_01);_verify(unit_02);_verify(unit_03);
-    _verify(Gibbs_01);
+    //_verify(Gibbs_01);
     //_verify(Gibbs_02);
+    _verify(HGibbs_01);
+
 
     return 0;
 }

@@ -2,9 +2,9 @@
 // Created by adria on 10/05/2025.
 //asta aqui
 
-#include "gibbs.h"
-#include "Sat_const.h"
-#include "angl.h"
+#include "../include/gibbs.h"
+#include "../include/Sat_const.h"
+#include "../include/angl.h"
 #include <cmath>
 
 /*

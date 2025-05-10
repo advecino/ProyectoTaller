@@ -59,6 +59,8 @@ add_executable(ProyectoTaller
         include/gast.h
         src/unit.cpp
         include/unit.h
-        include/gibbs.cpp
+        src/gibbs.cpp
         include/gibbs.h
+        src/hgibbs.cpp
+        include/hgibbs.h
 )
