@@ -24,6 +24,8 @@
 #include "include/gibbs.h"
 #include "include/hgibbs.h"
 #include "include/elements.h"
+#include "include/LTC.h"
+#include "include/GHAMatrix.h"
 
 #define TOL_ 10e-14
 
@@ -1150,7 +1152,125 @@ int elements_03() {
     }
 }
 
+int LTC_01() {
+    try {
+        std::cout << "\n=== Test 1: Latitud 0°, Longitud 0° ===\n";
 
+        double lon = 0.0;
+        double lat = 0.0;
+
+        Matrix result = LTC(lon, lat);
+
+        // Resultado esperado (matriz identidad con filas permutadas)
+        Matrix expected(3, 3);
+        expected(1,1) = 0.0; expected(1,2) = 1.0; expected(1,3) = 0.0;
+        expected(2,1) = 0.0; expected(2,2) = 0.0; expected(2,3) = 1.0;
+        expected(3,1) = 1.0; expected(3,2) = 0.0; expected(3,3) = 0.0;
+
+        std::cout << "Matriz resultante:\n";
+        result.print();
+
+        std::cout << "Matriz esperada:\n";
+        expected.print();
+
+        _assert(MatrixEqual(result, expected));
+
+        std::cout << "Test 1 pasado: LTC en (0°,0°) calculada correctamente.\n";
+        return 0;
+    } catch(const std::exception& e) {
+        std::cerr << "Error en LTC_test_01: " << e.what() << std::endl;
+        return 1;
+    }
+}
+
+int LTC_02() {
+    try {
+        std::cout << "\n=== Test 2: Latitud 45°, Longitud 30° ===\n";
+
+        double lon = M_PI/6;      // 30°
+        double lat = M_PI/4;      // 45°
+
+        Matrix result = LTC(lon, lat);
+
+        // Valores esperados CORREGIDOS (calculados analíticamente)
+        Matrix expected(3, 3);
+        expected(1,1) = -0.500000; expected(1,2) = 0.866025; expected(1,3) = 0.000000;
+        expected(2,1) = -0.612372; expected(2,2) = -0.353553; expected(2,3) = 0.707107;
+        expected(3,1) = 0.612372;  expected(3,2) = 0.353553;  expected(3,3) = 0.707107;
+
+        std::cout << "Matriz resultante:\n";
+        result.print();
+
+        std::cout << "Matriz esperada:\n";
+        expected.print();
+
+        _assert(MatrixEqual(result, expected, 1e-6));
+
+        std::cout << "Test 2 pasado: LTC en (30°,45°) calculada correctamente.\n";
+        return 0;
+    } catch(const std::exception& e) {
+        std::cerr << "Error en LTC_test_02: " << e.what() << std::endl;
+        return 1;
+    }
+}
+
+int GHAMatrix_01() {
+    try {
+        std::cout << "\n=== Test 1: GHAMatrix en J2000 (MJD 51544.5) ===\n";
+
+        double Mjd_UT1 = 51544.5;  // J2000.0
+        Matrix result = GHAMatrix(Mjd_UT1);
+
+        // Calcular GAST esperado
+        double expected_GAST = gstime(Mjd_UT1);
+
+        // Matriz esperada (rotación alrededor del eje Z por GAST)
+        Matrix expected = R_z(expected_GAST);
+
+        std::cout << "Matriz resultante:\n";
+        result.print();
+
+        std::cout << "Matriz esperada:\n";
+        expected.print();
+
+        _assert(MatrixEqual(result, expected));
+
+        std::cout << "Test 1 pasado: GHAMatrix en J2000 calculada correctamente.\n";
+        return 0;
+    } catch(const std::exception& e) {
+        std::cerr << "Error en GHAMatrix_test_01: " << e.what() << std::endl;
+        return 1;
+    }
+}
+
+int GHAMatrix_02() {
+    try {
+        std::cout << "\n=== Test 2: GHAMatrix en fecha actual (MJD 59754.0) ===\n";
+
+        double Mjd_UT1 = 59754.0;  // 2022/06/15 00:00:00 UTC
+        Matrix result = GHAMatrix(Mjd_UT1);
+
+        // Calcular GAST esperado
+        double expected_GAST = gstime(Mjd_UT1);
+
+        // Matriz esperada (rotación alrededor del eje Z por GAST)
+        Matrix expected = R_z(expected_GAST);
+
+        std::cout << "Matriz resultante:\n";
+        result.print();
+
+        std::cout << "Matriz esperada:\n";
+        expected.print();
+
+        _assert(MatrixEqual(result, expected));
+
+        std::cout << "Test 2 pasado: GHAMatrix en fecha actual calculada correctamente.\n";
+        return 0;
+    } catch(const std::exception& e) {
+        std::cerr << "Error en GHAMatrix_test_02: " << e.what() << std::endl;
+        return 1;
+    }
+}
 
 
 
@@ -1183,10 +1303,10 @@ int all_tests()
     //_verify(unit_01);_verify(unit_02);_verify(unit_03);
     //_verify(Gibbs_01);
     //_verify(Gibbs_02);
-    //_verify(HGibbs_01);
-    //_verify(elements_02);
-    _verify(elements_03);
-
+    //_verify(HGibbs_01);_verify(HGibbs_02);_verify(HGibbs_03);_verify(HGibbs_04);
+    //_verify(elements_01);_verify(elements_02);_verify(elements_03);
+    //_verify(LTC_01);_verify(LTC_02);
+    //_verify(GHAMatrix_01);_verify(GHAMatrix_02);
 
     return 0;
 }

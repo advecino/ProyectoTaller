@@ -63,6 +63,10 @@ add_executable(ProyectoTaller
         include/gibbs.h
         src/hgibbs.cpp
         include/hgibbs.h
-        include/elements.cpp
+        src/elements.cpp
         include/elements.h
+        src/LTC.cpp
+        include/LTC.h
+        include/GHAMatrix.cpp
+        include/GHAMatrix.h
 )
