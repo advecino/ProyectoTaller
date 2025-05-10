@@ -29,7 +29,7 @@ add_executable(ProyectoTaller
         include/TimeUpdate.h
         src/Position.cpp
         include/Position.h
-        include/MeasUpdate.cpp
+        src/MeasUpdate.cpp
         include/MeasUpdate.h
         src/sign_.cpp
         include/sign_.h

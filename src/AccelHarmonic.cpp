@@ -2,6 +2,7 @@
 #include "../include/global.h"
 #include <cmath>
 #include <stdexcept>
+#include <iostream>
 
 /*%--------------------------------------------------------------------------
 %
@@ -25,9 +26,19 @@
 %--------------------------------------------------------------------------*/
 
 
-Matrix AccelHarmonic(const Matrix& r, Matrix E, int n_max, int m_max) {
+Matrix AccelHarmonic(const Matrix r, Matrix E, int n_max, int m_max) {
     const double r_ref = 6378.1363e3;   //Earth's radius [m]; GGM03S
     const double gm = 398600.4415e9;    // [m^3/s^2]; GGM03S
+
+    if (r.getFilas() != 3 || r.getColumnas() != 1) {
+        throw std::runtime_error("El vector 'r' debe ser 3x1");
+    }
+    if (E.getFilas() != 3 || E.getColumnas() != 3) {
+        throw std::runtime_error("La matriz 'E' debe ser 3x3");
+    }
+    if (n_max < 0 || m_max < 0 || m_max > n_max) {
+        throw std::runtime_error("n_max y m_max deben ser >= 0, y m_max <= n_max");
+    }
 
     // Body-fixed position
     Matrix r_bf = E * r;
@@ -36,14 +47,19 @@ Matrix AccelHarmonic(const Matrix& r, Matrix E, int n_max, int m_max) {
     if(r_bf.getFilas() < 3 || r_bf.getColumnas() < 1) {
         throw std::runtime_error("r_bf debe ser al menos 3x1");
     }
-    // Cantidades auxiliares
-    double d = r_bf.norm();                     // distance
-    double latgc = asin(r_bf(2,0)/d);
-    double lon = atan2(r_bf(1,0), r_bf(0,0));
 
-    Matrix dpnm = Matrix(0, 0);
-    Matrix pnm = Matrix(0, 0);
+    double d = r_bf.norm();// distance
+    double latgc = asin(r_bf(3,1)/d);
+    double lon = atan2(r_bf(2,1), r_bf(1,1));
+
+    Matrix dpnm = Matrix(n_max+1, m_max+1);
+    Matrix pnm = Matrix(n_max+1, m_max+1);
     Legendre(n_max, m_max, latgc,pnm,dpnm);
+
+    if (pnm.getFilas() < n_max+1 || pnm.getColumnas() < m_max+1 ||
+        dpnm.getFilas() < n_max+1 || dpnm.getColumnas() < m_max+1) {
+        throw std::runtime_error("Las matrices pnm/dpnm son demasiado pequeñas");
+    }
 
     double dUdr = 0;
     double dUdlatgc = 0;
@@ -68,18 +84,21 @@ Matrix AccelHarmonic(const Matrix& r, Matrix E, int n_max, int m_max) {
     }
 
     // Body-fixed acceleration
-    double r2xy = r_bf(0, 0) * r_bf(0, 0) + r_bf(1, 0) * r_bf(1, 0);
+    double r2xy = r_bf(1, 1) * r_bf(1,1) + r_bf(2, 1) * r_bf(2, 1);
 
 
-    double ax = (1/d*dUdr - r_bf(2,0)/(pow(d,2)*sqrt(r2xy))*dUdlatgc)*r_bf(0,0) - (1/r2xy*dUdlon)*r_bf(1,0);
-    double ay = (1/d*dUdr - r_bf(2,0)/(pow(d,2)*sqrt(r2xy))*dUdlatgc)*r_bf(1,0) + (1/r2xy*dUdlon)*r_bf(0,0);
-    double az = 1/d*dUdr*r_bf(2,0) + sqrt(r2xy)/pow(d,2)*dUdlatgc;
+    double ax = (1/d*dUdr - r_bf(3,1)/(pow(d,2)*sqrt(r2xy))*dUdlatgc)*r_bf(1,1) - (1/r2xy*dUdlon)*r_bf(2,1);
+    double ay = (1/d*dUdr - r_bf(3,1)/(pow(d,2)*sqrt(r2xy))*dUdlatgc)*r_bf(2,1) + (1/r2xy*dUdlon)*r_bf(1,1);
+    double az = 1/d*dUdr*r_bf(3,1) + sqrt(r2xy)/pow(d,2)*dUdlatgc;
+
 
     Matrix a_bf(3, 1);
-    a_bf(0,0) = ax;
-    a_bf(1,0) = ay;
-    a_bf(2,0) = az;
+    a_bf(1,1) = ax;
+    a_bf(2,1) = ay;
+    a_bf(3,1) = az;
 
     // Inertial acceleration
-    return E.transpuesta() * a_bf;
+    Matrix a_final(E.transpuesta());
+    Matrix a_fin = a_final*a_bf;
+    return a_fin;
 }

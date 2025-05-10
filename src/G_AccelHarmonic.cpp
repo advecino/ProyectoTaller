@@ -1,3 +1,4 @@
+#include <iostream>
 #include "../include/G_AccelHarmonic.h"
 #include "../include/AccelHarmonic.h"
 
@@ -43,8 +44,17 @@ Matrix G_AccelHarmonic(const Matrix& r, const Matrix& U, int n_max, int m_max) {
         r_minus = -1 * r_minus;
         r_minus = r_minus + r;
 
-        Matrix da = AccelHarmonic(r_plus, U, n_max, m_max) -
-                    AccelHarmonic(r_minus, U, n_max, m_max);
+        r_plus.print();
+        r_minus.print();
+        U.print();
+        std::cout<<n_max<<std::endl;
+        std::cout<<m_max<<std::endl;
+
+        Matrix m1 = AccelHarmonic(r_plus, U, n_max, m_max);
+        m1.print();
+        Matrix m2 = AccelHarmonic(r_minus, U, n_max, m_max);
+
+        Matrix da = m1-m2;
 
         // Derivative with respect to i-th axis
         G(1,i) = da(1,1)/d;

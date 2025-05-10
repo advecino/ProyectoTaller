@@ -163,7 +163,7 @@ Matrix Matrix::operator-(const Matrix& matrix2)
  */
 Matrix Matrix::operator*(const Matrix& matrix2) const
 {
-    Matrix result(fil, col);
+    Matrix result(fil, matrix2.col);
 
     for (int i = 0; i < this->fil ; i++){
         for (int j = 0; j < matrix2.col; j++){
