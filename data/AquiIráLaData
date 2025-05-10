@@ -3,11 +3,9 @@ IERS
 NutMatrix
 PoleMatrix
 Precmatrix
-GHAMatrix
 doubler
 timediff
 Geodetic
-LTC
 Accel
 AzEIP
 DE430Coeff??????

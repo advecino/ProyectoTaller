@@ -67,6 +67,6 @@ add_executable(ProyectoTaller
         include/elements.h
         src/LTC.cpp
         include/LTC.h
-        include/GHAMatrix.cpp
+        src/GHAMatrix.cpp
         include/GHAMatrix.h
 )

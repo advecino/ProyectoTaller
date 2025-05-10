@@ -2,7 +2,7 @@
 // Created by adria on 11/05/2025.
 //
 
-#include "GHAMatrix.h"
+#include "../include/GHAMatrix.h"
 
 
 /*
