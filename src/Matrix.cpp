@@ -284,7 +284,62 @@ Matrix operator*(const Matrix& m, double scalar) {
     return scalar * m; // Reutiliza la implementación anterior
 }
 
+/**
+ * @brief Sobrecarga del operador de división por escalar (modifica la matriz actual)
+ * @param scalar Escalar por el que dividir
+ * @return Referencia a la matriz resultante
+ */
+Matrix& Matrix::operator/=(double scalar) {
+    if (scalar == 0.0) {
+        throw std::invalid_argument("División por cero no permitida");
+    }
 
+    for (int i = 0; i < fil; i++) {
+        for (int j = 0; j < col; j++) {
+            matrix[i][j] /= scalar;
+        }
+    }
+    return *this;
+}
+
+/**
+ * @brief Sobrecarga del operador de división matriz/escalar
+ * @param m Matriz a dividir
+ * @param scalar Escalar divisor
+ * @return Nueva matriz resultante
+ */
+Matrix operator/(const Matrix& m, double scalar) {
+    if (scalar == 0.0) {
+        throw std::invalid_argument("División por cero no permitida");
+    }
+
+    Matrix result(m.fil, m.col);
+    for (int i = 0; i < m.fil; i++) {
+        for (int j = 0; j < m.col; j++) {
+            result.matrix[i][j] = m.matrix[i][j] / scalar;
+        }
+    }
+    return result;
+}
+
+/**
+ * @brief Sobrecarga del operador de división escalar/matriz
+ * @param scalar Escalar a dividir
+ * @param m Matriz divisor
+ * @return Nueva matriz resultante
+ */
+Matrix operator/(double scalar, const Matrix& m) {
+    Matrix result(m.fil, m.col);
+    for (int i = 0; i < m.fil; i++) {
+        for (int j = 0; j < m.col; j++) {
+            if (m.matrix[i][j] == 0.0) {
+                throw std::invalid_argument("División por cero en elemento de matriz");
+            }
+            result.matrix[i][j] = scalar / m.matrix[i][j];
+        }
+    }
+    return result;
+}
 
 
 
@@ -439,4 +494,94 @@ double Matrix::norm() const {
         sum += matrix[i][0] * matrix[i][0];
     }
     return sqrt(sum);
+}
+
+/**
+ * @brief Calcula el producto punto entre dos vectores
+ */
+double Matrix::dot(const Matrix& a, const Matrix& b) {
+    // Verificar que ambos son vectores (columna o fila)
+    bool a_is_vector = (a.fil == 1 || a.col == 1);
+    bool b_is_vector = (b.fil == 1 || b.col == 1);
+
+    if (!a_is_vector || !b_is_vector) {
+        throw std::invalid_argument("dot() solo aplicable a vectores");
+    }
+
+    // Obtener la longitud (usar la mayor dimensión)
+    int n = (a.fil > a.col) ? a.fil : a.col;
+
+    // Verificar que tienen la misma longitud
+    if ((b.fil != n && b.col != n) || (b.fil != 1 && b.col != 1)) {
+        throw std::invalid_argument("Vectores de dimensiones incompatibles para dot product");
+    }
+
+    double result = 0.0;
+
+    // Producto punto para vectores columna
+    if (a.col == 1 && b.col == 1) {
+        for (int i = 0; i < n; ++i) {
+            result += a.matrix[i][0] * b.matrix[i][0];
+        }
+    }
+        // Producto punto para vectores fila
+    else if (a.fil == 1 && b.fil == 1) {
+        for (int j = 0; j < n; ++j) {
+            result += a.matrix[0][j] * b.matrix[0][j];
+        }
+    }
+        // Producto punto mixto (fila x columna)
+    else {
+        for (int i = 0; i < n; ++i) {
+            double a_val = (a.col == 1) ? a.matrix[i][0] : a.matrix[0][i];
+            double b_val = (b.col == 1) ? b.matrix[i][0] : b.matrix[0][i];
+            result += a_val * b_val;
+        }
+    }
+
+    return result;
+}
+
+/**
+ * @brief Calcula el producto cruz entre dos vectores 3D
+ */
+Matrix Matrix::cross(const Matrix& a, const Matrix& b) {
+    // Verificar que ambos son vectores 3D
+    bool a_is_3d = (a.fil == 3 && a.col == 1) || (a.fil == 1 && a.col == 3);
+    bool b_is_3d = (b.fil == 3 && b.col == 1) || (b.fil == 1 && b.col == 3);
+
+    if (!a_is_3d || !b_is_3d) {
+        throw std::invalid_argument("cross() solo aplicable a vectores 3D");
+    }
+
+    // Obtener componentes de los vectores
+    double a1, a2, a3, b1, b2, b3;
+
+    if (a.col == 1) { // Vector columna
+        a1 = a.matrix[0][0];
+        a2 = a.matrix[1][0];
+        a3 = a.matrix[2][0];
+    } else { // Vector fila
+        a1 = a.matrix[0][0];
+        a2 = a.matrix[0][1];
+        a3 = a.matrix[0][2];
+    }
+
+    if (b.col == 1) { // Vector columna
+        b1 = b.matrix[0][0];
+        b2 = b.matrix[1][0];
+        b3 = b.matrix[2][0];
+    } else { // Vector fila
+        b1 = b.matrix[0][0];
+        b2 = b.matrix[0][1];
+        b3 = b.matrix[0][2];
+    }
+
+    // Calcular producto cruz (siempre devuelve vector columna 3x1)
+    Matrix result(3, 1);
+    result.matrix[0][0] = a2 * b3 - a3 * b2;
+    result.matrix[1][0] = a3 * b1 - a1 * b3;
+    result.matrix[2][0] = a1 * b2 - a2 * b1;
+
+    return result;
 }

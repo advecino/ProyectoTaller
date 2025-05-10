@@ -71,6 +71,7 @@ public:
     * @return Matriz resultante de la multiplicación.
     */
     Matrix operator* (const Matrix& matrix2) const;
+    Matrix& operator/=(double scalar);
     /**
      * @brief Sobrecarga del operador de acceso a elementos de la matriz.
      * @param i Índice de la fila.
@@ -122,6 +123,8 @@ public:
     friend Matrix operator-(double scalar, const Matrix& m);
     friend Matrix operator*(const Matrix& m, double scalar);
     friend Matrix operator*(double scalar, const Matrix& m);
+    friend Matrix operator/(const Matrix& m, double scalar);
+    friend Matrix operator/(double scalar, const Matrix& m);
 
 
 
@@ -140,6 +143,25 @@ public:
     int getColumnas() const;
     Matrix transpuesta() const;
     Matrix inversa() const;
+
+
+    /**
+     * @brief Calcula el producto punto (dot product) entre dos vectores
+     * @param a Primer vector (debe ser matriz nx1 o 1xn)
+     * @param b Segundo vector (debe ser matriz nx1 o 1xn)
+     * @return Resultado del producto punto
+     * @throw std::invalid_argument Si las dimensiones no son compatibles
+     */
+    static double dot(const Matrix& a, const Matrix& b);
+
+    /**
+     * @brief Calcula el producto cruz (cross product) entre dos vectores 3D
+     * @param a Primer vector (debe ser matriz 3x1 o 1x3)
+     * @param b Segundo vector (debe ser matriz 3x1 o 1x3)
+     * @return Matriz resultante del producto cruz (3x1)
+     * @throw std::invalid_argument Si los vectores no son 3D
+     */
+    static Matrix cross(const Matrix& a, const Matrix& b);
 
 
 private:

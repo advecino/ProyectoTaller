@@ -21,6 +21,7 @@
 #include "include/EqnEquinox.h"
 #include "include/gast.h"
 #include "include/unit.h"
+#include "include/gibbs.h"
 
 #define TOL_ 10e-14
 
@@ -873,6 +874,68 @@ int unit_03() {
     }
 }
 
+int Gibbs_01() {
+    std::cout << "=== Prueba 1: Órbita circular ===" << std::endl;
+
+    // Configurar vectores de posición (órbita circular)
+    Matrix r1(3, 1);
+    r1(1,1) = 7000e3; // 7000 km -> m
+    r1(2,1) = 0;
+    r1(3,1) = 0;
+
+    Matrix r2(3, 1);
+    r2(1,1) = 0;
+    r2(2,1) = 7000e3;
+    r2(3,1) = 0;
+
+    Matrix r3(3, 1);
+    r3(1,1) = -7000e3;
+    r3(2,1) = 0;
+    r3(3,1) = 0;
+
+    // Ejecutar método Gibbs
+    GibbsResult result = gibbs(r1, r2, r3);
+    double TOL = 1e-6;
+    // Verificar resultados
+    _assert(result.error == "          ok");
+    _assert(fabs(result.theta - 1.570796) < TOL);
+    _assert(fabs(result.theta1 - 1.570796) < TOL);
+    _assert(fabs(result.copa) < TOL);
+
+    // Verificar velocidad (valores de tu salida MATLAB)
+    _assert((std::abs(result.v2(1,1)) - (7546.05329011)) < TOL);
+    _assert(fabs(result.v2(2,1)) < TOL);
+    _assert(fabs(result.v2(3,1)) < TOL);
+
+    std::cout << "Prueba 1 pasada!\n" << std::endl;
+}
+
+int Gibbs_02() {
+    std::cout << "=== Prueba 2: Vectores no coplanares ===" << std::endl;
+
+    Matrix r1(3, 1);
+    r1(1,1) = 7000e3;
+    r1(2,1) = 0;
+    r1(3,1) = 0;
+
+    Matrix r2(3, 1);
+    r2(1,1) = 0;
+    r2(2,1) = 7000e3;
+    r2(3,1) = 0;
+
+    Matrix r3(3, 1);
+    r3(1,1) = 0;
+    r3(2,1) = 0;
+    r3(3,1) = 7000e3;
+
+    GibbsResult result = gibbs(r1, r2, r3);
+
+    _assert(result.error == "not coplanar");
+    std::cout << "Prueba 2 pasada!\n" << std::endl;
+}
+
+
+
 
 int all_tests()
 {
@@ -901,6 +964,8 @@ int all_tests()
     //_verify(MeasUpdate_01);_verify(MeasUpdate_02);
     //_verify(gstime_01);
     //_verify(unit_01);_verify(unit_02);_verify(unit_03);
+    _verify(Gibbs_01);
+    //_verify(Gibbs_02);
 
     return 0;
 }
