@@ -69,4 +69,10 @@ add_executable(ProyectoTaller
         include/LTC.h
         src/GHAMatrix.cpp
         include/GHAMatrix.h
+        src/PoleMatrix.cpp
+        include/PoleMatrix.h
+        src/NutMatrix.cpp
+        include/NutMatrix.h
+        src/PrecMatrix.cpp
+        include/PrecMatrix.h
 )

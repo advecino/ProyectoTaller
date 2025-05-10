@@ -26,6 +26,9 @@
 #include "include/elements.h"
 #include "include/LTC.h"
 #include "include/GHAMatrix.h"
+#include "include/PoleMatrix.h"
+#include "include/NutMatrix.h"
+#include "include/PrecMatrix.h"
 
 #define TOL_ 10e-14
 
@@ -1272,6 +1275,91 @@ int GHAMatrix_02() {
     }
 }
 
+int PoleMatrix_01() {
+    try {
+        std::cout << "\n=== Test 2: PoleMatrix con xp=0.1\", yp=0.2\" (en radianes) ===\n";
+
+        // Convertir segundos de arco a radianes
+        double arcsec_to_rad = M_PI/(180.0*3600.0);
+        double xp = 0.1 * arcsec_to_rad;
+        double yp = 0.2 * arcsec_to_rad;
+
+        Matrix result = PoleMatrix(xp, yp);
+
+        // Calcular manualmente la matriz esperada
+        Matrix expected = R_y(-xp) * R_x(-yp);
+
+        std::cout << "Matriz resultante:\n";
+        result.print();
+
+        std::cout << "Matriz esperada:\n";
+        expected.print();
+
+        _assert(MatrixEqual(result, expected, 1e-12));
+
+        std::cout << "Test 1 pasado: PoleMatrix con pequeños valores calculada correctamente.\n";
+        return 0;
+    } catch(const std::exception& e) {
+        std::cerr << "Error en PoleMatrix_test_02: " << e.what() << std::endl;
+        return 1;
+    }
+}
+
+int NutMatrix_01() {
+    try {
+        std::cout << "\n=== Test 1: NutMatrix en J2000 ===\n";
+
+        double Mjd_TT = 51544.5;  // J2000.0
+        Matrix result = NutMatrix(Mjd_TT);
+
+        // Calcular componentes esperados
+        double eps = MeanObliquity(Mjd_TT);
+        double dpsi, deps;
+        NutAngles(Mjd_TT, dpsi, deps);
+        Matrix expected = R_x(-eps-deps) * R_z(-dpsi) * R_x(+eps);
+
+        _assert(MatrixEqual(result, expected, 1e-12));
+
+        std::cout << "Test 1 pasado correctamente.\n";
+        return 0;
+    } catch(const std::exception& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+        return 1;
+    }
+}
+
+
+int PrecMatrix_01() {
+    try {
+        std::cout << "\n=== Test 2: PrecMatrix de J2000 a 2020 ===\n";
+
+        double Mjd_1 = 51544.5;  // J2000.0
+        double Mjd_2 = 58952.0;  // 2020-03-21 12:00:00 TT
+
+        Matrix result = PrecMatrix(Mjd_1, Mjd_2);
+
+        // Valores esperados calculados manualmente
+        Matrix expected(3, 3);
+        expected(1,1) = 0.9999999999999929; expected(1,2) = -0.0000271361741621; expected(1,3) = -0.0000117760568353;
+        expected(2,1) = 0.0000271361741621; expected(2,2) = 0.9999999999996318; expected(2,3) = -0.0000000000000000;
+        expected(3,1) = 0.0000117760568353; expected(3,2) = -0.0000000000000000; expected(3,3) = 0.9999999999993063;
+
+        std::cout << "Matriz resultante:\n";
+        result.print();
+
+        std::cout << "Matriz esperada:\n";
+        expected.print();
+
+        _assert(MatrixEqual(result, expected, 1e-2));
+
+        std::cout << "Test 1 pasado: PrecMatrix a 2020 calculada correctamente.\n";
+        return 0;
+    } catch(const std::exception& e) {
+        std::cerr << "Error en PrecMatrix_01: " << e.what() << std::endl;
+        return 1;
+    }
+}
+
 
 
 int all_tests()
@@ -1307,6 +1395,9 @@ int all_tests()
     //_verify(elements_01);_verify(elements_02);_verify(elements_03);
     //_verify(LTC_01);_verify(LTC_02);
     //_verify(GHAMatrix_01);_verify(GHAMatrix_02);
+    //_verify(PoleMatrix_01);
+    //_verify(NutMatrix_01);
+    //_verify(PrecMatrix_01);
 
     return 0;
 }
