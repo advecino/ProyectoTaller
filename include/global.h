@@ -11,7 +11,6 @@
 extern double Cnm[300][300];
 extern double Snm[300][300];
 
-extern std::vector<std::vector<double>> PC;
 
 
 #endif //PROYECTOTALLER_GLOBAL_H

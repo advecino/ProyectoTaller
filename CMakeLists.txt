@@ -83,4 +83,6 @@ add_executable(ProyectoTaller
         include/doubler.h
         include/IERS.cpp
         include/IERS.h
+        include/AzElPa.cpp
+        include/AzElPa.h
 )

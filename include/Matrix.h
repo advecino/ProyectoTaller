@@ -41,6 +41,19 @@ public:
 
     explicit Matrix(const std::vector<double>& values);
 
+
+    /**
+ * @brief Constructor que inicializa la matriz con un array de datos.
+ * @param fil Número de filas.
+ * @param col Número de columnas.
+ * @param v Array con los datos a cargar.
+ */
+    Matrix(int fil, int col, double v[]);
+
+    Matrix getColumn(int col) const;
+
+    Matrix concatenate(const Matrix& other, int axis = 0) const;
+
     /**
     * @brief Destructor de la matriz.
     */

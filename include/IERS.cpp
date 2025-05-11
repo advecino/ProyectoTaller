@@ -1,6 +1,6 @@
 //
 // Created by adria on 11/05/2025.
-//
+//asta squi
 
 #include <stdexcept>
 #include "IERS.h"
@@ -16,97 +16,66 @@
 
 
 
+IERSResult IERS(const Matrix& eop, double Mjd_UTC, std::string& interp) {
+    IERSResult result;
+    const double Arcs = 3600.0 * 180.0 / M_PI; // Define Arcs constant
 
-IERSResult IERS(const Matrix& eop, double Mjd_UTC, const std::string& interp) {
-    int n = eop.getColumnas();
-    if (n < 2) {
-        throw std::runtime_error("Matriz EOP debe tener al menos 2 columnas");
+    if (interp.empty()) {
+        interp = "n";
     }
 
-    IERSResult res;
-    std::string s = "l";
-    std::string ss = "n";
-    if (interp == s) {
-        // Interpolación lineal
-        double mjd = floor(Mjd_UTC);
-        int i = -1;
+    double mjd = floor(Mjd_UTC);
+    int i = -1;
+    int cols = eop.getColumnas();
 
-        // Encontrar el índice donde mjd coincide con la columna 4 de eop
-        for (int j = 0; j < eop.getColumnas(); ++j) {
-            if (eop(3, j) == mjd) {  // Columna 4 en MATLAB es índice 3 en C++
-                i = j;
-                break;
-            }
+    // Find the column index where MJD matches
+    for (int col = 0; col < cols; ++col) {
+        if (std::abs(eop(4, col) - mjd < 1e-8)) { // Note: using row 4 (0-based) for MJD
+            i = col;
+            break;
         }
-
-        if (i == -1) {
-            throw std::runtime_error("No se encontró el valor MJD en los datos EOP.");
-        }
-
-        // Recuperar los valores de la fila i y i+1
-        std::vector<double> preeop(12);
-        std::vector<double> nexteop(12);
-
-        for (int j = 1; j <= 12; ++j) {
-            preeop[j] = eop(i, j);
-            nexteop[j] = eop(i + 1, j);
-        }
-
-        double mfme = 1440 * (Mjd_UTC - floor(Mjd_UTC));
-        double fixf = mfme / 1440;
-
-        // Establecimiento de los parámetros de rotación de la Tierra IERS
-        res.x_pole = preeop[4] + (nexteop[4] - preeop[4]) * fixf;
-        res.y_pole = preeop[5] + (nexteop[5] - preeop[5]) * fixf;
-        res.UT1_UTC = preeop[6] + (nexteop[6] - preeop[6]) * fixf;
-        res.LOD = preeop[7] + (nexteop[7] - preeop[7]) * fixf;
-        res.dpsi = preeop[8] + (nexteop[8] - preeop[8]) * fixf;
-        res.deps = preeop[9] + (nexteop[9] - preeop[9]) * fixf;
-        res.dx_pole = preeop[10] + (nexteop[10] - preeop[10]) * fixf;
-        res.dy_pole = preeop[11] + (nexteop[11] - preeop[11]) * fixf;
-        res.TAI_UTC = preeop[12];
-
-        // Convertir las coordenadas del polo y otros valores
-        res.x_pole /= Arcs;  // Coordenada del polo [rad]
-        res.y_pole /= Arcs;  // Coordenada del polo [rad]
-        res.dpsi /= Arcs;
-        res.deps /= Arcs;
-        res.dx_pole /= Arcs; // Coordenada del polo [rad]
-        res.dy_pole /= Arcs; // Coordenada del polo [rad]
-    } else if (interp == ss) {
-        double mjd = floor(Mjd_UTC);
-        int i = -1;
-
-        // Encontrar el índice donde mjd coincide con la columna 4 de eop
-        for (int j = 0; j < eop.getColumnas(); ++j) {
-            if (eop(3, j) == mjd) {
-                i = j;
-                break;
-            }
-        }
-
-        if (i == -1) {
-            throw std::runtime_error("No se encontró el valor MJD en los datos EOP.");
-        }
-
-
-        std::vector<double> eop_row(12);
-
-
-        for (int j = 1; j <= 12; ++j) {
-            eop_row[j] = eop(i, j);
-        }
-
-        // Establecimiento de los parámetros de rotación de la Tierra IERS
-        res.x_pole = eop_row[4] / Arcs;  // Coordenada del polo [rad]
-        res.y_pole = eop_row[5] / Arcs;  // Coordenada del polo [rad]
-        res.UT1_UTC = eop_row[6];                 // Diferencia de tiempo UT1-UTC [s]
-        res.LOD = eop_row[7];                 // Longitud del día [s]
-        res.dpsi = eop_row[8] / Arcs;
-        res.deps = eop_row[9] / Arcs;
-        res.dx_pole = eop_row[10] / Arcs; // Coordenada del polo [rad]
-        res.dy_pole = eop_row[11] / Arcs; // Coordenada del polo [rad]
-        res.TAI_UTC = eop_row[12];               // Diferencia de tiempo TAI-UTC [s]
     }
-    return res;
+
+    if (i == -1 || i >= cols-1) {
+        throw std::runtime_error("Could not find MJD in EOP data or insufficient data for interpolation");
+    }
+
+    if (interp == "l") {
+        // Calculate interpolation fraction
+        double mfme = 1440.0 * (Mjd_UTC - mjd);
+        double fixf = mfme / 1440.0;
+
+        // Linear interpolation
+        result.x_pole   = eop(5, i)   + (eop(5, i+1)   - eop(5, i))   * fixf;
+        result.y_pole   = eop(6, i)   + (eop(6, i+1)   - eop(6, i))   * fixf;
+        result.UT1_UTC  = eop(7, i)   + (eop(7, i+1)   - eop(7, i))   * fixf;
+        result.LOD      = eop(8, i)   + (eop(8, i+1)   - eop(8, i))   * fixf;
+        result.dpsi     = eop(9, i)   + (eop(9, i+1)   - eop(9, i))   * fixf;
+        result.deps     = eop(10, i)  + (eop(10, i+1)  - eop(10, i))  * fixf;
+        result.dx_pole  = eop(11, i)  + (eop(11, i+1)  - eop(11, i))  * fixf;
+        result.dy_pole  = eop(12, i)  + (eop(12, i+1)  - eop(12, i))  * fixf;
+        result.TAI_UTC  = eop(13, i); // No interpolation for TAI_UTC
+
+        // Convert from arcseconds to radians
+        result.x_pole  /= Arcs;
+        result.y_pole  /= Arcs;
+        result.dpsi    /= Arcs;
+        result.deps    /= Arcs;
+        result.dx_pole /= Arcs;
+        result.dy_pole /= Arcs;
+    }
+    else if (interp == "n") {
+        // No interpolation - direct values
+        result.x_pole   = eop(5, i) / Arcs;
+        result.y_pole   = eop(6, i) / Arcs;
+        result.UT1_UTC  = eop(7, i);
+        result.LOD      = eop(8, i);
+        result.dpsi     = eop(9, i) / Arcs;
+        result.deps     = eop(10, i) / Arcs;
+        result.dx_pole  = eop(11, i) / Arcs;
+        result.dy_pole  = eop(12, i) / Arcs;
+        result.TAI_UTC  = eop(13, i);
+    }
+
+    return result;
 }

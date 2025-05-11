@@ -85,6 +85,20 @@ Matrix::Matrix(const std::vector<double>& values) : fil(1), col(values.size())
     }
 }
 
+
+Matrix::Matrix(int fil, int col, double v[]) : fil(fil), col(col) {
+    initMatrix();
+
+    int k = 0;
+    for (int i = 0; i < fil; i++) {
+        for (int j = 0; j < col; j++) {
+            matrix[i][j] = v[k++];
+        }
+    }
+}
+
+
+
 /**
  * @brief Destructor de la matriz.
  */
@@ -605,4 +619,56 @@ Matrix Matrix::getSubMatrix(int startRow, int endRow, int startCol, int endCol) 
     }
 
     return sub;
+}
+
+
+Matrix Matrix::getColumn(int col) const {
+    if (col < 0 || col > this->getColumnas()) {
+        throw std::out_of_range("Índice de columna inválido");
+    }
+    Matrix result(this->getFilas(), 1);
+    for (int i = 1; i < this->getFilas(); i++) {
+        result(i, 1) = this->matrix[i-1][col-1];
+    }
+    return result;
+}
+
+Matrix Matrix::concatenate(const Matrix& other, int axis) const {
+    if (axis == 0) { // Concatenación vertical
+        if (col != other.col) {
+            throw std::invalid_argument("El número de columnas debe coincidir para concatenar verticalmente");
+        }
+
+        Matrix result(fil + other.fil, col);
+        for (int i = 0; i < fil; ++i) {
+            for (int j = 0; j < col; ++j) {
+                result.matrix[i][j] = matrix[i][j];
+            }
+        }
+        for (int i = 0; i < other.fil; ++i) {
+            for (int j = 0; j < other.col; ++j) {
+                result.matrix[fil + i][j] = other.matrix[i][j];
+            }
+        }
+        return result;
+    }
+    else if (axis == 1) { // Concatenación horizontal
+        if (fil != other.fil) {
+            throw std::invalid_argument("El número de filas debe coincidir para concatenar horizontalmente");
+        }
+
+        Matrix result(fil, col + other.col);
+        for (int i = 0; i < fil; ++i) {
+            for (int j = 0; j < col; ++j) {
+                result.matrix[i][j] = matrix[i][j];
+            }
+            for (int j = 0; j < other.col; ++j) {
+                result.matrix[i][col + j] = other.matrix[i][j];
+            }
+        }
+        return result;
+    }
+    else {
+        throw std::invalid_argument("El eje debe ser 0 (vertical) o 1 (horizontal)");
+    }
 }
