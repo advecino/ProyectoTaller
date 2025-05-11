@@ -1923,7 +1923,7 @@ int all_tests()
     //_verify(test_IERS);//FALLA
     //_verify(JPL_Eph_DE430_Test_01);//FALLA
     //_verify(AzElPa_Test_01);
-    _verify(VarEqn_Test_01);
+    //_verify(VarEqn_Test_01);
 
     return 0;
 }

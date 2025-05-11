@@ -2,7 +2,7 @@
 // Created by adria on 12/05/2025.
 //
 
-#include "AzElPa.h"
+#include "../include/AzElPa.h"
 #include <cmath>
 #include <stdexcept>
 

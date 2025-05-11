@@ -83,7 +83,7 @@ add_executable(ProyectoTaller
         include/doubler.h
         include/IERS.cpp
         include/IERS.h
-        include/AzElPa.cpp
+        src/AzElPa.cpp
         include/AzElPa.h
         include/VarEqn.cpp
         include/VarEqn.h
