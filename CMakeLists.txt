@@ -75,4 +75,10 @@ add_executable(ProyectoTaller
         include/NutMatrix.h
         src/PrecMatrix.cpp
         include/PrecMatrix.h
+        src/timediff.cpp
+        include/timediff.h
+        src/Geodetic.cpp
+        include/Geodetic.h
+        src/doubler.cpp
+        include/doubler.h
 )

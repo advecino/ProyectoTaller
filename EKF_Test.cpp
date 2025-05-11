@@ -29,6 +29,9 @@
 #include "include/PoleMatrix.h"
 #include "include/NutMatrix.h"
 #include "include/PrecMatrix.h"
+#include "include/timediff.h"
+#include "include/Geodetic.h"
+#include "include/doubler.h"
 
 #define TOL_ 10e-14
 
@@ -1328,7 +1331,6 @@ int NutMatrix_01() {
     }
 }
 
-
 int PrecMatrix_01() {
     try {
         std::cout << "\n=== Test 2: PrecMatrix de J2000 a 2020 ===\n";
@@ -1359,6 +1361,105 @@ int PrecMatrix_01() {
         return 1;
     }
 }
+
+int timediff_01() {
+    try {
+        std::cout << "\n=== Test 2: Valores límite (UT1-UTC=0, TAI-UTC=0) ===\n";
+
+        double UT1_UTC = 0.0;
+        double TAI_UTC = 0.0;
+
+        TimeDiffs result = timediff(UT1_UTC, TAI_UTC);
+
+        // Valores esperados con entradas cero
+        _assert(fabs(result.UT1_TAI - 0.0) < TOL_);
+        _assert(fabs(result.UTC_GPS - 19.0) < TOL_);
+        _assert(fabs(result.UT1_GPS - 19.0) < TOL_);
+        _assert(fabs(result.TT_UTC - 32.184) < TOL_);
+        _assert(fabs(result.GPS_UTC - (-19.0)) < TOL_);
+
+        std::cout << "Test 1 pasado: Valores límite calculados correctamente.\n";
+        return 0;
+    } catch(const std::exception& e) {
+        std::cerr << "Error en timediff_01: " << e.what() << std::endl;
+        return 1;
+    }
+}
+
+int Geodetic_01() {
+    try {
+        std::cout << "\n=== Test 1: Punto en el ecuador ===\n";
+
+        Matrix r(3, 1);
+        r(1,1) = R_Earth; r(2,1) = 0.0; r(3,1) = 0.0;
+
+        GeodeticCoords coords = Geodetic(r, R_Earth, f_Earth);
+
+        _assert(fabs(coords.longitude - 0.0) < TOL_);
+        _assert(fabs(coords.latitude - 0.0) < TOL_);
+        _assert(fabs(coords.altitude - 0.0) < 1.0);
+
+        return 0;
+    } catch(const std::exception& e) {
+        std::cerr << "Error en Geodetic_test_01: " << e.what() << std::endl;
+        return 1;
+    }
+}
+
+int doubler_01() {
+    try {
+        std::cout << "\n=== Test doubler_01 ===" << std::endl;
+
+        // Datos simulados para un caso válido
+        double los1_data[] = {0.2673, 0.5345, 0.8018};
+        double los2_data[] = {0.4082, 0.8165, 0.4082};
+        double los3_data[] = {0.7071, 0.0,    0.7071};
+
+        double rsite1_data[] = {6378.137, 0.0, 0.0};
+        double rsite2_data[] = {0.0, 6378.137, 0.0};
+        double rsite3_data[] = {0.0, 0.0, 6378.137};
+
+        Matrix los1(3,1, los1_data, 3);
+        Matrix los2(3,1, los2_data, 3);
+        Matrix los3(3,1, los3_data, 3);
+
+        Matrix rsite1(3,1, rsite1_data, 3);
+        Matrix rsite2(3,1, rsite2_data, 3);
+        Matrix rsite3(3,1, rsite3_data, 3);
+
+        double cc1 = 1.0;
+        double cc2 = 1.0;
+        double magrsite1 = rsite1.norm();
+        double magrsite2 = rsite2.norm();
+        double magr1in = 7000.0;
+        double magr2in = 7100.0;
+        double t1 = 10.0;
+        double t3 = 40.0;
+        char direct = 'y';
+
+        DoubleRResult res = doubler(cc1, cc2, magrsite1, magrsite2, magr1in, magr2in,
+                                    los1, los2, los3, rsite1, rsite2, rsite3,
+                                    t1, t3, direct);
+
+        // Verificaciones básicas
+        _assert(res.r2.getFilas() == 3 && res.r2.getColumnas() == 1);
+        _assert(res.r3.getFilas() == 3 && res.r3.getColumnas() == 1);
+        _assert(!std::isnan(res.magr1) && !std::isinf(res.magr1));
+        _assert(!std::isnan(res.magr2) && !std::isinf(res.magr2));
+        _assert(!std::isnan(res.f1) && !std::isinf(res.f1));
+        _assert(!std::isnan(res.f2) && !std::isinf(res.f2));
+        _assert(!std::isnan(res.q1) && !std::isinf(res.q1));
+        _assert(!std::isnan(res.a) && !std::isinf(res.a));
+        _assert(!std::isnan(res.deltae32) && !std::isinf(res.deltae32));
+
+        std::cout << "Test doubler_01 pasado correctamente.\n";
+        return 0;
+    } catch(const std::exception& e) {
+        std::cerr << "Error en doubler_01: " << e.what() << std::endl;
+        return 1;
+    }
+}
+
 
 
 
@@ -1398,6 +1499,9 @@ int all_tests()
     //_verify(PoleMatrix_01);
     //_verify(NutMatrix_01);
     //_verify(PrecMatrix_01);
+    //_verify(timediff_01);
+    //_verify(Geodetic_01);
+    _verify(doubler_01);
 
     return 0;
 }
