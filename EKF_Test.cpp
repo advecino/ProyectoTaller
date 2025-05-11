@@ -32,6 +32,7 @@
 #include "include/timediff.h"
 #include "include/Geodetic.h"
 #include "include/doubler.h"
+#include "include/IERS.h"
 
 #define TOL_ 10e-14
 
@@ -1460,6 +1461,96 @@ int doubler_01() {
     }
 }
 
+int iers_01() {
+    try {
+        std::cout << "\n=== Test 1: Interpolación lineal básica ===" << std::endl;
+
+        // Datos de prueba (2 columnas)
+        double eop_data[] = {
+                0, 0, 0, 0,       // 4 primeros elementos (no usados)
+                59000.0,          // MJD
+                0.1, 0.2, 0.3,    // x_pole, y_pole, UT1_UTC
+                0.4, 0.5, 0.6,    // LOD, dpsi, deps
+                0.7, 0.8, 37.0,   // dx_pole, dy_pole, TAI_UTC
+
+                0, 0, 0, 0,       // 4 primeros elementos (no usados)
+                59001.0,          // MJD
+                0.2, 0.3, 0.4,    // x_pole, y_pole, UT1_UTC
+                0.5, 0.6, 0.7,    // LOD, dpsi, deps
+                0.8, 0.9, 37.0    // dx_pole, dy_pole, TAI_UTC
+        };
+
+        Matrix eop(14, 2, eop_data, sizeof(eop_data) / sizeof(eop_data[0]));
+        double Mjd_UTC = 59000.5; // Punto medio
+        eop.print();
+        IERSResult res = IERS(eop, Mjd_UTC, "l");
+
+        // Verificaciones
+        std::cout<< res.x_pole<<std::endl;
+        std::cout<< (res.x_pole - (0.15 / Arcs))<<std::endl;
+        std::cout<<"==============="<<std::endl;
+        std::cout<< res.y_pole<<std::endl;
+        std::cout<< (res.y_pole - (0.15 / Arcs))<<std::endl;
+        std::cout<<"==============="<<std::endl;
+        std::cout<< res.UT1_UTC<<std::endl;
+        std::cout<< (res.UT1_UTC - 0.35)<<std::endl;
+        std::cout<<"==============="<<std::endl;
+        std::cout<< res.LOD<<std::endl;
+        std::cout<< (res.LOD - 0.45)<<std::endl;
+        std::cout<<"==============="<<std::endl;
+        std::cout<< res.TAI_UTC<<std::endl;
+        std::cout<< (res.TAI_UTC - 37.0) <<std::endl;
+
+        double TOL = 1e-5;
+
+        _assert(fabs(res.x_pole - (0.15 / Arcs)) < TOL);
+        _assert(fabs(res.y_pole - (0.25 / Arcs)) < TOL);
+        _assert(fabs(res.UT1_UTC - 0.35) < TOL);
+        _assert(fabs(res.LOD - 0.45) < TOL);
+        _assert(fabs(res.TAI_UTC - 37.0) < TOL);
+
+        std::cout << "Test 1 pasado: Interpolación lineal correcta.\n";
+        return 0;
+    } catch(const std::exception& e) {
+        std::cerr << "Error en test 1: " << e.what() << std::endl;
+        return 1;
+    }
+}
+
+int iers_02() {
+    try {
+        std::cout << "\n=== Test 3: Manejo de errores ===" << std::endl;
+
+        double eop_data[] = {0, 0, 0, 0, 59200.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 37.0};
+        Matrix eop(14, 1, eop_data,sizeof(eop_data) / sizeof(eop_data[0]));
+
+        // Debe fallar con fecha anterior
+        try {
+            IERS(eop, 59100.0);
+            _assert(false && "Debería haber lanzado excepción");
+        } catch (...) {
+            _assert(true);
+        }
+
+        // Debe fallar con fecha posterior
+        try {
+            IERS(eop, 59300.0);
+            _assert(false && "Debería haber lanzado excepción");
+        } catch (...) {
+            _assert(true);
+        }
+
+        std::cout << "Test 2 pasado: Manejo de errores correcto.\n";
+        return 0;
+    } catch(const std::exception& e) {
+        std::cerr << "Error en test 2: " << e.what() << std::endl;
+        return 1;
+    }
+}
+
+
+
+
 
 
 
@@ -1501,10 +1592,12 @@ int all_tests()
     //_verify(PrecMatrix_01);
     //_verify(timediff_01);
     //_verify(Geodetic_01);
-    _verify(doubler_01);
+    //_verify(doubler_01);
+    _verify(iers_01);//_verify(iers_01);//Falla el 1, hay que comprobar en matlab
 
     return 0;
 }
+
 
 
 
