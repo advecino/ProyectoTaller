@@ -85,4 +85,6 @@ add_executable(ProyectoTaller
         include/IERS.h
         include/AzElPa.cpp
         include/AzElPa.h
+        include/VarEqn.cpp
+        include/VarEqn.h
 )

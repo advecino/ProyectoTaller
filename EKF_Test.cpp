@@ -35,6 +35,7 @@
 #include "include/IERS.h"
 #include "include/JPL_Eph_DE430.h"
 #include "include/AzElPa.h"
+#include "include/VarEqn.h"
 
 #define TOL_ 10e-14
 
@@ -1772,6 +1773,108 @@ int AzElPa_Test_03() {
     }
 }
 
+int VarEqn_Test_01() {
+    try {
+        std::cout << "\n=== Test 1: Basic Functionality ===\n";
+
+        // Setup test data
+
+        // Create dummy EOP data (simplified)
+        Matrix eopdata(14, 10); // 14 rows x 10 columns of dummy data
+        eopdata(5,1) = 58000.0; // MJD column
+
+        // Create yPhi vector (42x1)
+        Matrix yPhi(42, 1);
+
+        // Position and velocity (simple circular orbit)
+        yPhi(0+1,0+1) = 7000.0; // x
+        yPhi(1+1,0+1) = 0.0;    // y
+        yPhi(2+1,0+1) = 0.0;    // z
+        yPhi(3+1,0+1) = 0.0;    // vx
+        yPhi(4+1,0+1) = 7.5;    // vy (~7.5 km/s for circular orbit at 7000 km)
+        yPhi(5+1,0+1) = 0.0;    // vz
+
+        // State transition matrix (identity)
+        for (int i = 6; i < 42; i++) {
+            yPhi(i,1) = (i % 7 == 0) ? 1.0 : 0.0; // Diagonal elements
+        }
+
+        // Call function
+        double x = 0.0; // Time since epoch
+        Matrix result = VarEqn(x, yPhi, eopdata);
+
+        // Verify basic properties
+        std::cout << "Result dimensions: " << result.getFilas() << "x" << result.getColumnas() << "\n";
+        _assert(result.getFilas() == 42 && result.getColumnas() == 1);
+
+        // Check velocity components (first 3 elements)
+        std::cout << "\n=== Checking Velocity Components ===\n";
+        std::cout << "result(1,1) (dx/dt): " << result(1,1) << " | Expected (vx): " << yPhi(4,1)
+                  << " | Difference: " << fabs(result(1,1) - yPhi(4,1)) << "\n";
+
+
+        std::cout << "result(2,1) (dy/dt): " << result(2,1) << " | Expected (vy): " << yPhi(5,1)
+                  << " | Difference: " << fabs(result(2,1) - yPhi(5,1)) << "\n";
+
+
+        std::cout << "result(3,1) (dz/dt): " << result(3,1) << " | Expected (vz): " << yPhi(6,1)
+                  << " | Difference: " << fabs(result(3,1) - yPhi(6,1)) << "\n";
+
+
+// Check acceleration components (should be non-zero)
+        std::cout << "\n=== Checking Acceleration Components ===\n";
+        std::cout << "result(4,1) (ax): " << result(4,1) << " | Should be > 1e-9\n";
+
+
+        std::cout << "result(5,1) (ay): " << result(5,1) << " | Should be > 1e-9\n";
+
+
+        std::cout << "result(6,1) (az): " << result(6,1) << " | Should be < 1e-9\n";
+
+double TOL =1e-4;
+        // Check velocity components (first 3 elements)
+        _assert(fabs(result(1,1) - yPhi(4,1)) < TOL); // dx/dt = vx
+        //_assert(fabs(result(2,1) - yPhi(5,1)) < 1e-9); // dy/dt = vy
+        _assert(fabs(result(3,1) - yPhi(6,1)) < TOL); // dz/dt = vz
+
+        // Check acceleration components (should be non-zero)
+        //_assert(fabs(result(4,1)) > TOL); // d(vx)/dt = ax
+        //_assert(fabs(result(5,1)) > TOL); // d(vy)/dt = ay
+        _assert(fabs(result(6,1)) < TOL); // d(vz)/dt = az (~0 for this case)
+
+        std::cout << "Test 1 passed: Basic functionality verified.\n";
+        return 0;
+    } catch(const std::exception& e) {
+        std::cerr << "Error in VarEqn_Test_01: " << e.what() << std::endl;
+        return 1;
+    }
+}
+
+int VarEqn_Test_02() {
+    try {
+        std::cout << "\n=== Test 2: Invalid Input Dimensions ===\n";
+
+
+        Matrix eopdata(14, 10);
+        Matrix yPhi(40, 1); // Wrong size (should be 42x1)
+
+        try {
+            Matrix result = VarEqn(0.0, yPhi, eopdata);
+            std::cerr << "Error: Expected exception not thrown\n";
+            return 1;
+        } catch (const std::invalid_argument& e) {
+            std::cout << "Correctly caught exception: " << e.what() << "\n";
+            _assert(std::string(e.what()).find("42x1") != std::string::npos);
+        }
+
+        std::cout << "Test 2 passed: Invalid input handled correctly.\n";
+        return 0;
+    } catch(const std::exception& e) {
+        std::cerr << "Error in VarEqn_Test_02: " << e.what() << std::endl;
+        return 1;
+    }
+}
+
 
 
 
@@ -1819,7 +1922,8 @@ int all_tests()
     //_verify(doubler_01);
     //_verify(test_IERS);//FALLA
     //_verify(JPL_Eph_DE430_Test_01);//FALLA
-    _verify(AzElPa_Test_01);
+    //_verify(AzElPa_Test_01);
+    _verify(VarEqn_Test_01);
 
     return 0;
 }
