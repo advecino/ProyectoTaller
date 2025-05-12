@@ -93,4 +93,6 @@ add_executable(ProyectoTaller
         include/anglesg.h
         include/DEInteg.cpp
         include/DEInteg.h
+        include/Accel.cpp
+        include/Accel.h
 )

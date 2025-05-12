@@ -16,7 +16,7 @@
 %   Freeman and Comp., San Francisco (1975).
 %
 %----------------------------------------------------------------------------*/
-
+/*
 Matrix DEInteg(
         void (*func)(double t, const Matrix& y, Matrix& dydt),
         double t,
@@ -665,3 +665,4 @@ Matrix DEInteg(
         % end
 
 }
+*/
