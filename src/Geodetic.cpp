@@ -19,10 +19,10 @@
 % Last modified:   2015/08/12   M. Mahooti
 %
 %--------------------------------------------------------------------------*/
-GeodeticCoords Geodetic(const Matrix& r, double R_equ, double f) {
+GeodeticCoords Geodetic(const Matrix& r) {
     const double eps = std::numeric_limits<double>::epsilon();
-    const double epsRequ = eps * R_equ; //Convergence criterion
-    const double e2 = f * (2.0 - f); //Square of eccentricity
+    const double epsRequ = eps * R_Earth; //Convergence criterion
+    const double e2 = f_Earth * (2.0 - f_Earth); //Square of eccentricity
 
 
     double X = r(1,1);  //Cartesian coordinates
@@ -42,7 +42,7 @@ GeodeticCoords Geodetic(const Matrix& r, double R_equ, double f) {
         ZdZ = Z + dZ;
         Nh = sqrt(rho2 + ZdZ*ZdZ);
         SinPhi = ZdZ / Nh;                //Sine of geodetic latitude
-        N = R_equ / sqrt(1.0 - e2*SinPhi*SinPhi);
+        N = R_Earth / sqrt(1.0 - e2*SinPhi*SinPhi);
         dZ_new = N * e2 * SinPhi;
 
         if (std::abs(dZ - dZ_new) < epsRequ) {

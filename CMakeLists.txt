@@ -87,4 +87,6 @@ add_executable(ProyectoTaller
         include/AzElPa.h
         include/VarEqn.cpp
         include/VarEqn.h
+        include/anglesdr.cpp
+        include/anglesdr.h
 )

@@ -6,6 +6,7 @@
 #define PROYECTOTALLER_GEODETIC_H
 
 #include "Matrix.h"
+#include "Sat_const.h"
 
 
 struct GeodeticCoords {
@@ -29,7 +30,7 @@ struct GeodeticCoords {
  * @param f Achatamiento de la Tierra
  * @return GeodeticCoords Estructura con coordenadas geodésicas
  */
-GeodeticCoords Geodetic(const Matrix& r, double R_equ, double f);
+GeodeticCoords Geodetic(const Matrix& r);
 
 
 #endif //PROYECTOTALLER_GEODETIC_H

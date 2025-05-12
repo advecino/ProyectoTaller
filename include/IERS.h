@@ -10,24 +10,23 @@
 #include "Matrix.h"
 #include <cmath>
 #include "Sat_const.h"
+#include <string>
+
 
 
 struct IERSResult {
-    double x_pole;    // Pole coordinate [rad]
-    double y_pole;    // Pole coordinate [rad]
-    double UT1_UTC;   // UT1-UTC time difference [s]
-    double LOD;       // Length of day [s]
-    double dpsi;      // Nutation angle [rad]
-    double deps;      // Nutation angle [rad]
-    double dx_pole;   // Pole coordinate [rad]
-    double dy_pole;   // Pole coordinate [rad]
-    double TAI_UTC;   // TAI-UTC time difference [s]
-
-    // Constructor por defecto
-
+    double x_pole;
+    double y_pole;
+    double UT1_UTC;
+    double LOD;
+    double dpsi;
+    double deps;
+    double dx_pole;
+    double dy_pole;
+    double TAI_UTC;
 };
 
-// Declaración de la función IERS
-IERSResult IERS(const Matrix& eop, double Mjd_UTC, std::string& interp);
 
+
+IERSResult IERS(Matrix eop, double Mjd_UTC, std::string interp = "n");
 #endif //PROYECTOTALLER_IERS_H

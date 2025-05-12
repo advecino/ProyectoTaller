@@ -36,6 +36,7 @@
 #include "include/JPL_Eph_DE430.h"
 #include "include/AzElPa.h"
 #include "include/VarEqn.h"
+#include "include/anglesdr.h"
 
 #define TOL_ 10e-14
 
@@ -1397,7 +1398,7 @@ int Geodetic_01() {
         Matrix r(3, 1);
         r(1,1) = R_Earth; r(2,1) = 0.0; r(3,1) = 0.0;
 
-        GeodeticCoords coords = Geodetic(r, R_Earth, f_Earth);
+        GeodeticCoords coords = Geodetic(r);
 
         _assert(fabs(coords.longitude - 0.0) < TOL_);
         _assert(fabs(coords.latitude - 0.0) < TOL_);
@@ -1531,93 +1532,87 @@ TAI_UTC: 37.000000
 
 int test_IERS() {
     try {
-        // Constante para conversión de arcosegundos a radianes
-        const double Arcs = 3600.0 * 180.0 / M_PI;
 
-        // Datos de prueba CORRECTAMENTE ESTRUCTURADOS (14 filas x 2 columnas)
-        // Formato: Cada columna representa un conjunto completo de datos EOP
+
+        // Datos de prueba: 14 filas x 2 columnas
         double eop_data[] = {
-                // Columna 0          Columna 1
-                0, 0,               0, 0,               // Filas 0-1 no usadas
-                0, 0,               0, 0,               // Filas 2-3 no usadas
-                59000.0,            59001.0,            // Fila 4: MJD
-                0.1,                0.2,                // Fila 5: x_pole [arcsec]
-                0.2,                0.3,                // Fila 6: y_pole [arcsec]
-                0.3,                0.4,                // Fila 7: UT1_UTC [s]
-                0.4,                0.5,                // Fila 8: LOD [s]
-                0.5,                0.6,                // Fila 9: dpsi [arcsec]
-                0.6,                0.7,                // Fila 10: deps [arcsec]
-                0.7,                0.8,                // Fila 11: dx_pole [arcsec]
-                0.8,                0.9,                // Fila 12: dy_pole [arcsec]
-                37.0,               37.0                // Fila 13: TAI_UTC [s]
+                // MJD,     x_pole, y_pole, UT1_UTC, LOD,  dpsi, deps, dx_pole, dy_pole, TAI_UTC
+                59000.0,  0.1,    0.2,    0.3,     0.4,  0.5,  0.6,   0.7,     0.8,     37.0,
+                59001.0,  0.2,    0.3,    0.4,     0.5,  0.6,  0.7,   0.8,     0.9,     37.0
         };
-        Matrix eop(14, 2, eop_data);
+        Matrix eop(2, 10, eop_data);
 
-        // Test 1: Interpolación lineal en punto medio (59000.5)
+
+        const double TOL = 1e-3;
+
+        // =======================
+        // Test 1: Interpolación
+        // =======================
         std::cout << "\n=== Test 1: Interpolación lineal (Mjd_UTC = 59000.5) ===\n";
-        std::string ss = "l";
+
+        std::string ss = "l";  // Interpolación lineal
+        double frac = 0.5;
         IERSResult res1 = IERS(eop, 59000.5, ss);
 
-        // Valores esperados CALCULADOS CORRECTAMENTE
-        double frac = 0.5; // Fracción de día (0.5 para medio día)
+        // Valores esperados
+        double expected_x_pole   = (0.1 + (0.2 - 0.1) * frac) / Arcs;
+        double expected_y_pole   = (0.2 + (0.3 - 0.2) * frac) / Arcs;
+        double expected_UT1_UTC  = 0.3 + (0.4 - 0.3) * frac;
+        double expected_LOD      = 0.4 + (0.5 - 0.4) * frac;
+        double expected_dpsi     = (0.5 + (0.6 - 0.5) * frac) / Arcs;
+        double expected_deps     = (0.6 + (0.7 - 0.6) * frac) / Arcs;
+        double expected_dx_pole  = (0.7 + (0.8 - 0.7) * frac) / Arcs;
+        double expected_dy_pole  = (0.8 + (0.9 - 0.8) * frac) / Arcs;
+        double expected_TAI_UTC  = 37.0;
 
-        // Cálculo de valores esperados
-        double expected_x_pole = (0.1 + (0.2 - 0.1) * frac) / Arcs;
-        double expected_y_pole = (0.2 + (0.3 - 0.2) * frac) / Arcs;
-        double expected_UT1_UTC = 0.3 + (0.4 - 0.3) * frac;
-        double expected_LOD = 0.4 + (0.5 - 0.4) * frac;
-        double expected_dpsi = (0.5 + (0.6 - 0.5) * frac) / Arcs;
-        double expected_deps = (0.6 + (0.7 - 0.6) * frac) / Arcs;
-        double expected_dx_pole = (0.7 + (0.8 - 0.7) * frac) / Arcs;
-        double expected_dy_pole = (0.8 + (0.9 - 0.8) * frac) / Arcs;
-        double expected_TAI_UTC = 37.0; // No se interpola
-
-        // Mostrar resultados
         std::cout << "Resultados obtenidos vs esperados:\n";
-        std::cout << "x_pole:   " << res1.x_pole << " | " << expected_x_pole << "\n";
-        std::cout << "y_pole:   " << res1.y_pole << " | " << expected_y_pole << "\n";
-        std::cout << "UT1_UTC:  " << res1.UT1_UTC << " | " << expected_UT1_UTC << "\n";
-        std::cout << "LOD:      " << res1.LOD << " | " << expected_LOD << "\n";
-        std::cout << "dpsi:     " << res1.dpsi << " | " << expected_dpsi << "\n";
-        std::cout << "deps:     " << res1.deps << " | " << expected_deps << "\n";
-        std::cout << "dx_pole:  " << res1.dx_pole << " | " << expected_dx_pole << "\n";
-        std::cout << "dy_pole:  " << res1.dy_pole << " | " << expected_dy_pole << "\n";
-        std::cout << "TAI_UTC:  " << res1.TAI_UTC << " | " << expected_TAI_UTC << "\n";
+        std::cout << "x_pole:   " << res1.x_pole   << " | " << expected_x_pole   << "\n";
+        std::cout << "y_pole:   " << res1.y_pole   << " | " << expected_y_pole   << "\n";
+        std::cout << "UT1_UTC:  " << res1.UT1_UTC  << " | " << expected_UT1_UTC  << "\n";
+        std::cout << "LOD:      " << res1.LOD      << " | " << expected_LOD      << "\n";
+        std::cout << "dpsi:     " << res1.dpsi     << " | " << expected_dpsi     << "\n";
+        std::cout << "deps:     " << res1.deps     << " | " << expected_deps     << "\n";
+        std::cout << "dx_pole:  " << res1.dx_pole  << " | " << expected_dx_pole  << "\n";
+        std::cout << "dy_pole:  " << res1.dy_pole  << " | " << expected_dy_pole  << "\n";
+        std::cout << "TAI_UTC:  " << res1.TAI_UTC  << " | " << expected_TAI_UTC  << "\n";
 
-        // Verificaciones con tolerancia
-        const double TOL = 1e-3;
-        _assert(fabs(res1.x_pole - expected_x_pole) < TOL);
-        _assert(fabs(res1.y_pole - expected_y_pole) < TOL);
-        _assert(fabs(res1.UT1_UTC - expected_UT1_UTC) < TOL);
-        _assert(fabs(res1.LOD - expected_LOD) < TOL);
-        _assert(fabs(res1.dpsi - expected_dpsi) < TOL);
-        _assert(fabs(res1.deps - expected_deps) < TOL);
-        _assert(fabs(res1.dx_pole - expected_dx_pole) < TOL);
-        _assert(fabs(res1.dy_pole - expected_dy_pole) < TOL);
-        _assert(fabs(res1.TAI_UTC - expected_TAI_UTC) < TOL);
+        // Verificaciones
+        _assert(fabs(res1.x_pole   - expected_x_pole)   < TOL);
+        _assert(fabs(res1.y_pole   - expected_y_pole)   < TOL);
+        _assert(fabs(res1.UT1_UTC  - expected_UT1_UTC)  < TOL);
+        _assert(fabs(res1.LOD      - expected_LOD)      < TOL);
+        _assert(fabs(res1.dpsi     - expected_dpsi)     < TOL);
+        _assert(fabs(res1.deps     - expected_deps)     < TOL);
+        _assert(fabs(res1.dx_pole  - expected_dx_pole)  < TOL);
+        _assert(fabs(res1.dy_pole  - expected_dy_pole)  < TOL);
+        _assert(fabs(res1.TAI_UTC  - expected_TAI_UTC)  < TOL);
 
-        std::cout << "\nTest 1 pasado: Interpolación lineal correcta\n";
+        std::cout << "Test 1 pasado: Interpolación lineal correcta\n";
 
-        // Test 2: Sin interpolación (primer punto)
+        // =======================
+        // Test 2: Sin interpolar
+        // =======================
         std::cout << "\n=== Test 2: Sin interpolación (Mjd_UTC = 59000.0) ===\n";
+
         std::string s = "n";
         IERSResult res2 = IERS(eop, 59000.0, s);
 
-        // Verificaciones para caso sin interpolación
-        _assert(fabs(res2.x_pole - 0.1/Arcs) < TOL);
-        _assert(fabs(res2.y_pole - 0.2/Arcs) < TOL);
-        _assert(fabs(res2.UT1_UTC - 0.3) < TOL);
-        _assert(fabs(res2.TAI_UTC - 37.0) < TOL);
+        _assert(fabs(res2.x_pole   - (0.1 / Arcs)) < TOL);
+        _assert(fabs(res2.y_pole   - (0.2 / Arcs)) < TOL);
+        _assert(fabs(res2.UT1_UTC  - 0.3)          < TOL);
+        _assert(fabs(res2.TAI_UTC  - 37.0)         < TOL);
 
         std::cout << "Test 2 pasado: Valores sin interpolación correctos\n";
 
-        std::cout << "\nTodos los tests de IERS pasaron exitosamente!\n";
+        std::cout << "\n✅ Todos los tests de IERS pasaron exitosamente.\n";
         return 0;
-    } catch(const std::exception& e) {
-        std::cerr << "Error en test_IERS: " << e.what() << std::endl;
+
+    } catch (const std::exception& e) {
+        std::cerr << "❌ Error en test_IERS: " << e.what() << std::endl;
         return 1;
     }
 }
+
 
 int JPL_Eph_DE430_Test_01() {
     try {
@@ -1875,7 +1870,44 @@ int VarEqn_Test_02() {
     }
 }
 
+int test_anglesdr_basico() {
+    // Azimuths y Elevations (en radianes)
+    double az1 = 0.1, az2 = 0.2, az3 = 0.3;
+    double el1 = 0.5, el2 = 0.6, el3 = 0.4;
 
+    // Modified Julian Dates (ejemplo ficticio)
+    double Mjd1 = 58000.0;
+    double Mjd2 = 58000.01;
+    double Mjd3 = 58000.02;
+
+    // Posiciones ficticias de las estaciones (en metros, 3x1)
+    Matrix rsite1(3,1); rsite1(1,1) = 1000; rsite1(2,1) = 2000; rsite1(3,1) = 3000;
+    Matrix rsite2(3,1); rsite2(1,1) = 1100; rsite2(2,1) = 2100; rsite2(3,1) = 3100;
+    Matrix rsite3(3,1); rsite3(1,1) = 1200; rsite3(2,1) = 2200; rsite3(3,1) = 3200;
+
+    // eopdata ficticio: crea una matriz vacía o mock si no es relevante para este test
+    Matrix eopdata(1,1); // Rellénala adecuadamente si es necesario
+
+    AnglesDRResult result = anglesdr(az1, az2, az3,
+                                     el1, el2, el3,
+                                     Mjd1, Mjd2, Mjd3,
+                                     rsite1, rsite2, rsite3,
+                                     eopdata);
+
+    // Verifica que el resultado tenga dimensiones correctas
+    _assert(result.r2.getFilas() == 3 && result.r2.getColumnas() == 1);
+    _assert(result.v2.getFilas() == 3 && result.v2.getColumnas() == 1);
+
+    // Verifica que no haya valores NaN ni absurdos
+    for (int i = 1; i <= 3; ++i) {
+        _assert(!std::isnan(result.r2(i,1)));
+        _assert(!std::isnan(result.v2(i,1)));
+        _assert(std::abs(result.r2(i,1)) < 1e9); // valores razonables
+        _assert(std::abs(result.v2(i,1)) < 1e5); // valores razonables
+    }
+
+    std::cout << "Test anglesdr_basico PASADO.\n";
+}
 
 
 
@@ -1920,10 +1952,11 @@ int all_tests()
     //_verify(timediff_01);
     //_verify(Geodetic_01);
     //_verify(doubler_01);
-    //_verify(test_IERS);//FALLA
+    _verify(test_IERS);//FALLA
     //_verify(JPL_Eph_DE430_Test_01);//FALLA
     //_verify(AzElPa_Test_01);
-    //_verify(VarEqn_Test_01);
+    //_verify(VarEqn_Test_01);//FALLA
+    //_verify(test_anglesdr_basico);//FALLA
 
     return 0;
 }
