@@ -97,6 +97,25 @@ Matrix::Matrix(int fil, int col, double v[]) : fil(fil), col(col) {
     }
 }
 
+Matrix::Matrix(const std::initializer_list<double>& values, int cols) {
+    int size = values.size();
+    if (size % cols != 0) {
+        throw std::invalid_argument("Number of values must be divisible by columns");
+    }
+    fil = size / cols;
+    col = cols;
+    matrix = new double*[fil];
+    for (int i = 0; i < fil; i++) {
+        matrix[i] = new double[col];
+    }
+
+    auto it = values.begin();
+    for (int i = 0; i < fil; i++) {
+        for (int j = 0; j < col; j++) {
+            matrix[i][j] = *it++;
+        }
+    }
+}
 
 
 /**
@@ -670,5 +689,18 @@ Matrix Matrix::concatenate(const Matrix& other, int axis) const {
     }
     else {
         throw std::invalid_argument("El eje debe ser 0 (vertical) o 1 (horizontal)");
+    }
+}
+
+void Matrix::setColumn(int col, const Matrix& column) {
+    if (col < 1 || col > this->col) {
+        throw std::invalid_argument("Column index out of bounds");
+    }
+    if (column.getFilas() != fil || column.getColumnas() != 1) {
+        throw std::invalid_argument("Column vector must match matrix rows and be single column");
+    }
+
+    for (int i = 1; i <= fil; i++) {
+        (*this)(i, col) = column(i, 1);
     }
 }

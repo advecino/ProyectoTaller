@@ -40,6 +40,7 @@ public:
     Matrix(const Matrix& m);
 
     explicit Matrix(const std::vector<double>& values);
+    Matrix(const std::initializer_list<double>& values, int cols = 1);
 
 
     /**
@@ -51,6 +52,8 @@ public:
     Matrix(int fil, int col, double v[]);
 
     Matrix getColumn(int col) const;
+    void setColumn(int col, const Matrix& column);
+
 
     Matrix concatenate(const Matrix& other, int axis = 0) const;
 
@@ -92,17 +95,6 @@ public:
      * @return Referencia al valor en la posición (i, j).
      */
     double& operator()( int i,  int j) const;
-
-
-
-
-
-
-
-
-
-
-
 
 
     /**

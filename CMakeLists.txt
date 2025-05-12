@@ -89,4 +89,8 @@ add_executable(ProyectoTaller
         include/VarEqn.h
         include/anglesdr.cpp
         include/anglesdr.h
+        include/anglesg.cpp
+        include/anglesg.h
+        include/DEInteg.cpp
+        include/DEInteg.h
 )
