@@ -88,6 +88,9 @@ public:
     */
     Matrix operator* (const Matrix& matrix2) const;
     Matrix& operator/=(double scalar);
+
+
+
     /**
      * @brief Sobrecarga del operador de acceso a elementos de la matriz.
      * @param i Índice de la fila.

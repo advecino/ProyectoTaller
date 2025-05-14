@@ -244,6 +244,7 @@ double& Matrix::operator()(int i, int j) const {
 
 
 
+
 // Suma por escalar (modifica la matriz actual)
 Matrix& Matrix::operator+=(double scalar) {
     for (int i = 0; i < fil; i++) {

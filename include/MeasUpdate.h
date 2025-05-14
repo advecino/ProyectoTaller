@@ -8,16 +8,30 @@
 
 #include "Matrix.h"
 
+
+
 /**
- * @brief Actualización de medición del filtro de Kalman
- * @param x Vector de estado (se actualiza in-place)
- * @param z Vector de medición
- * @param g Función de predicción de medición
- * @param s Desviación estándar de las mediciones
- * @param G Matriz de diseño de medición
- * @param P Matriz de covarianza (se actualiza in-place)
- * @param n Dimensión del estado
- * @return K Ganancia de Kalman
+ * @brief Performs the Kalman measurement update.
+ *
+ * @param x     State vector (n×1), updated in place.
+ * @param P     State covariance matrix (n×n), updated in place.
+ * @param K     Kalman gain matrix (n×m), returned.
+ * @param z     Measurement vector (m×1).
+ * @param g     Predicted measurement vector (m×1).
+ * @param s     Measurement standard-deviation vector (m×1).
+ * @param G     Measurement sensitivity matrix (m×n).
+ * @param n     Dimension of the state.
  */
-void MeasUpdate(Matrix& x,  Matrix z,  Matrix g,  Matrix s,  Matrix G, Matrix& P, int n, Matrix& K);
+void MeasUpdate(
+        Matrix& x,
+        Matrix& P,
+        Matrix& K,
+        Matrix& z,
+        const Matrix& g,
+        const Matrix& s,
+        const Matrix& G,
+        int n
+);
+
+
 #endif //PROYECTOTALLER_MEASUPDATE_H

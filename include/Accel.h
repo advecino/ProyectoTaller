@@ -7,19 +7,14 @@
 
 #include "Matrix.h"
 
-#include "IERS.h"
-#include "TimeDiff.h"
-#include "Mjday_TDB.h"
-#include "JPL_Eph_DE430.h"
-#include "AccelHarmonic.h"
-#include "AccelPointMass.h"
-#include "PrecMatrix.h"
-#include "NutMatrix.h"
-#include "PoleMatrix.h"
-#include "GHAMatrix.h"
-#include "Sat_const.h"
 
-
-Matrix Accel(double x, const Matrix& Y, const Matrix& eopdata);
+/**
+ * @brief Calcula la aceleración total de un satélite en órbita terrestre.
+ *
+ * @param x  Tiempo desde epoch en segundos (offset para Mjd_UTC)
+ * @param Y  Vector de estado [r; v] en ICRF/EME2000 (6×1)
+ * @return   Derivada [v; a]  (6×1)
+ */
+Matrix Accel(double x, const Matrix& Y);
 
 #endif //PROYECTOTALLER_ACCEL_H

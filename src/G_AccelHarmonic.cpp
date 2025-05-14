@@ -23,44 +23,39 @@
 %
 %--------------------------------------------------------------------------*/
 
-Matrix G_AccelHarmonic(const Matrix& r, const Matrix& U, int n_max, int m_max) {
-    double d = 1.0;   // Position increment [m]
+Matrix G_AccelHarmonic(Matrix& r, Matrix& U, int n_max, int m_max) {
+    const double delta = 1.0;
 
-    Matrix G = Matrix(3,3);
-    Matrix dr = Matrix(3,1);
+    // Sanity checks
+    if (r.getFilas() != 3 || r.getColumnas() != 1)
+        throw std::invalid_argument("r must be 3×1");
+    if (U.getFilas() != 3 || U.getColumnas() != 3)
+        throw std::invalid_argument("U must be 3×3");
+    if (n_max < 0 || m_max < 0 || m_max > n_max)
+        throw std::invalid_argument("Invalid degree/order in G_AccelHarmonic");
 
-    // Gradient
-    for(int i = 1; i <= 3; i++) {  // Cambiado a índices basados en 1
-        // Set offset in i-th component of the position vector
-        dr(1,1) = 0.0;
-        dr(2,1) = 0.0;
-        dr(3,1) = 0.0;
-        dr(i,1) = d;
+    Matrix G(3, 3);
+    // for each coordinate direction i
+    for (int i = 1; i <= 3; ++i) {
+        // build offset vector dr = δ * e_i
+        Matrix dr(3,1);
+        dr(i,1) = delta;
 
-        // Acceleration difference
-        Matrix r_plus = dr * 0.5;
-        r_plus = r_plus + r;
-        Matrix r_minus = dr * 0.5;
-        r_minus = -1 * r_minus;
-        r_minus = r_minus + r;
+        // central points
+        Matrix r_plus  = r + dr * 0.5;
+        Matrix r_minus = r - dr * 0.5;
 
-        r_plus.print();
-        r_minus.print();
-        U.print();
-        std::cout<<n_max<<std::endl;
-        std::cout<<m_max<<std::endl;
+        // compute accelerations
+        Matrix a_plus  = AccelHarmonic(r_plus,  U, n_max, m_max);
+        Matrix a_minus = AccelHarmonic(r_minus, U, n_max, m_max);
 
-        Matrix m1 = AccelHarmonic(r_plus, U, n_max, m_max);
-        m1.print();
-        Matrix m2 = AccelHarmonic(r_minus, U, n_max, m_max);
-
-        Matrix da = m1-m2;
-
-        // Derivative with respect to i-th axis
-        G(1,i) = da(1,1)/d;
-        G(2,i) = da(2,1)/d;
-        G(3,i) = da(3,1)/d;
+        // finite‐difference derivative for column i
+        Matrix da = a_plus - a_minus;
+        for (int k = 1; k <= 3; ++k) {
+            G(k, i) = da(k,1) / delta;
+        }
     }
+
     return G;
 }
 

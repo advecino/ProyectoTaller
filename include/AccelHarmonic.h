@@ -7,6 +7,6 @@
 
 #include "Matrix.h"
 
-Matrix AccelHarmonic(Matrix r, Matrix E, int n_max, int m_max);
+Matrix AccelHarmonic(Matrix& r, Matrix& E, int n_max, int m_max);
 
 #endif //PROYECTOTALLER_ACCELHARMONIC_H

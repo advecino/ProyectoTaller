@@ -6,28 +6,28 @@
 #define PROYECTOTALLER_DEINTEG_H
 
 
-#include "Matrix.h"
-#include "Sat_const.h"
 #include <vector>
 #include <functional>
+#include "Matrix.h"
 
-enum DEState {
-    DE_INIT    = 1,
-    DE_DONE    = 2,
-    DE_BADACC  = 3,
-    DE_NUMSTEPS= 4,
-    DE_STIFF   = 5,
-    DE_INVPARAM= 6
-};
-
+/**
+ * @brief Integrador de paso variable estilo Dormand–Prince (Ode45).
+ *
+ * @param func    Función que calcula dy/dt = f(t, y). Firma: f(t, y_in, y_dot_out).
+ * @param t0      Tiempo inicial [s].
+ * @param tout    Vector de tiempos de salida (monótonamente creciente).
+ * @param relerr  Tolerancia relativa.
+ * @param abserr  Tolerancia absoluta.
+ * @param y0      Condición inicial (n_eqn×1).
+ * @return        Solución en cada tout: matriz de tamaño (n_eqn × tout.size()).
+ */
 Matrix DEInteg(
-        void (*func)(double t, const Matrix& y, Matrix& dydt),
-        double t,
-        double tout,
+        const std::function<void(double, const Matrix&, Matrix&)>& func,
+        double t0,
+        const std::vector<double>& tout,
         double relerr,
         double abserr,
-        int n_eqn,
-        const Matrix& y
+        const Matrix& y0
 );
 
 #endif //PROYECTOTALLER_DEINTEG_H

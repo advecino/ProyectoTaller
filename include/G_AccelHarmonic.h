@@ -17,7 +17,7 @@
  * @param m_max Gravity model order
  * @return Matrix Gradient (G=da/dr) in the true-of-date system [1/s²]
  */
-Matrix G_AccelHarmonic(const Matrix& r, const Matrix& U, int n_max, int m_max);
+Matrix G_AccelHarmonic(Matrix& r, Matrix& U, int n_max, int m_max);
 
 
 #endif //PROYECTOTALLER_G_ACCELHARMONIC_H

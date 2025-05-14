@@ -27,67 +27,75 @@
 %--------------------------------------------------------------------------*/
 
 
-Matrix AccelHarmonic(Matrix r, Matrix E, int n_max, int m_max) {
-    const double r_ref = 6378.1363e3;   // Earth's radius [m]
-    const double gm    = 398600.4415e9; // Standard gravitational parameter [m^3/s^2]
+Matrix AccelHarmonic(
+        Matrix& r,
+        Matrix& E,
+        int n_max,
+        int m_max
+) {
+    // Physical constants
+    const double r_ref = 6378.1363e3;   // [m]
+    const double gm    = 398600.4415e9; // [m^3/s^2]
 
-    if (r.getFilas() != 3 || r.getColumnas() != 1)
-        throw std::runtime_error("El vector 'r' debe ser 3x1");
-    if (E.getFilas() != 3 || E.getColumnas() != 3)
-        throw std::runtime_error("La matriz 'E' debe ser 3x3");
-    if (n_max < 0 || m_max < 0 || m_max > n_max)
-        throw std::runtime_error("Valores de n_max/m_max inválidos");
+    // Sanity checks
+    if (r.getFilas()!=3 || r.getColumnas()!=1)
+        throw std::invalid_argument("r must be 3×1");
+    if (E.getFilas()!=3 || E.getColumnas()!=3)
+        throw std::invalid_argument("E must be 3×3");
+    if (n_max<0 || m_max<0 || m_max>n_max)
+        throw std::invalid_argument("Invalid n_max/m_max");
 
-    // Transform to body-fixed frame
+    // Body‐fixed position
     Matrix r_bf = E * r;
-    double d   = r_bf.norm();
-    double lat = std::asin(r_bf(3,1) / d);
-    double lon = std::atan2(r_bf(2,1), r_bf(1,1));
 
-    // Prepare matrices pnm and dpnm with correct dimensions
-    Matrix pnm(n_max+2, m_max+2);
-    Matrix dpnm(n_max+2, m_max+2);
-    Legendre(n_max, m_max, lat, pnm, dpnm);
-    std::cout<<"hola"<<std::endl;
-    pnm.print();
-    dpnm.print();
+    // Compute geocentric latitude and longitude
+    double x = r_bf(1,1), y = r_bf(2,1), zc = r_bf(3,1);
+    double d  = r_bf.norm();                       // distance
+    double latgc = std::asin(zc/d);
+    double lon   = std::atan2(y, x);
 
-    // Compute partial derivatives of potential
+    // Compute associated Legendre functions and their derivatives
+    Matrix pnm(0,0), dpnm(0,0);
+    Legendre(n_max, m_max, latgc, pnm, dpnm);
+
+    // Accumulate potential derivatives
     double dUdr = 0.0, dUdlat = 0.0, dUdlon = 0.0;
     for (int n = 0; n <= n_max; ++n) {
-        double r_ratio_n = std::pow(r_ref / d, n);
-        double b1 = -gm * (n+1) * r_ratio_n / (d * d);
-        double b2 =  gm * r_ratio_n / d;
+        double factor = std::pow(r_ref/d, n);
+        double b1 = -gm/(d*d) * factor * (n+1);
+        double b2 =  gm/d       * factor;
+        double b3 =  b2;
+        double q1 = 0.0, q2 = 0.0, q3 = 0.0;
         for (int m = 0; m <= m_max; ++m) {
             double C = Cnm[n+1][m+1];
             double S = Snm[n+1][m+1];
-            double cosml = std::cos(m * lon);
-            double sinml = std::sin(m * lon);
-            double P = pnm(n+1, m+1);
-            double dP = dpnm(n+1, m+1);
-            dUdr   += P  * (C * cosml + S * sinml) * b1;
-            dUdlat += dP * (C * cosml + S * sinml) * b2;
-            dUdlon += m  * P  * (S * cosml - C * sinml) * b2;
+            double P = pnm(n+1,m+1);
+            double dP= dpnm(n+1,m+1);
+            double cosml = std::cos(m*lon);
+            double sinml = std::sin(m*lon);
+            q1 += P * (C*cosml + S*sinml);
+            q2 += dP* (C*cosml + S*sinml);
+            q3 += m * P * (S*cosml - C*sinml);
         }
+        dUdr     += q1 * b1;
+        dUdlat   += q2 * b2;
+        dUdlon   += q3 * b3;
     }
 
-    // Body-fixed acceleration
-    double x = r_bf(1,1), y = r_bf(2,1), z = r_bf(3,1);
+    // Body‐fixed acceleration components
     double r2xy = x*x + y*y;
+    double common = (1.0/d)*dUdr - (zc/(d*d*std::sqrt(r2xy)))*dUdlat;
+    double ax_bf = common * x - (1.0/r2xy*dUdlon) * y;
+    double ay_bf = common * y + (1.0/r2xy*dUdlon) * x;
+    double az_bf = (1.0/d)*dUdr * zc + (std::sqrt(r2xy)/(d*d)) * dUdlat;
 
-    double ax = ((dUdr / d) - (z * dUdlat) / (d*d * std::sqrt(r2xy))) * x
-                - (dUdlon / r2xy) * y;
-    double ay = ((dUdr / d) - (z * dUdlat) / (d*d * std::sqrt(r2xy))) * y
-                + (dUdlon / r2xy) * x;
-    double az = (dUdr / d) * z
-                + (std::sqrt(r2xy) / (d*d)) * dUdlat;
-
+    // Assemble body‐fixed acceleration vector
     Matrix a_bf(3,1);
-    a_bf(1,1) = ax;
-    a_bf(2,1) = ay;
-    a_bf(3,1) = az;
+    a_bf(1,1)=ax_bf;
+    a_bf(2,1)=ay_bf;
+    a_bf(3,1)=az_bf;
 
-    // Convert back to inertial frame
+    // Transform back to inertial frame: a = E' * a_bf
     return E.transpuesta() * a_bf;
 }
 

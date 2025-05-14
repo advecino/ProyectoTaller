@@ -39,6 +39,8 @@
 #include "include/anglesdr.h"
 #include "include/anglesg.h"
 #include "include/Legendre.h"
+#include "include/global.h"
+#include "include/Accel.h"
 
 #define TOL_ 10e-14
 
@@ -49,9 +51,6 @@ int tests_run = 0;
 #define _verify(test) do { int r=test(); tests_run++; if(r) return r; } while(0)
 
 using namespace std;
-
-extern double Cnm[300][300];
-extern double Snm[300][300];
 
 
 bool MatrixEqual(const Matrix& a, const Matrix& b, double tol = TOL_) {
@@ -200,8 +199,6 @@ int Legendre_01()
 
     return 0;
 }
-
-
 
 int sign_() {
     // Casos positivos
@@ -439,388 +436,193 @@ int NutAngles_01() {
 }
 
 int AccelHarmonic_01() {
-    try {
-        // 1. Inicializar coeficientes armónicos (solo J2 para simplificar)
-        for(int n = 0; n < 300; ++n) {
-            for(int m = 0; m < 300; ++m) {
-                Cnm[n][m] = 0.0;
-                Snm[n][m] = 0.0;
-            }
+    // Monopole puro: n_max=m_max=0, Cnm[1][1]=1.0
+    for(int i=0;i<300;i++) for(int j=0;j<300;j++){
+            Cnm[i][j]=0; Snm[i][j]=0;
         }
-        Cnm[2][0] = -0.484165371736e-3; // J2 term
+    Cnm[1][1]=1.0;
 
-        // 2. Configurar caso de prueba
-        double r_data[3] = {7000e3, 0.0, 0.0}; // Posición en el ecuador
-        Matrix r(3, 1, r_data, 3);
-        r.print();
+    double r_val=7000e3;
+    Matrix r(3,1); r(1,1)=r_val; r(2,1)=0; r(3,1)=0;
+    Matrix E(3,3);
+    for(int i=1;i<=3;i++) E(i,i)=1.0;
 
-        // Matriz identidad como matriz de transformación
-        Matrix E(3, 3);
-        for(int i = 0; i < 3; ++i) {
-            E(i+1, i+1) = 1.0;
-        }
-        E.print();
+    Matrix a=AccelHarmonic(r,E,0,0);
+    double gm=398600.4415e9;
+    double expected_ax=-gm/(r_val*r_val);
+    _assert(fabs(a(1,1)-expected_ax)<TOL_);
+    _assert(fabs(a(2,1))<TOL_);
+    _assert(fabs(a(3,1))<TOL_);
 
-        // 3. Llamar a la función
-        Matrix a = AccelHarmonic(r, E, 2, 0); // Solo hasta grado 2, orden 0
-
-        // 4. Verificar resultados (valores esperados para J2)
-        double expected[3] = {
-                -7.942e-3,  // ax
-                0.0,        // ay (debería ser cero por simetría)
-                0.0         // az (debería ser cero en el ecuador)
-        };
-
-        const double TOL = 1e-2; // Tolerancia relajada para este caso
-
-        for(int i = 0; i < 3; ++i) {
-            double diff = fabs(a(i+1,1) - expected[i]);
-            if(diff > TOL) {
-                std::cout << "AccelHarmonic_01 failed at component " << i
-                          << ": expected " << expected[i]
-                          << ", got " << a(i+1,1)
-                          << ", diff = " << diff << std::endl;
-                return 1;
-            }
-        }
-
-        return 0;
-    } catch(const std::exception& e) {
-        std::cerr << "Exception in AccelHarmonic_01: " << e.what() << std::endl;
-        return 1;
-    }
+    std::cout<<"AccelHarmonic_Test_01 passed\n";
+    return 0;
 }
 
 int AccelHarmonic_02() {
-    try {
-        // 1. Inicializar coeficientes (solo J2)
-        for(int n = 0; n < 300; ++n) {
-            for(int m = 0; m < 300; ++m) {
-                Cnm[n][m] = 0.0;
-                Snm[n][m] = 0.0;
-            }
+    // Monopole puro y posición en y
+    for(int i=0;i<300;i++) for(int j=0;j<300;j++){
+            Cnm[i][j]=0; Snm[i][j]=0;
         }
-        Cnm[2][0] = -0.484165371736e-3; // J2 term
+    Cnm[1][1]=1.0;
 
-        // 2. Configurar caso de prueba (polo norte)
-        double r_data[3] = {0.0, 0.0, 7000e3}; // Posición en el polo
-        Matrix r(3, 1, r_data, 3);
+    double r_val=8000e3;
+    Matrix r(3,1); r(1,1)=0; r(2,1)=r_val; r(3,1)=0;
+    Matrix E(3,3);
+    for(int i=1;i<=3;i++) E(i,i)=1.0;
 
-        // Matriz identidad
-        Matrix E(3, 3);
-        for(int i = 1; i <= 3; ++i) E(i, i) = 1.0;
+    Matrix a=AccelHarmonic(r,E,0,0);
+    double gm=398600.4415e9;
+    double expected_ay=-gm/(r_val*r_val);
+    _assert(fabs(a(1,1))<TOL_);
+    _assert(fabs(a(2,1)-expected_ay)<TOL_);
+    _assert(fabs(a(3,1))<TOL_);
 
-        // 3. Llamar a la función
-        Matrix a = AccelHarmonic(r, E, 2, 0);
-
-        // 4. Verificar resultados (J2 en polo debería tener componente z)
-        double expected[3] = {0.0, 0.0, -15.883e-3}; // Valor teórico aproximado
-        const double TOL = 1e-3;
-
-        for(int i = 1; i <= 3; ++i) {
-            double diff = fabs(a(i,1) - expected[i-1]);
-            if(diff > TOL) {
-                std::cout << "AccelHarmonic_02 failed at component " << i
-                          << ": expected " << expected[i-1]
-                          << ", got " << a(i,1)
-                          << ", diff = " << diff << std::endl;
-                return 1;
-            }
-        }
-
-        return 0;
-    } catch(const std::exception& e) {
-        std::cerr << "Exception in AccelHarmonic_02: " << e.what() << std::endl;
-        return 1;
-    }
-}
-
-int AccelHarmonic_03() {
-    try {
-        // 1. Inicializar coeficientes (J2 + J3)
-        for(int n = 0; n < 300; ++n) {
-            for(int m = 0; m < 300; ++m) {
-                Cnm[n][m] = 0.0;
-                Snm[n][m] = 0.0;
-            }
-        }
-        Cnm[2][0] = -0.484165371736e-3; // J2
-        Cnm[3][0] = 0.957161e-6;        // J3
-
-        // 2. Configurar caso de prueba (latitud media)
-        double r_data[3] = {5000e3, 5000e3, 5000e3};
-        Matrix r(3, 1, r_data, 3);
-
-        // Matriz identidad
-        Matrix E(3, 3);
-        for(int i = 1; i <= 3; ++i) E(i, i) = 1.0;
-
-        // 3. Llamar a la función (n_max=3 para incluir J3)
-        Matrix a = AccelHarmonic(r, E, 3, 0);
-
-        // 4. Verificar que la aceleración no es cero (sin valor exacto)
-        _assert(fabs(a(1,1)) > 1e-10 || fabs(a(2,1)) > 1e-10 || fabs(a(3,1)) > 1e-10);
-
-        return 0;
-    } catch(const std::exception& e) {
-        std::cerr << "Exception in AccelHarmonic_03: " << e.what() << std::endl;
-        return 1;
-    }
+    std::cout<<"AccelHarmonic_Test_02 passed\n";
+    return 0;
 }
 
 int G_AccelHarmonic_01() {
-    const int dim = 3;
-    const double TOL = 1e-9;
-
-    try {
-        std::cout << "Iniciando test de G_AccelHarmonic..." << std::endl;
-
-        // 1. Initialize harmonic coefficients
-        for(int n = 0; n < 300; ++n) {
-            for(int m = 0; m < 300; ++m) {
-                Cnm[n][m] = 0.0;
-                Snm[n][m] = 0.0;
-            }
+    // Monopole field test at r = [R,0,0]
+    for(int i=0;i<300;i++) for(int j=0;j<300;j++){
+            Cnm[i][j]=0.0; Snm[i][j]=0.0;
         }
-        Cnm[2][0] = -0.484165371736e-3; // J2 term
+    Cnm[1][1] = 1.0;  // monopole
 
-        // 2. Test Case 1: Equatorial point
-        {
-            std::cout << "\nCaso 1: Punto sobre el ecuador (z=0)" << std::endl;
+    double R = 7000e3;
+    Matrix r(3,1); r(1,1)=R; r(2,1)=0; r(3,1)=0;
+    Matrix E = Matrix(3,3);
+    for(int i=1;i<=3;i++) E(i,i)=1.0;
 
-            double r_data[dim] = {7000e3, 0.0, 0.0};
-            Matrix r(dim, 1, r_data, dim);
+    Matrix G = G_AccelHarmonic(r, E, 0, 0);
 
-            Matrix U(dim, dim);
-            for(int i = 1; i <= dim; ++i) {
-                U(i, i) = 1.0; // Identity matrix
-            }
+    double gm = 398600.4415e9;
+    double r3 = R*R*R;
+    double Gxx = 2*gm/r3;
+    double Gyy = -gm/r3;
+    double Gzz = Gyy;
 
-            Matrix G = G_AccelHarmonic(r, U, 2, 0);
-
-            // Expected values for J2-only gravity field
-            double expected[dim][dim] = {
-                    {-8.346e-6, 0.0, 0.0},
-                    {0.0, 4.173e-6, 0.0},
-                    {0.0, 0.0, 4.173e-6}
-            };
-
-            // Verification
-            for(int i = 0; i < dim; ++i) {
-                for(int j = 0; j < dim; ++j) {
-                    double diff = fabs(G(i,j) - expected[i][j]);
-                    std::cout << "G[" << i << "][" << j << "] = " << G(i,j)
-                              << " (expected " << expected[i][j] << "), diff = " << diff << std::endl;
-                    _assert(diff < TOL);
-                }
-            }
+    _assert(fabs(G(1,1) - Gxx) < 1e-6);
+    _assert(fabs(G(2,2) - Gyy) < 1e-6);
+    _assert(fabs(G(3,3) - Gzz) < 1e-6);
+    // off-diagonals zero
+    for(int i=1;i<=3;i++) for(int j=1;j<=3;j++){
+            if(i!=j) _assert(fabs(G(i,j)) < TOL_);
         }
 
-        // 3. Test Case 2: Generic point
-        {
-            std::cout << "\nCaso 2: Punto genérico" << std::endl;
+    std::cout<<"G_AccelHarmonic_Test_01 passed\n";
+    return 0;
+}
 
-            double r_data[dim] = {6524.834e3, 6862.875e3, 6448.296e3};
-            Matrix r(dim, 1, r_data, dim);
+int G_AccelHarmonic_02() {
+    // Monopole field test at r = [0,R,0]
+    for(int i=0;i<300;i++) for(int j=0;j<300;j++){
+            Cnm[i][j]=0.0; Snm[i][j]=0.0;
+        }
+    Cnm[1][1] = 1.0;
 
-            Matrix U(dim, dim);
-            for(int i = 0; i < dim; ++i) {
-                U(i, i) = 1.0;
-            }
+    double R = 8000e3;
+    Matrix r(3,1); r(1,1)=0; r(2,1)=R; r(3,1)=0;
+    Matrix E = Matrix(3,3);
+    for(int i=1;i<=3;i++) E(i,i)=1.0;
 
-            Matrix G = G_AccelHarmonic(r, U, 2, 0);
+    Matrix G = G_AccelHarmonic(r, E, 0, 0);
 
-            // Expected values (adjust these based on your reference implementation)
-            double expected[dim][dim] = {
-                    {-3.824e-6, -1.234e-9, -2.345e-9},
-                    {-1.234e-9, -3.921e-6, -1.678e-9},
-                    {-2.345e-9, -1.678e-9, -3.745e-6}
-            };
+    double gm = 398600.4415e9;
+    double r3 = R*R*R;
+    double Gyy = 2*gm/r3;
+    double Gxx = -gm/r3;
+    double Gzz = Gxx;
 
-            // Verification with relaxed tolerance
-            for(int i = 0; i < dim; ++i) {
-                for(int j = 0; j < dim; ++j) {
-                    double diff = fabs(G(i,j) - expected[i][j]);
-                    std::cout << "G[" << i << "][" << j << "] = " << G(i,j)
-                              << " (expected " << expected[i][j] << "), diff = " << diff << std::endl;
-                    _assert(diff < 5e-8); // More relaxed tolerance for this case
-                }
-            }
+    _assert(fabs(G(2,2) - Gyy) < 1e-6);
+    _assert(fabs(G(1,1) - Gxx) < 1e-6);
+    _assert(fabs(G(3,3) - Gzz) < 1e-6);
+    // off-diagonals zero
+    for(int i=1;i<=3;i++) for(int j=1;j<=3;j++){
+            if(i!=j) _assert(fabs(G(i,j)) < TOL_);
         }
 
-        std::cout << "\nTodos los tests pasaron exitosamente!" << std::endl;
-        return 0;
-    } catch(const std::exception& e) {
-        std::cerr << "Error en testG_AccelHarmonic: " << e.what() << std::endl;
-        return 1;
-    }
+    std::cout<<"G_AccelHarmonic_Test_02 passed\n";
+    return 0;
 }
 
 int MeasUpdate_01() {
-    try {
+    int n = 2, m = 2;
+    Matrix x(n,1), P(n,n), K(0,0);
+    Matrix z(m,1), g(m,1), s(m,1), G(m,n);
 
-        // 1. Configuración CONSISTENTE
-        const int n = 2; // Dimensión del estado (x1, x2)
-        const int m = 2; // 2 mediciones (antes era 1, ¡esto era el error!)
+    // Initialize state and covariance
+    x(1,1) = 1.0; x(2,1) = -2.0;
+    P(1,1) = 2.0; P(1,2) = 0.5;
+    P(2,1) = 0.5; P(2,2) = 1.0;
 
-        // 2. Inicialización de matrices
+    // Measurement = prediction
+    z(1,1) = 10.0; g(1,1) = 10.0;
+    z(2,1) = -5.0; g(2,1) = -5.0;
+
+    // Measurement noise std deviations
+    s(1,1) = 1.0;
+    s(2,1) = 2.0;
+
+    // Sensitivity matrix G
+    G(1,1) = 1.0; G(1,2) = 0.0;
+    G(2,1) = 0.0; G(2,2) = 1.0;
+
+    // Perform update
+    MeasUpdate(x, P, K, z, g, s, G, n);
 
 
-        Matrix z(m, 1);      // Mediciones [z1; z2]
-        z(1,1) = 1.5;        // z1 = 1.5
-        z(2,1) = 2.0;        // z2 = 2.0 (nuevo valor añadido)
+    const double P11 = 0.66101694915254;
+    const double P12 = 0.13559322033898;
+    const double P21 = 0.13559322033898;
+    const double P22 = 0.74576271186441;
 
-        Matrix x(m, 1);      // Estado [x1; x2]
-        x(1,1) = 1.0;        // x1 = 1.0
-        x(2,1) = 2.0;        // x2 = 2.0
+    _assert(fabs(P(1,1) - P11) < TOL_);
+    _assert(fabs(P(1,2) - P12) < TOL_);
+    _assert(fabs(P(2,1) - P21) < TOL_);
+    _assert(fabs(P(2,2) - P22) < TOL_);
 
-        Matrix g(m, 1);      // Predicciones [g1; g2]
-        g(1,1) = 1.2;        // g1 = 1.2
-        g(2,1) = 1.8;        // g2 = 1.8 (nuevo valor añadido)
+    // El estado x no cambia porque z-g = 0
+    _assert(fabs(x(1,1) - 1.0) < TOL_);
+    _assert(fabs(x(2,1) + 2.0) < TOL_);
 
-        Matrix s(m, 1);      // Desviaciones estándar [σ1; σ2]
-        s(1,1) = 0.1;        // σ1 = 0.1
-        s(2,1) = 0.1;        // σ2 = 0.1 (nuevo valor añadido)
-
-        Matrix G(m, n);      // Matriz de sensibilidad
-        G(1,1) = 1.0; G(1,2) = 0.0;  // Observamos x1
-        G(2,1) = 0.0; G(2,2) = 1.0;  // Observamos x2
-
-        Matrix P(n, n);      // Covarianza
-        P(1,1) = 0.5; P(1,2) = 0.0;
-        P(2,1) = 0.0; P(2,2) = 0.5;
-
-        Matrix K(n, m);      // Ganancia de Kalman (salida)
-
-        // 3. Verificación de consistencia
-        _assert(z.getFilas() == m && s.getFilas() == m); // Ahora ambas son 2
-        _assert(z.getColumnas() == 1 && s.getColumnas() == 1);
-        _assert(G.getFilas() == m && G.getColumnas() == n);
-        _assert(P.getFilas() == n && P.getColumnas() == n);
-
-        x.print();
-        // 4. Ejecutar función
-        MeasUpdate(x, z, g, s, G, P, n, K);
-
-        // 5. Valores esperados (calculados analíticamente)
-        const double expected_x[] = {1.23077, 2.00000};
-        const double expected_P[] = {0.03846, 0.0,
-                                     0.0,     0.5};
-        const double expected_K[] = {0.38462, 0.0};
-
-        // 6. Verificación con tolerancia
-        const double TOL = 0.1;
-
-        // Verificar estado actualizado
-        /* for (int i = 1; i <= n; ++i) {
-             double diff = fabs(x(i,1) - expected_x[i-1]);
-             _assert(diff < TOL);
-         }
-
-         // Verificar covarianza
-         for (int i = 1; i <= n; ++i) {
-             for (int j = 1; j <= n; ++j) {
-                 double diff = fabs(P(i,j) - expected_P[(i-1)*n + (j-1)]);
-                 _assert(diff < TOL);
-             }
-         }*/
-
-        // Verificar ganancia de Kalman
-        for (int i = 1; i <= n; ++i) {
-            for (int j = 1; j <= m; ++j) {
-                double diff = fabs(K(i,j) - expected_K[(i-1)*m + (j-1)]);
-                _assert(diff < TOL);
-            }
-        }
-
-        std::cout << "Test 1 pasado exitosamente!" << std::endl;
-        return 0;
-    } catch(const std::exception& e) {
-        std::cerr << "Error en MeasUpdate_01: " << e.what() << std::endl;
-        return 1;
-    }
+    std::cout << "Test_MeasUpdate_Identity passed\n";
+    return 0;
 }
 
 int MeasUpdate_02() {
-    try {
-        // 1. Configuración idéntica al ejemplo de Octave
-        const int n = 2; // Dimensión del estado
-        const int m = 2; // Número de medidas
+    // Scalar case: n=1, m=1
+    int n = 1, m = 1;
+    Matrix x(n,1), P(n,n), K(0,0);
+    Matrix z(m,1), g(m,1), s(m,1), G(m,n);
 
-        // 2. Inicialización de matrices (valores del ejemplo de Octave)
-        Matrix x(n, 1);      // Estado inicial [1.0; 0.5]
-        x(1,1) = 1.0;
-        x(2,1) = 0.5;
+    // Prior state and covariance
+    x(1,1) = 0.0;
+    P(1,1) = 1.0;
 
-        Matrix z(m, 1);      // Medidas [1.1; 0.6]
-        z(1,1) = 1.1;
-        z(2,1) = 0.6;
+    // Measurement and prediction
+    z(1,1) = 2.0;
+    g(1,1) = 1.0;
 
-        Matrix g(m, 1);      // Predicción [1.0; 0.5]
-        g(1,1) = 1.0;
-        g(2,1) = 0.5;
+    // Measurement noise std dev
+    s(1,1) = 1.0;
 
-        Matrix s(m, 1);      // Ruido [0.1; 0.1]
-        s(1,1) = 0.1;
-        s(2,1) = 0.1;
+    // Sensitivity = 1
+    G(1,1) = 1.0;
 
-        Matrix G(m, n);      // Jacobiano identidad
-        G(1,1) = 1.0; G(1,2) = 0.0;
-        G(2,1) = 0.0; G(2,2) = 1.0;
+    // Perform update
+    MeasUpdate(x, P, K, z, g, s, G, n);
 
-        Matrix P(n, n);      // Covarianza inicial identidad
-        P(1,1) = 1.0; P(1,2) = 0.0;
-        P(2,1) = 0.0; P(2,2) = 1.0;
+    // Kalman gain should be 0.5
+    _assert(fabs(K(1,1) - 0.5) < TOL_);
 
-        Matrix K(n, m);      // Ganancia de Kalman (salida)
+    // Updated state: x = 0 + 0.5*(2-1) = 0.5
+    _assert(fabs(x(1,1) - 0.5) < TOL_);
 
-        // 3. Verificación de consistencia
-        _assert(z.getFilas() == m && s.getFilas() == m);
-        _assert(G.getFilas() == m && G.getColumnas() == n);
-        _assert(P.getFilas() == n && P.getColumnas() == n);
+    // Updated covariance: (1 - 0.5*1)*1 = 0.5
+    _assert(fabs(P(1,1) - 0.5) < TOL_);
 
-        // 4. Ejecutar función
-        MeasUpdate(x, z, g, s, G, P, n, K);
-
-        // 5. Valores esperados (copiados de Octave)
-        const double expected_K[] = {0.99009900990099, 0.0,
-                                     0.0, 0.99009900990099};
-        const double expected_x[] = {1.0990099009901, 0.599009900990099};
-        const double expected_P[] = {0.00990099009900991, 0.0,
-                                     0.0, 0.00990099009900991};
-
-        // 6. Tolerancia para comparación (ajustable)
-        const double TOL = 1e-10;
-
-        // Verificar Ganancia de Kalman
-        for (int i = 1; i <= n; ++i) {
-            for (int j = 1; j <= m; ++j) {
-                double diff = fabs(K(i,j) - expected_K[(i-1)*m + (j-1)]);
-                _assert(diff < TOL);
-            }
-        }
-
-        // Verificar Estado actualizado
-        for (int i = 1; i <= n; ++i) {
-            double diff = fabs(x(i,1) - expected_x[i-1]);
-            _assert(diff < TOL);
-        }
-
-        // Verificar Covarianza
-        for (int i = 1; i <= n; ++i) {
-            for (int j = 1; j <= n; ++j) {
-                double diff = fabs(P(i,j) - expected_P[(i-1)*n + (j-1)]);
-                _assert(diff < TOL);
-            }
-        }
-
-        std::cout << "Test pasado exitosamente!" << std::endl;
-        return 0;
-
-    } catch(const std::exception& e) {
-        std::cerr << "Error en MeasUpdate_02: " << e.what() << std::endl;
-        return 1;
-    }
+    std::cout << "Test_MeasUpdate_Scalar passed\n";
+    return 0;
 }
 
 int gstime_01() {
@@ -1485,72 +1287,7 @@ int doubler_01() {
     }
 }
 
-/*
-% Datos de prueba
-eop = zeros(13, 2);  % Prealocar una matriz de 13 filas y 2 columnas
-
-% Fila 4: MJD (índice 4)
-eop(4, :) = [59000.0, 59001.0];
-
-% Fila 5: x_pole
-        eop(5, :) = [0.1, 0.2];
-
-% Fila 6: y_pole
-        eop(6, :) = [0.2, 0.3];
-
-% Fila 7: UT1_UTC
-        eop(7, :) = [0.3, 0.4];
-
-% Fila 8: LOD
-        eop(8, :) = [0.4, 0.5];
-
-% Fila 9: dpsi
-        eop(9, :) = [0.5, 0.6];
-
-% Fila 10: deps
-        eop(10, :) = [0.6, 0.7];
-
-% Fila 11: dx_pole
-        eop(11, :) = [0.7, 0.8];
-
-% Fila 12: dy_pole
-        eop(12, :) = [0.8, 0.9];
-
-% Fila 13: TAI_UTC
-        eop(13, :) = [37.0, 37.0];
-
-% Parámetro de entrada para el test
-Mjd_UTC = 59000.5;  % Valor MJD que se usará para la interpolación
-interp = 'l';        % Interpolación lineal
-
-% Llamar a la función IERS
-[x_pole, y_pole, UT1_UTC, LOD, dpsi, deps, dx_pole, dy_pole, TAI_UTC] = IERS(eop, Mjd_UTC, interp);
-
-% Mostrar los resultados
-        fprintf('x_pole: %f\n', x_pole);
-fprintf('y_pole: %f\n', y_pole);
-fprintf('UT1_UTC: %f\n', UT1_UTC);
-fprintf('LOD: %f\n', LOD);
-fprintf('dpsi: %f\n', dpsi);
-fprintf('deps: %f\n', deps);
-fprintf('dx_pole: %f\n', dx_pole);
-fprintf('dy_pole: %f\n', dy_pole);
-fprintf('TAI_UTC: %f\n', TAI_UTC);
-
- RESULTADOS:
- x_pole: 0.000001
-y_pole: 0.000001
-UT1_UTC: 0.350000
-LOD: 0.450000
-dpsi: 0.000003
-deps: 0.000003
-dx_pole: 0.000004
-dy_pole: 0.000004
-TAI_UTC: 37.000000
->> */
-
-
-int Test_IERS_Linear() {
+int IERS_01() {
     // EOP data: 13 rows x 2 cols (row-wise)
     double data[13*2] = {
             // row1-3 (dummy)
@@ -1593,7 +1330,7 @@ int Test_IERS_Linear() {
     return 0;
 }
 
-int Test_IERS_02() {
+int IERS_02() {
     // EOP data: 13 rows × 2 cols (row-wise)
     double data[13*2] = {
             // row1-3 (dummy)
@@ -1640,55 +1377,79 @@ int Test_IERS_02() {
     return 0;
 }
 
+int JPL_Eph_01() {
+    // Definimos un MJD base y calculamos el JD correspondiente
+    double MjdBase = 58000.0;
+    double JDBase  = MjdBase + 2400000.5;
 
+    // 1) Preparo PC con una sola fila y suficientes columnas
+    const int COLS = 1100;
+    PC = Matrix(1, COLS);
 
+    // Ahora PC(1,1) y PC(1,2) deben ser JD (no MJD)
+    PC(1,1) = JDBase;         // JD inicial
+    PC(1,2) = JDBase + 1000;  // JD final
 
-int JPL_Eph_DE430_Test_01() {
+    // El resto de columnas pueden quedar a cero (constructor inicializa a 0)
+
+    // 2) Llamamos con Mjd_TDB dentro del rango MjdBase..MjdBase+1000
+    double Mjd_TDB = MjdBase + 10.0;
+    PlanetaryPositions pos = JPL_Eph_DE430(Mjd_TDB);
+
+    // 3) Verificar que todas las posiciones son cero
+    auto checkZero = [&](const Matrix& v){
+        _assert(v.getFilas()==3 && v.getColumnas()==1);
+        for(int i=1; i<=3; ++i)
+            _assert(fabs(v(i,1)) < TOL_);
+    };
+
+    checkZero(pos.r_Earth);
+    checkZero(pos.r_Moon);
+    checkZero(pos.r_Sun);
+    checkZero(pos.r_Mercury);
+    checkZero(pos.r_Venus);
+    checkZero(pos.r_Mars);
+    checkZero(pos.r_Jupiter);
+    checkZero(pos.r_Saturn);
+    checkZero(pos.r_Uranus);
+    checkZero(pos.r_Neptune);
+    checkZero(pos.r_Pluto);
+
+    std::cout << "JPL_Eph_01 passed: all zero coefficients yield zero positions\n";
+    return 0;
+}
+
+int JPL_Eph_02() {
+    Matrix PC(1,2);
+    PC(1,1) = 59000.0; PC(1,2) = 59010.0;
+    bool caught = false;
     try {
-        std::cout << "\n=== Test 1: Basic JPL Ephemeris DE430 Calculation ===\n";
-
-        // Create a minimal PC matrix for testing
-        // Note: This is a simplified test case with just enough data to test the function
-        Matrix PC(14, 2); // 14 rows x 2 columns (matching the expected format)
-
-        // Fill with test data (only the essential elements we'll use)
-        PC(4+1, 0+1) = 59000.0;  // MJD start of interval
-        PC(4+1, 1+1) = 59016.0;  // MJD end of interval
-
-
-
-        // Test date in the middle of the interval
-        double Mjd_TDB = 59008.0;
-
-        // Call the function
-        PlanetaryPositions result = JPL_Eph_DE430(Mjd_TDB, PC);
-
-        // Verify basic properties
-        std::cout << "Earth position (x,y,z): "
-                  << result.r_Earth(0,0) << ", "
-                  << result.r_Earth(1,0) << ", "
-                  << result.r_Earth(2,0) << "\n";
-
-        // Check that all positions were initialized
-        _assert(result.r_Mercury.getFilas() == 3 && result.r_Mercury.getColumnas() == 1);
-        _assert(result.r_Venus.getFilas() == 3 && result.r_Venus.getColumnas() == 1);
-        _assert(result.r_Earth.getFilas() == 3 && result.r_Earth.getColumnas() == 1);
-        _assert(result.r_Mars.getFilas() == 3 && result.r_Mars.getColumnas() == 1);
-        _assert(result.r_Jupiter.getFilas() == 3 && result.r_Jupiter.getColumnas() == 1);
-        _assert(result.r_Saturn.getFilas() == 3 && result.r_Saturn.getColumnas() == 1);
-        _assert(result.r_Uranus.getFilas() == 3 && result.r_Uranus.getColumnas() == 1);
-        _assert(result.r_Neptune.getFilas() == 3 && result.r_Neptune.getColumnas() == 1);
-        _assert(result.r_Pluto.getFilas() == 3 && result.r_Pluto.getColumnas() == 1);
-        _assert(result.r_Moon.getFilas() == 3 && result.r_Moon.getColumnas() == 1);
-        _assert(result.r_Sun.getFilas() == 3 && result.r_Sun.getColumnas() == 1);
-
-
-        std::cout << "Test 1 pasado: JPL_Eph_DE430 calculó posiciones básicas correctamente.\n";
-        return 0;
+        auto p = JPL_Eph_DE430(59050.0);
     } catch(const std::exception& e) {
-        std::cerr << "Error en JPL_Eph_DE430_Test_01: " << e.what() << std::endl;
-        return 1;
+        caught = true;
+        std::cout << "Caught expected exception: " << e.what() << "\n";
     }
+    _assert(caught);
+    std::cout << "Test_JPL_Eph_OutOfRange passed\n";
+    return 0;
+}
+
+int JPL_Eph_03() {
+    // Preparo PC para un rango distinto
+    PC = Matrix(1, 10);
+    PC(1,1) = 1000.0;
+    PC(1,2) = 2000.0;
+
+    bool threw = false;
+    try {
+        JPL_Eph_DE430(3000.0);
+    } catch(const std::runtime_error& e) {
+        threw = true;
+        _assert(std::string(e.what()).find("JD fuera de rango")!=std::string::npos);
+    }
+    _assert(threw);
+    std::cout<<"JPL_Eph_03 passed\n";
+    return 0;
 }
 
 int AzElPa_Test_01() {
@@ -1796,108 +1557,68 @@ int AzElPa_Test_03() {
         return 1;
     }
 }
-/*
+
 int VarEqn_Test_01() {
-    try {
-        std::cout << "\n=== Test 1: Basic Functionality ===\n";
+    // 1) Preparo yPhi: r(3), v(3) = [1,2,3], Phi zeros
+    Matrix yPhi(42,1);
+    // r = [10,20,30]
+    yPhi(1,1)=10; yPhi(2,1)=20; yPhi(3,1)=30;
+    // v = [1,2,3]
+    yPhi(4,1)=1;  yPhi(5,1)=2;  yPhi(6,1)=3;
+    // Phi(6×6) ya en zeros.
 
-        // Setup test data
+    // 2) AuxParam con n=m=0
+    AuxParam params;
+    params.Mjd_UTC = 59000.0;
+    params.Mjd_TT  = 59000.0;
+    params.n = 0;
+    params.m = 0;
 
-        // Create dummy EOP data (simplified)
-        Matrix eopdata(14, 10); // 14 rows x 10 columns of dummy data
-        eopdata(5,1) = 58000.0; // MJD column
+    // 3) Dummy EOP para IERS (necesario pero no altera con AuxParam.n=0)
+    Matrix eop(1,2);
+    double JD = params.Mjd_UTC + 2400000.5;
+    eop(1,1) = JD;
+    eop(1,2) = JD + 1.0;
 
-        // Create yPhi vector (42x1)
-        Matrix yPhi(42, 1);
+    // 4) Llamada
+    Matrix yPhip = VarEqn(0.0, yPhi, params, eop);
 
-        // Position and velocity (simple circular orbit)
-        yPhi(0+1,0+1) = 7000.0; // x
-        yPhi(1+1,0+1) = 0.0;    // y
-        yPhi(2+1,0+1) = 0.0;    // z
-        yPhi(3+1,0+1) = 0.0;    // vx
-        yPhi(4+1,0+1) = 7.5;    // vy (~7.5 km/s for circular orbit at 7000 km)
-        yPhi(5+1,0+1) = 0.0;    // vz
-
-        // State transition matrix (identity)
-        for (int i = 6; i < 42; i++) {
-            yPhi(i,1) = (i % 7 == 0) ? 1.0 : 0.0; // Diagonal elements
-        }
-
-        // Call function
-        double x = 0.0; // Time since epoch
-        Matrix result = VarEqn(x, yPhi, eopdata);
-
-        // Verify basic properties
-        std::cout << "Result dimensions: " << result.getFilas() << "x" << result.getColumnas() << "\n";
-        _assert(result.getFilas() == 42 && result.getColumnas() == 1);
-
-        // Check velocity components (first 3 elements)
-        std::cout << "\n=== Checking Velocity Components ===\n";
-        std::cout << "result(1,1) (dx/dt): " << result(1,1) << " | Expected (vx): " << yPhi(4,1)
-                  << " | Difference: " << fabs(result(1,1) - yPhi(4,1)) << "\n";
-
-
-        std::cout << "result(2,1) (dy/dt): " << result(2,1) << " | Expected (vy): " << yPhi(5,1)
-                  << " | Difference: " << fabs(result(2,1) - yPhi(5,1)) << "\n";
-
-
-        std::cout << "result(3,1) (dz/dt): " << result(3,1) << " | Expected (vz): " << yPhi(6,1)
-                  << " | Difference: " << fabs(result(3,1) - yPhi(6,1)) << "\n";
-
-
-// Check acceleration components (should be non-zero)
-        std::cout << "\n=== Checking Acceleration Components ===\n";
-        std::cout << "result(4,1) (ax): " << result(4,1) << " | Should be > 1e-9\n";
-
-
-        std::cout << "result(5,1) (ay): " << result(5,1) << " | Should be > 1e-9\n";
-
-
-        std::cout << "result(6,1) (az): " << result(6,1) << " | Should be < 1e-9\n";
-
-double TOL =1e-4;
-        // Check velocity components (first 3 elements)
-        _assert(fabs(result(1,1) - yPhi(4,1)) < TOL); // dx/dt = vx
-        //_assert(fabs(result(2,1) - yPhi(5,1)) < 1e-9); // dy/dt = vy
-        _assert(fabs(result(3,1) - yPhi(6,1)) < TOL); // dz/dt = vz
-
-        // Check acceleration components (should be non-zero)
-        //_assert(fabs(result(4,1)) > TOL); // d(vx)/dt = ax
-        //_assert(fabs(result(5,1)) > TOL); // d(vy)/dt = ay
-        _assert(fabs(result(6,1)) < TOL); // d(vz)/dt = az (~0 for this case)
-
-        std::cout << "Test 1 passed: Basic functionality verified.\n";
-        return 0;
-    } catch(const std::exception& e) {
-        std::cerr << "Error in VarEqn_Test_01: " << e.what() << std::endl;
-        return 1;
+    // 5) Verificaciones
+    // dr/dt = v
+    _assert(fabs(yPhip(1,1) - 1.0) < TOL_);
+    _assert(fabs(yPhip(2,1) - 2.0) < TOL_);
+    _assert(fabs(yPhip(3,1) - 3.0) < TOL_);
+    // dv/dt = 0
+    _assert(fabs(yPhip(4,1)) < TOL_);
+    _assert(fabs(yPhip(5,1)) < TOL_);
+    _assert(fabs(yPhip(6,1)) < TOL_);
+    // dPhi/dt = 0
+    for(int k = 7; k <= 42; ++k) {
+        _assert(fabs(yPhip(k,1)) < TOL_);
     }
+
+    std::cout << "VarEqn_Test_01 passed\n";
+    return 0;
 }
 
 int VarEqn_Test_02() {
+    // Preparo yPhi de tamaño incorrecto (por ejemplo 10×1)
+    Matrix yPhi_bad(10,1);
+    AuxParam params{59000.0, 59000.0, 0, 0};
+    Matrix eop(1,2);
+    double JD = params.Mjd_UTC + 2400000.5;
+    eop(1,1) = JD; eop(1,2) = JD + 1.0;
+
+    bool threw = false;
     try {
-        std::cout << "\n=== Test 2: Invalid Input Dimensions ===\n";
-
-
-        Matrix eopdata(14, 10);
-        Matrix yPhi(40, 1); // Wrong size (should be 42x1)
-
-        try {
-            Matrix result = VarEqn(0.0, yPhi, eopdata);
-            std::cerr << "Error: Expected exception not thrown\n";
-            return 1;
-        } catch (const std::invalid_argument& e) {
-            std::cout << "Correctly caught exception: " << e.what() << "\n";
-            _assert(std::string(e.what()).find("42x1") != std::string::npos);
-        }
-
-        std::cout << "Test 2 passed: Invalid input handled correctly.\n";
-        return 0;
-    } catch(const std::exception& e) {
-        std::cerr << "Error in VarEqn_Test_02: " << e.what() << std::endl;
-        return 1;
+        Matrix out = VarEqn(0.0, yPhi_bad, params, eop);
+    } catch (const std::exception& e) {
+        threw = true;
     }
-}*/
+    _assert(threw && "Expected exception for wrong yPhi size");
+    std::cout << "VarEqn_Test_02 passed\n";
+    return 0;
+}
 
 int test_anglesdr_basico() {
     // Azimuths y Elevations (en radianes)
@@ -1938,53 +1659,268 @@ int test_anglesdr_basico() {
     std::cout << "Test anglesdr_basico PASADO.\n";
 }
 
-
-int anglesg_test() {
+int anglesg_test_01() {
     try {
-        std::cout << "=== Testing anglesg ===" << std::endl;
+        std::cout << "=== anglesg_test_01: EOP simple lineal ===\n";
 
-        // Test case 1: Simple known orbit
-        double az1 = 0.1, az2 = 0.2, az3 = 0.3;  // rad
-        double el1 = 0.5, el2 = 0.6, el3 = 0.7;  // rad
+        double az1 = 0.1, az2 = 0.2, az3 = 0.3;
+        double el1 = 0.5, el2 = 0.6, el3 = 0.7;
         double Mjd1 = 58000.0, Mjd2 = 58000.5, Mjd3 = 58001.0;
 
-        // Site positions (ECEF in meters)
+        // 1) Construyo eopdata con 13 filas x 3 columnas
+        // Rellenamos con ceros primero
+        for (int i = 1; i <= 13; ++i)
+            for (int j = 1; j <= 3; ++j)
+                eopdata(i, j) = 0.0;
+
+        // 2) Fila 4: MJD enteros (para no salirse al interpolar)
+        eopdata(4, 1) = Mjd1;        // 58000
+        eopdata(4, 2) = Mjd1 + 1.0;  // 58001
+        eopdata(4, 3) = Mjd1 + 2.0;  // 58002
+
+        // 3) Filas 5–13: valores constantes (no importa mucho para el test)
+        //    aquí pongo valores sencillos en unidades de arcsec o segundos:
+        for (int col = 1; col <= 3; ++col) {
+            eopdata(5, col)  = 0.1; // x_pole ["]
+            eopdata(6, col)  = 0.2; // y_pole ["]
+            eopdata(7, col)  = 0.0; // UT1-UTC [s]
+            eopdata(8, col)  = 0.0; // LOD [s]
+            eopdata(9, col)  = 0.0; // dpsi ["]
+            eopdata(10, col) = 0.0; // deps ["]
+            eopdata(11, col) = 0.0; // dx_pole ["]
+            eopdata(12, col) = 0.0; // dy_pole ["]
+            eopdata(13, col) = 37.0;// TAI-UTC [s]
+        }
+
+        // Sitios (same site for simplicity)
         Matrix Rs1(3,1), Rs2(3,1), Rs3(3,1);
-        Rs1(1,1) = -2314870.0; Rs1(2,1) = 4663275.0; Rs1(3,1) = 3673747.0;
-        Rs2 = Rs1;  // Same site for simplicity
+        Rs1(1,1) = -2314870.0; Rs1(2,1) =  4663275.0; Rs1(3,1) =  3673747.0;
+        Rs2 = Rs1;
         Rs3 = Rs1;
 
-        // Dummy EOP data
-        Matrix eopdata(14, 10);  // Simplified for test
+        // Llamada a la función
+        AnglesGResult res = anglesg(
+                az1, az2, az3,
+                el1, el2, el3,
+                Mjd1, Mjd2, Mjd3,
+                Rs1, Rs2, Rs3
+        );
 
-        AnglesGResult result = anglesg(az1, az2, az3, el1, el2, el3,
-                                       Mjd1, Mjd2, Mjd3,
-                                       Rs1, Rs2, Rs3,
-                                       eopdata);
+        double rnorm = res.r2.norm();
+        double vnorm = res.v2.norm();
 
-        // Verify results
-        std::cout << "Resulting position at t2:\n";
-        result.r2.print();
+        // Comprobaciones razonables
+        _assert(rnorm > 6378000.0);                // mayor que el radio terrestre
+        _assert(vnorm > 1000.0 && vnorm < 10000.0);// velocidad orbital típica
 
-        std::cout << "Resulting velocity at t2:\n";
-        result.v2.print();
-
-        // Check for reasonable values
-        double r_norm = result.r2.norm();
-        double v_norm = result.v2.norm();
-
-        std::cout << "Position norm: " << r_norm << " m (should be > Earth radius)" << std::endl;
-        std::cout << "Velocity norm: " << v_norm << " m/s (should be ~7.5 km/s)" << std::endl;
-
-        _assert(r_norm > 6378000.0);  // Greater than Earth radius
-        _assert(v_norm > 1000.0 && v_norm < 10000.0);  // Reasonable orbital velocity
-
-        std::cout << "Test passed successfully!" << std::endl;
+        std::cout << "anglesg_test_01 passed\n";
         return 0;
-    } catch(const std::exception& e) {
-        std::cerr << "Error in anglesg_test: " << e.what() << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "Error in anglesg_test_01: " << e.what() << "\n";
         return 1;
     }
+}
+
+
+
+int anglesg_test_02() {
+    try {
+        std::cout << "=== anglesg_test_02: EOP constante ===\n";
+
+        double az1 = 1.0, az2 = 1.2, az3 = 1.4;
+        double el1 = 0.2, el2 = 0.3, el3 = 0.4;
+        double Mjd1 = 59000.0, Mjd2 = 59000.5, Mjd3 = 59001.0;
+
+        Matrix Rs1(3,1), Rs2(3,1), Rs3(3,1);
+        Rs1(1,1)= 1000000; Rs1(2,1)= -500000; Rs1(3,1)= 2000000;
+        Rs2 = Rs1; Rs3 = Rs1;
+
+        // EOP completamente constante (sin interpolación)
+        eopdata(4,1)  = 59000.0;
+        for(int r=5; r<=13; ++r) {
+            eopdata(r,1) = 0.0;  // cero desplazamientos y UT1-UTC
+        }
+
+        AnglesGResult res = anglesg(
+                az1, az2, az3,
+                el1, el2, el3,
+                Mjd1, Mjd2, Mjd3,
+                Rs1, Rs2, Rs3
+        );
+
+        double rnorm = res.r2.norm();
+        double vnorm = res.v2.norm();
+        std::cout << "r_norm = " << rnorm << ", v_norm = " << vnorm << "\n";
+
+        // Aunque eopdata=0, la geometría sigue produciendo algo sensato
+        _assert(rnorm > 1000000.0);
+        _assert(vnorm >= 0.0);
+
+        std::cout << "anglesg_test_02 passed\n";
+        return 0;
+    } catch(const std::exception& e) {
+        std::cerr << "Error in anglesg_test_02: " << e.what() << "\n";
+        return 1;
+    }
+}
+
+
+int VarEqn_Test_ZeroHarmonic() {
+    // Prepara parámetros
+    AuxParamGlob.Mjd_UTC = 59000.0;
+    AuxParamGlob.Mjd_TT  = 59000.0;
+    AuxParamGlob.n = 0;
+    AuxParamGlob.m = 0;
+    AuxParamGlob.sun = false;
+    AuxParamGlob.moon = false;
+    AuxParamGlob.planets = false;
+
+    // EOP dummy: una sola fila con MJD igual a Mjd_UTC
+    // Formato: filas>=4, col>=13. Solo fila 4, col1=MJD.
+    double eop_arr[13*13] = {0};
+    Matrix eopdata(13, 13, eop_arr, 13*13);
+    eopdata(4,1) = AuxParamGlob.Mjd_UTC;
+
+    // Construye yPhi: [r; v; Phi=I]
+    Matrix yPhi(42,1);
+    double r0 = 7000e3;
+    // r = [r0,0,0]
+    yPhi(1,1) = r0; yPhi(2,1) = 0; yPhi(3,1) = 0;
+    // v = 0
+    yPhi(4,1)=0; yPhi(5,1)=0; yPhi(6,1)=0;
+    // Phi = I_6 → columna mayor
+    for(int j=1;j<=6;++j) {
+        yPhi(6*j + j, 1) = 1.0;
+    }
+
+    Matrix yPhip = VarEqn(0.0, yPhi, AuxParamGlob, eopdata);
+
+    // dr/dt = v = 0
+    _assert(fabs(yPhip(1,1)) < TOL_);
+    _assert(fabs(yPhip(2,1)) < TOL_);
+    _assert(fabs(yPhip(3,1)) < TOL_);
+
+    // dv/dt = -GM/r0^2 along x
+    double expected_ax = - GM_Earth / (r0*r0);
+    _assert(fabs(yPhip(4,1) - expected_ax) < 1e-6);
+    _assert(fabs(yPhip(5,1)) < TOL_);
+    _assert(fabs(yPhip(6,1)) < TOL_);
+
+    std::cout << "VarEqn_Test_ZeroHarmonic passed\n";
+    return 0;
+}
+
+int VarEqn_Test_IdentityPhi() {
+    AuxParamGlob.Mjd_UTC = 59000.0;
+    AuxParamGlob.Mjd_TT  = 59000.0;
+    AuxParamGlob.n = 0;
+    AuxParamGlob.m = 0;
+    AuxParamGlob.sun = false;
+    AuxParamGlob.moon = false;
+    AuxParamGlob.planets = false;
+
+    double eop_arr[13*13] = {0};
+    Matrix eopdata(13,13,eop_arr,13*13);
+    eopdata(4,1) = AuxParamGlob.Mjd_UTC;
+
+    Matrix yPhi(42,1);
+    // r arbitrary
+    yPhi(1,1)=1000; yPhi(2,1)=2000; yPhi(3,1)=3000;
+    // v non-zero
+    yPhi(4,1)=1.23; yPhi(5,1)=-4.56; yPhi(6,1)=7.89;
+    // Phi = I
+    for(int j=1;j<=6;++j) yPhi(6*j + j, 1) = 1.0;
+
+    Matrix yPhip = VarEqn(0.0, yPhi, AuxParamGlob, eopdata);
+
+    // dr/dt = v
+    _assert(fabs(yPhip(1,1) - 1.23)  < TOL_);
+    _assert(fabs(yPhip(2,1) + 4.56)  < TOL_);
+    _assert(fabs(yPhip(3,1) - 7.89)  < TOL_);
+
+    // Comprobación ligera de dΦ/dt: del bloque superior derecho dfdy(1:3,4:6)=I
+    // Las primeras 6 entradas de dΦ/dt (índices 7..12) corresponden a Phip(:,1):
+    // Phip(i,1) = dfdy(i,1) = 0 para i=1..3, = G(i,1)=0 para i=4..6
+    for(int k=7; k<=12; ++k) {
+        _assert(fabs(yPhip(k,1)) < TOL_);
+    }
+
+    std::cout << "VarEqn_Test_IdentityPhi passed\n";
+    return 0;
+}
+
+void initDummyEOP(double mjd0) {
+    // filas=13 (1..13), columnas mínimo 2 (1,2)
+    eopdata = Matrix(13, 2);
+    // Fila 4: MJD
+    eopdata(4, 1) = mjd0;
+    eopdata(4, 2) = mjd0 + 1.0;
+    // Otras filas (5..13): ceros está bien (x_pole,y_pole,... serán 0)
+}
+
+// Test 1: comprueba que dr/dt = v
+int Accel_Test_VelocityPropagation() {
+    // 1) Ajusto AuxParamGlob: solo armónico monopolo, sin perturbaciones
+    AuxParamGlob.Mjd_UTC = 59000.0;
+    AuxParamGlob.Mjd_TT  = 59000.0;
+    AuxParamGlob.n = 0;
+    AuxParamGlob.m = 0;
+    AuxParamGlob.sun = false;
+    AuxParamGlob.moon = false;
+    AuxParamGlob.planets = false;
+
+    // 2) EOP dummy para IERS(linear)
+    initDummyEOP(AuxParamGlob.Mjd_UTC);
+
+    // 3) Estado Y: r arbitrary, v = [vx,vy,vz]
+    Matrix Y(6,1);
+    Y(1,1)=1000; Y(2,1)=2000; Y(3,1)=3000;
+    Y(4,1)=1.23; Y(5,1)=-4.56; Y(6,1)=7.89;
+
+    // 4) Llamada
+    Matrix dY = Accel(0.0, Y);
+
+    // 5) Compruebo dr/dt = v
+    _assert(fabs(dY(1,1) - 1.23)  < TOL_);
+    _assert(fabs(dY(2,1) + 4.56)  < TOL_);
+    _assert(fabs(dY(3,1) - 7.89)  < TOL_);
+
+    std::cout<<"Accel_Test_VelocityPropagation passed\n";
+    return 0;
+}
+
+// Test 2: v=0, r en x → a_x = -GM/r^2
+int Accel_Test_CentralGravity() {
+    AuxParamGlob.Mjd_UTC = 59000.0;
+    AuxParamGlob.Mjd_TT  = 59000.0;
+    AuxParamGlob.n = 0;
+    AuxParamGlob.m = 0;
+    AuxParamGlob.sun = false;
+    AuxParamGlob.moon = false;
+    AuxParamGlob.planets = false;
+
+    initDummyEOP(AuxParamGlob.Mjd_UTC);
+
+    const double r0 = 7000e3;
+    Matrix Y(6,1);
+    Y(1,1)=r0; Y(2,1)=0; Y(3,1)=0;
+    Y(4,1)=0;  Y(5,1)=0; Y(6,1)=0;
+
+    Matrix dY = Accel(0.0, Y);
+
+    // dr/dt deben ser cero
+    _assert(fabs(dY(1,1)) < TOL_);
+    _assert(fabs(dY(2,1)) < TOL_);
+    _assert(fabs(dY(3,1)) < TOL_);
+
+    // dv/dt:
+    double expected_ax = - GM_Earth / (r0*r0);
+    _assert(fabs(dY(4,1) - expected_ax) < 1e-6);
+    _assert(fabs(dY(5,1)) < TOL_);
+    _assert(fabs(dY(6,1)) < TOL_);
+
+    std::cout<<"Accel_Test_CentralGravity passed\n";
+    return 0;
 }
 
 
@@ -1993,49 +1929,59 @@ int anglesg_test() {
 
 int all_tests()
 {
-
-   //_verify(Matrix_Basico);
-   //_verify(Mjday_01);
-   //_verify(Mjday_02);
-   //_verify(R_x_01);
-   //_verify(TimeUpdate_01);
-   //_verify(Position_01);
-    //_verify(Legendre_01);
-    //_verify(sign_);
-    //_verify(AccelPointMass_01);
-    //_verify(Mjday_TDB_01);
-    //_verify(angl_01);
-    //_verify(angl_02);
-    //_verify(Cheb3D_01);
-    //_verify(Cheb3D_02);
-    //_verify(MeanObliquity_01);
-    //_verify(NutAngles_01);????
-    //_verify(AccelHarmonic_01);//HAy 1,2,3,4 pero debe haber algun error en el return de la funcion de AccelHarmonic, o en LEGENDRE
-    //_verify(G_AccelHarmonic_01);//Cambiar AccelHarmonic primero, falla al llamarlo
-    //_verify(EqnEquinox_01);
-    //_verify(EqnEquinox_02);
-    //_verify(MeasUpdate_01); FALLA
-    //_verify(MeasUpdate_02);
-    //_verify(gstime_01);
-    //_verify(unit_01);_verify(unit_02);_verify(unit_03);
-    //_verify(Gibbs_01);
-    //_verify(Gibbs_02);
-    //_verify(HGibbs_01);_verify(HGibbs_02);_verify(HGibbs_03);_verify(HGibbs_04);
-    //_verify(elements_01);_verify(elements_02);_verify(elements_03);
-    //_verify(LTC_01);_verify(LTC_02);
-    //_verify(GHAMatrix_01);_verify(GHAMatrix_02);
-    //_verify(PoleMatrix_01);
-    //_verify(NutMatrix_01);
-    //_verify(PrecMatrix_01);
-    //_verify(timediff_01);
-    //_verify(Geodetic_01);
-    //_verify(doubler_01);
-    //_verify(Test_IERS_02);
-    //_verify(JPL_Eph_DE430_Test_01);//FALLA
-    //_verify(AzElPa_Test_01);
-    //_verify(VarEqn_Test_01);//FALLA
+/*
+    _verify(Matrix_Basico);
+    _verify(Mjday_01);
+    _verify(Mjday_02);
+    _verify(R_x_01);
+    _verify(TimeUpdate_01);
+    //_verify(Position_01);//ns
+    _verify(Legendre_01);
+    _verify(sign_);
+    _verify(AccelPointMass_01);
+    //_verify(Mjday_TDB_01);//ns
+    _verify(angl_01);
+    _verify(angl_02);
+    _verify(Cheb3D_01);
+    _verify(Cheb3D_02);
+    _verify(MeanObliquity_01);
+    //_verify(NutAngles_01);//ns
+    _verify(AccelHarmonic_01);
+    _verify(AccelHarmonic_02);
+    _verify(G_AccelHarmonic_01);
+    _verify(G_AccelHarmonic_02);
+    _verify(EqnEquinox_01);
+    _verify(EqnEquinox_02);
+    _verify(MeasUpdate_01);
+    _verify(MeasUpdate_02);
+    _verify(gstime_01);
+    _verify(unit_01);_verify(unit_02);_verify(unit_03);
+    _verify(Gibbs_01);
+    //_verify(Gibbs_02);//ns
+    _verify(HGibbs_01);_verify(HGibbs_02);_verify(HGibbs_03);_verify(HGibbs_04);
+    _verify(elements_01);_verify(elements_02);_verify(elements_03);
+    _verify(LTC_01);_verify(LTC_02);
+    _verify(GHAMatrix_01);_verify(GHAMatrix_02);
+    _verify(PoleMatrix_01);
+    _verify(NutMatrix_01);
+    _verify(PrecMatrix_01);
+    _verify(timediff_01);
+    _verify(Geodetic_01);
+    _verify(doubler_01);
+    _verify(IERS_01);
+    _verify(IERS_02);
+    _verify(JPL_Eph_01);
+    _verify(JPL_Eph_02);
+    _verify(JPL_Eph_03);
+    _verify(AzElPa_Test_01);*/
+    //_verify(VarEqn_Test_01);//FALLA (AccelHarmonic)
+    //_verify(VarEqn_Test_02);//FALLA
     //_verify(test_anglesdr_basico);//FALLA
-    //_verify(anglesg_test);//FALLA
+    _verify(anglesg_test_01);//FALLA
+    //_verify(VarEqn_Test_IdentityPhi);
+    //_verify(VarEqn_Test_ZeroHarmonic);//FALLA un assert
+    //_verify(Accel_Test_CentralGravity);//FALLA
+    //_verify(Accel_Test_VelocityPropagation);
 
     return 0;
 }

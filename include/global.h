@@ -11,6 +11,8 @@
 extern double Cnm[300][300];
 extern double Snm[300][300];
 
+extern Matrix PC;
+extern Matrix eopdata;
 
 
 #endif //PROYECTOTALLER_GLOBAL_H

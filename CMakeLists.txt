@@ -51,7 +51,7 @@ add_executable(ProyectoTaller
         src/global.cpp
         src/G_AccelHarmonic.cpp
         include/G_AccelHarmonic.h
-        include/JPL_Eph_DE430.cpp
+        src/JPL_Eph_DE430.cpp
         include/JPL_Eph_DE430.h
         src/EqnEquinox.cpp
         include/EqnEquinox.h
@@ -95,4 +95,6 @@ add_executable(ProyectoTaller
         include/DEInteg.h
         include/Accel.cpp
         include/Accel.h
+        include/AuxParam.cpp
+        include/AuxParam.h
 )

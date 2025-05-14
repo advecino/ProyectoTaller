@@ -7,25 +7,22 @@
 
 
 #include "Matrix.h"
-#include "IERS.h"
-#include "TimeDiff.h"
-#include "PrecMatrix.h"
-#include "NutMatrix.h"
-#include "PoleMatrix.h"
-#include "GHAMatrix.h"
-#include "AccelHarmonic.h"
-#include "G_AccelHarmonic.h"
-#include "Sat_const.h"
-#include <vector>
+#include "AuxParam.h"  // <<< sólo aquí
 
 /**
- * @brief Computes the variational equations (derivative of state vector and state transition matrix)
- *
- * @param x Time since epoch in [s]
- * @param yPhi (6+36)-dim vector comprising state vector (y) and state transition matrix (Phi)
- * @param eopdata Earth Orientation Parameters data
- * @return Matrix Derivative of yPhi (42x1)
+ * @brief Derivada conjunta de estado y matriz de transición.
+ * @param t     Tiempo desde epoch [s].
+ * @param yPhi  (42×1) [r; v; vec(Φ)].
+ * @param params Auxiliares (fechas, grado/orden).
+ * @param eop    EOP data para IERS.
+ * @return yPhip (42×1).
  */
-Matrix VarEqn(double x, const Matrix& yPhi, const Matrix& eopdata);
+Matrix VarEqn(
+        double t,
+        Matrix& yPhi,
+        AuxParam& params,
+        Matrix& eop
+);
+
 
 #endif //PROYECTOTALLER_VAREQN_H

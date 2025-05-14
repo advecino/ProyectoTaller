@@ -1,8 +1,20 @@
-//
-// Created by adria on 12/05/2025.
-//
+
 
 #include "Accel.h"
+#include "IERS.h"
+#include "TimeDiff.h"
+#include "Mjday_TDB.h"
+#include "JPL_Eph_DE430.h"
+#include "AccelHarmonic.h"
+#include "AccelPointMass.h"
+#include "PrecMatrix.h"
+#include "NutMatrix.h"
+#include "PoleMatrix.h"
+#include "GHAMatrix.h"
+#include "Sat_const.h"
+#include "AuxParam.h"
+#include "global.h"
+
 /*
  * %--------------------------------------------------------------------------
 %
@@ -25,64 +37,54 @@
 % Last modified:   2015/08/12   M. Mahooti
 %
 %--------------------------------------------------------------------------*/
-/*
-
-Matrix Accel(double x, const Matrix& Y, const Matrix& eopdata)
-    {
-    double Mjd_UTC = 59000.5;
-        // Extraer parámetros de IERS
-        IERSResult iersResult = IERS(eopdata, Mjd_UTC + x/86400.0, "l");
-
-        // Diferencias de tiempo
-        TimeDiffs timeDiffResult = timediff(iersResult.UT1_UTC, iersResult.TAI_UTC);
 
 
-        // Cálculos de fechas
-        double Mjd_UT1 = Mjd_UTC + x/86400.0 + iersResult.UT1_UTC/86400.0;
-        double Mjd_TT = Mjd_UTC + x/86400.0 + timeDiffResult.TT_UTC/86400.0;
 
-        // Matrices de transformación
-        Matrix P = PrecMatrix(MJD_J2000, Mjd_TT);
-        Matrix N = NutMatrix(Mjd_TT);
-        Matrix T = N * P;
-        Matrix E = PoleMatrix(iersResult.x_pole, iersResult.y_pole) * GHAMatrix(Mjd_UT1) * T;
+Matrix Accel(double x, const Matrix& Y) {
+    double Mjd_UTC = AuxParamGlob.Mjd_UTC + x/86400.0;
+    auto iers = IERS(eopdata, Mjd_UTC, 'l');
 
-        // Efemérides planetarias
-        double MJD_TDB = Mjday_TDB(Mjd_TT);
-        PlanetaryPositions jplResult = JPL_Eph_DE430(MJD_TDB, PC);
+    auto td   = timediff(iers.UT1_UTC, iers.TAI_UTC);
+    double Mjd_UT1 = Mjd_UTC + iers.UT1_UTC/86400.0;
+    double Mjd_TT  = Mjd_UTC + td.TT_UTC   /86400.0;
 
+    // 2) Construir matriz E de transformación a cuerpo fijo
+    Matrix P = PrecMatrix(MJD_J2000, Mjd_TT);
+    Matrix N = NutMatrix(Mjd_TT);
+    Matrix T = N * P;
+    Matrix E = PoleMatrix(iers.x_pole, iers.y_pole)
+               * GHAMatrix(Mjd_UT1)
+               * T;
 
-        // Aceleración debido al campo gravitatorio armónico de la Tierra
-        Matrix position = Y.getSubMatrix(1,3,1,1);
-        Matrix a = AccelHarmonic(position, E, 20, 20);
+    // 3) Posiciones planetarias
+    double Mjd_TDB = Mjday_TDB(Mjd_TT);
+    auto pp = JPL_Eph_DE430(Mjd_TDB);
 
-        // Perturbaciones lunares y solares
-        if (auxParam.sun) {
-            a = a + AccelPointMass(position, R_Sun, GM_Sun);
-        }
+    // 4) Aceleración armónica
+    Matrix r = Y.getSubMatrix(1,3,1,1);
+    Matrix a = AccelHarmonic(r, E, AuxParamGlob.n, AuxParamGlob.m);
 
-        if (auxParam.moon) {
-            a = a + AccelPointMass(position, R_Moon, GM_Moon);
-        }
+    // 5) Perturbaciones luni–solares
+    if (AuxParamGlob.sun)  a = a + AccelPointMass(r, pp.r_Sun,   GM_Sun);
+    if (AuxParamGlob.moon) a = a + AccelPointMass(r, pp.r_Moon,  GM_Moon);
 
-        // Perturbaciones planetarias
-        if (auxParam.planets) {
-            a = a + AccelPointMass(position, r_Mercury, consts.GM_Mercury);
-            a = a + AccelPointMass(position, r_Venus, consts.GM_Venus);
-            a = a + AccelPointMass(position, r_Mars, consts.GM_Mars);
-            a = a + AccelPointMass(position, r_Jupiter, consts.GM_Jupiter);
-            a = a + AccelPointMass(position, r_Saturn, consts.GM_Saturn);
-            a = a + AccelPointMass(position, r_Uranus, consts.GM_Uranus);
-            a = a + AccelPointMass(position, r_Neptune, consts.GM_Neptune);
-            a = a + AccelPointMass(position, r_Pluto, consts.GM_Pluto);
-        }
-
-        // Construir vector de estado derivado
-        Matrix velocity = Y.getSubMatrix(3, 5, 0, 0);
-        Matrix dY(6, 1);
-        dY.setSubMatrix(0, 0, velocity);
-        dY.setSubMatrix(3, 0, a);
-
-        return dY;
+    // 6) Perturbaciones planetarias
+    if (AuxParamGlob.planets) {
+        a = a + AccelPointMass(r, pp.r_Mercury, GM_Mercury);
+        a = a + AccelPointMass(r, pp.r_Venus,   GM_Venus);
+        a = a + AccelPointMass(r, pp.r_Mars,    GM_Mars);
+        a = a + AccelPointMass(r, pp.r_Jupiter, GM_Jupiter);
+        a = a + AccelPointMass(r, pp.r_Saturn,  GM_Saturn);
+        a = a + AccelPointMass(r, pp.r_Uranus,  GM_Uranus);
+        a = a + AccelPointMass(r, pp.r_Neptune, GM_Neptune);
+        a = a + AccelPointMass(r, pp.r_Pluto,   GM_Pluto);
     }
-*/
+
+    // 7) Devolver [v; a]
+    Matrix dY(6,1);
+    for (int i = 1; i <= 3; ++i) {
+        dY(i,1)   = Y(i+3,1);  // componente velocidad
+        dY(i+3,1) = a(i,1);    // componente aceleración
+    }
+    return dY;
+}
