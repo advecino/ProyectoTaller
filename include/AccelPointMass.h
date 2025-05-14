@@ -15,7 +15,7 @@
  * @param GM Coeficiente gravitacional de la masa puntual
  * @return Vector de aceleración (Matrix 3x1)
  */
-Matrix AccelPointMass( Matrix& r, const Matrix& s, double GM);
+Matrix AccelPointMass(Matrix& r, const Matrix& s, double GM);
 
 
 #endif //PROYECTOTALLER_ACCELPOINTMASS_H

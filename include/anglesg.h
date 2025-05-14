@@ -50,7 +50,7 @@ AnglesGResult anglesg(double az1, double az2, double az3,
                       double el1, double el2, double el3,
                       double Mjd1, double Mjd2, double Mjd3,
                       const Matrix& Rs1, const Matrix& Rs2, const Matrix& Rs3,
-                      const Matrix& eopdata);
+                      Matrix& eopdata);
 
 
 #endif //PROYECTOTALLER_ANGLESG_H

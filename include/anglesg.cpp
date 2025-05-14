@@ -14,7 +14,7 @@ AnglesGResult anglesg(double az1, double az2, double az3,
                       double el1, double el2, double el3,
                       double Mjd1, double Mjd2, double Mjd3,
                       const Matrix& Rs1, const Matrix& Rs2, const Matrix& Rs3,
-                      const Matrix& eopdata) {
+                      Matrix& eopdata) {
 
     // Validate inputs
     if (Rs1.getFilas() != 3 || Rs1.getColumnas() != 1 ||
@@ -55,7 +55,7 @@ AnglesGResult anglesg(double az1, double az2, double az3,
 
     // Time 1 transformation
     Mjd_UTC = Mjd1;
-    IERSResult iers1 = IERS(eopdata, Mjd_UTC, "l");
+    IERSResult iers1 = IERS(eopdata, Mjd_UTC, 'l');
     TimeDiffs td1 = timediff(iers1.UT1_UTC, iers1.TAI_UTC);
     Mjd_TT = Mjd_UTC + td1.TT_UTC/86400.0;
     Mjd_UT1 = Mjd_TT + (iers1.UT1_UTC - td1.TT_UTC)/86400.0;
@@ -66,7 +66,7 @@ AnglesGResult anglesg(double az1, double az2, double az3,
 
     // Time 2 transformation
     Mjd_UTC = Mjd2;
-    IERSResult iers2 = IERS(eopdata, Mjd_UTC, "l");
+    IERSResult iers2 = IERS(eopdata, Mjd_UTC, 'l');
     TimeDiffs td2 = timediff(iers2.UT1_UTC, iers2.TAI_UTC);
     Mjd_TT = Mjd_UTC + td2.TT_UTC/86400.0;
     Mjd_UT1 = Mjd_TT + (iers2.UT1_UTC - td2.TT_UTC)/86400.0;
@@ -77,7 +77,7 @@ AnglesGResult anglesg(double az1, double az2, double az3,
 
     // Time 3 transformation
     Mjd_UTC = Mjd3;
-    IERSResult iers3 = IERS(eopdata, Mjd_UTC, "l");
+    IERSResult iers3 = IERS(eopdata, Mjd_UTC, 'l');
     TimeDiffs td3 = timediff(iers3.UT1_UTC, iers3.TAI_UTC);
     Mjd_TT = Mjd_UTC + td3.TT_UTC/86400.0;
     Mjd_UT1 = Mjd_TT + (iers3.UT1_UTC - td3.TT_UTC)/86400.0;

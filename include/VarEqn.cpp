@@ -29,7 +29,7 @@
 */
 
 
-Matrix VarEqn(double x, const Matrix& yPhi, const Matrix& eopdata) {
+Matrix VarEqn(double x, const Matrix& yPhi, Matrix& eopdata) {
 
     // Validate input dimensions
     if (yPhi.getFilas() != 42 || yPhi.getColumnas() != 1) {
@@ -37,7 +37,7 @@ Matrix VarEqn(double x, const Matrix& yPhi, const Matrix& eopdata) {
     }
 
     double Mjd_UTC=49746.116354;
-    std::string s = "l";
+    char s = 'l';
     double Mjd_TT= 49746.117062;
     // IERS Earth orientation parameters
     IERSResult iers = IERS(eopdata, Mjd_UTC, s);

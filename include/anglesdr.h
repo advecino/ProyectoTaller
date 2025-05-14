@@ -39,7 +39,7 @@ AnglesDRResult anglesdr(double az1, double az2, double az3,
                         double el1, double el2, double el3,
                         double Mjd1, double Mjd2, double Mjd3,
                         const Matrix& rsite1, const Matrix& rsite2, const Matrix& rsite3,
-                        const Matrix& eopdata);
+                        Matrix& eopdata);
 
 #endif //PROYECTOTALLER_ANGLESDR_H
 

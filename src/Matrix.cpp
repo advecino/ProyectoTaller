@@ -216,10 +216,13 @@ Matrix Matrix::operator*(const Matrix& matrix2) const
  * @param j Índice de la columna.
  * @return Referencia al valor en la posición (i, j).
  */
-double& Matrix::operator()( int i,  int j) const
-{
-    return matrix[i-1][j-1];
+double& Matrix::operator()(int i, int j) const {
+    if (i < 1 || i > fil || j < 1 || j > col) {
+        throw std::out_of_range("Índice fuera de rango (1-based)");
+    }
+    return matrix[i - 1][j - 1];
 }
+
 
 
 

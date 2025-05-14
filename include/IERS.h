@@ -8,25 +8,30 @@
 
 
 #include "Matrix.h"
-#include <cmath>
-#include "Sat_const.h"
-#include <string>
 
 
 
+/**
+ * @brief Result container for IERS Earth orientation parameters
+ */
 struct IERSResult {
-    double x_pole;
-    double y_pole;
-    double UT1_UTC;
-    double LOD;
-    double dpsi;
-    double deps;
-    double dx_pole;
-    double dy_pole;
-    double TAI_UTC;
+    double x_pole;   ///< Pole coordinate [rad]
+    double y_pole;   ///< Pole coordinate [rad]
+    double UT1_UTC;  ///< UT1-UTC time difference [s]
+    double LOD;      ///< Length of day [s]
+    double dpsi;     ///< Nutation in longitude [rad]
+    double deps;     ///< Nutation in obliquity [rad]
+    double dx_pole;  ///< Pole coordinate [rad]
+    double dy_pole;  ///< Pole coordinate [rad]
+    double TAI_UTC;  ///< TAI-UTC time difference [s]
 };
 
-
-
-IERSResult IERS(Matrix eop, double Mjd_UTC, std::string interp = "n");
+/**
+ * @brief Management of IERS time and polar motion data
+ * @param eop     Matrix of Earth orientation parameters (at least 13 rows)
+ * @param Mjd_UTC Modified Julian Date UTC
+ * @param interp  'l' for linear interpolation, 'n' for no interpolation
+ * @return Filled IERSResult struct
+ */
+IERSResult IERS(Matrix& eop, double Mjd_UTC, char interp='n');
 #endif //PROYECTOTALLER_IERS_H
