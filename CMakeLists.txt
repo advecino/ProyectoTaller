@@ -81,7 +81,7 @@ add_executable(ProyectoTaller
         include/Geodetic.h
         src/doubler.cpp
         include/doubler.h
-        include/IERS.cpp
+        src/IERS.cpp
         include/IERS.h
         src/AzElPa.cpp
         include/AzElPa.h
