@@ -48,9 +48,12 @@ Matrix AccelHarmonic(
     // Body‐fixed position
     Matrix r_bf = E * r;
 
+    double d = r_bf.norm();
+    if (d < 1e-16) {
+        return Matrix(3,1);  // aceleración cero
+    }
     // Compute geocentric latitude and longitude
     double x = r_bf(1,1), y = r_bf(2,1), zc = r_bf(3,1);
-    double d  = r_bf.norm();                       // distance
     double latgc = std::asin(zc/d);
     double lon   = std::atan2(y, x);
 
@@ -94,6 +97,13 @@ Matrix AccelHarmonic(
     a_bf(1,1)=ax_bf;
     a_bf(2,1)=ay_bf;
     a_bf(3,1)=az_bf;
+
+    {
+        double inv_r3 = -gm / (d*d*d);
+        // a_central = inv_r3 * r_bf
+        Matrix a_central = r_bf * inv_r3;
+        a_bf = a_bf + a_central;
+    }
 
     // Transform back to inertial frame: a = E' * a_bf
     return E.transpuesta() * a_bf;

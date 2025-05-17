@@ -24,7 +24,7 @@
 %--------------------------------------------------------------------------*/
 
 Matrix G_AccelHarmonic(Matrix& r, Matrix& U, int n_max, int m_max) {
-    const double delta = 1.0;
+
 
     // Sanity checks
     if (r.getFilas() != 3 || r.getColumnas() != 1)
@@ -33,6 +33,12 @@ Matrix G_AccelHarmonic(Matrix& r, Matrix& U, int n_max, int m_max) {
         throw std::invalid_argument("U must be 3×3");
     if (n_max < 0 || m_max < 0 || m_max > n_max)
         throw std::invalid_argument("Invalid degree/order in G_AccelHarmonic");
+
+    const double eps = 1e-16;
+    if (r.norm() < eps) {
+        return Matrix(3,3);  // todos ceros
+    }
+    const double delta = 1.0;
 
     Matrix G(3, 3);
     // for each coordinate direction i

@@ -19,10 +19,11 @@
  */
 Matrix VarEqn(
         double t,
-        Matrix& yPhi,
-        AuxParam& params,
-        Matrix& eop
+        const Matrix& yPhi,
+        const AuxParam& params,
+        Matrix& eopdata
 );
 
 
 #endif //PROYECTOTALLER_VAREQN_H
+
