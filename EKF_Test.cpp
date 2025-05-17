@@ -1859,82 +1859,137 @@ int anglesg_test_02() {
 }
 
 
-
-
-void initDummyEOP(double mjd0) {
-    // filas=13 (1..13), columnas mínimo 2 (1,2)
-    eopdata = Matrix(13, 2);
-    // Fila 4: MJD
-    eopdata(4, 1) = mjd0;
-    eopdata(4, 2) = mjd0 + 1.0;
-    // Otras filas (5..13): ceros está bien (x_pole,y_pole,... serán 0)
-}
-
-// Test 1: comprueba que dr/dt = v
-int Accel_Test_VelocityPropagation() {
-    // 1) Ajusto AuxParamGlob: solo armónico monopolo, sin perturbaciones
-    AuxParamGlob.Mjd_UTC = 59000.0;
-    AuxParamGlob.Mjd_TT  = 59000.0;
-    AuxParamGlob.n = 0;
-    AuxParamGlob.m = 0;
-    AuxParamGlob.sun = false;
-    AuxParamGlob.moon = false;
-    AuxParamGlob.planets = false;
-
-    // 2) EOP dummy para IERS(linear)
-    initDummyEOP(AuxParamGlob.Mjd_UTC);
-
-    // 3) Estado Y: r arbitrary, v = [vx,vy,vz]
+int Accel_01() {
+    AuxParam p{58000.0, 58000.0, 0, 0, false,false,false};
+    Matrix eop(13,2);
+    eop(4,1)=p.Mjd_UTC; eop(4,2)=p.Mjd_UTC+1;
+    eop(13,1)=37; eop(13,2)=37;
+    // Estado inicial: r=[R,0,0], v=[0,0,0]
+    double R = 7000e3;
     Matrix Y(6,1);
-    Y(1,1)=1000; Y(2,1)=2000; Y(3,1)=3000;
-    Y(4,1)=1.23; Y(5,1)=-4.56; Y(6,1)=7.89;
-
-    // 4) Llamada
-    Matrix dY = Accel(0.0, Y);
-
-    // 5) Compruebo dr/dt = v
-    _assert(fabs(dY(1,1) - 1.23)  < TOL_);
-    _assert(fabs(dY(2,1) + 4.56)  < TOL_);
-    _assert(fabs(dY(3,1) - 7.89)  < TOL_);
-
-    std::cout<<"Accel_Test_VelocityPropagation passed\n";
+    Y(1,1)=R;
+    Matrix dY = Accel(0.0, Y, p, eop);
+    double expect = -GM_Earth/(R*R);
+    _assert(fabs(dY(4,1)-expect)<1e-8);
+    _assert(fabs(dY(5,1))<1e-12);
+    _assert(fabs(dY(6,1))<1e-12);
     return 0;
 }
 
-// Test 2: v=0, r en x → a_x = -GM/r^2
-int Accel_Test_CentralGravity() {
-    AuxParamGlob.Mjd_UTC = 59000.0;
-    AuxParamGlob.Mjd_TT  = 59000.0;
-    AuxParamGlob.n = 0;
-    AuxParamGlob.m = 0;
-    AuxParamGlob.sun = false;
-    AuxParamGlob.moon = false;
-    AuxParamGlob.planets = false;
+static Matrix make_simple_eop(double Mjd0) {
+    Matrix eop(13,2);
+    for(int i=1;i<=13;++i)
+        for(int j=1;j<=2;++j)
+            eop(i,j)=0.0;
+    eop(4,1)=Mjd0;
+    eop(4,2)=Mjd0+1.0;
+    eop(13,1)=37.0;
+    eop(13,2)=37.0;
+    return eop;
+}
 
-    initDummyEOP(AuxParamGlob.Mjd_UTC);
-
-    const double r0 = 7000e3;
-    Matrix Y(6,1);
-    Y(1,1)=r0; Y(2,1)=0; Y(3,1)=0;
-    Y(4,1)=0;  Y(5,1)=0; Y(6,1)=0;
-
-    Matrix dY = Accel(0.0, Y);
-
-    // dr/dt deben ser cero
-    _assert(fabs(dY(1,1)) < TOL_);
-    _assert(fabs(dY(2,1)) < TOL_);
-    _assert(fabs(dY(3,1)) < TOL_);
-
-    // dv/dt:
-    double expected_ax = - GM_Earth / (r0*r0);
-    _assert(fabs(dY(4,1) - expected_ax) < 1e-6);
-    _assert(fabs(dY(5,1)) < TOL_);
-    _assert(fabs(dY(6,1)) < TOL_);
-
-    std::cout<<"Accel_Test_CentralGravity passed\n";
+// 1) Invalid Y size --> debe lanzar invalid_argument
+int Accel_02(){
+    std::cout<<"=== Accel_InvalidY_Test ===\n";
+    AuxParam params{58000.0,58000.0,0,0};
+    Matrix eop = make_simple_eop(params.Mjd_UTC);
+    Matrix Y_bad(5,1);
+    bool threw=false;
+    try {
+        Accel(0.0, Y_bad, params, eop);
+    } catch(const std::invalid_argument&) {
+        threw=true;
+    }
+    _assert(threw);
+    std::cout<<"Accel_InvalidY_Test passed\n";
     return 0;
 }
 
+// 2) Invalid AuxParam (m>n) --> punto de chequeo en AccelHarmonic
+int Accel_03(){
+    std::cout<<"=== Accel_InvalidAux_Test ===\n";
+    AuxParam params{58000.0,58000.0,2,3}; // m>n
+    Matrix eop = make_simple_eop(params.Mjd_UTC);
+    Matrix Y(6,1);
+    for(int i=1;i<=6;++i) Y(i,1)=1.0;
+    bool threw=false;
+    try {
+        Accel(0.0, Y, params, eop);
+    } catch(const std::invalid_argument&) {
+        threw=true;
+    }
+    _assert(threw);
+    std::cout<<"Accel_InvalidAux_Test passed\n";
+    return 0;
+}
+
+// 3) EOP fuera de rango --> IERS lanza out_of_range
+int Accel_04(){
+    std::cout<<"=== Accel_EOP_OutOfRange_Test ===\n";
+    AuxParam params{58000.0,58000.0,0,0};
+    Matrix eop(13,2); // todo cero, no fila 4 == Mjd_UTC
+    Matrix Y(6,1);
+    bool threw=false;
+    try {
+        Accel(0.0, Y, params, eop);
+    } catch(const std::out_of_range&) {
+        threw=true;
+    }
+    _assert(threw);
+    std::cout<<"Accel_EOP_OutOfRange_Test passed\n";
+    return 0;
+}
+
+// 4) Estado cero (r=0,v=0) --> dr/dt=0, dv/dt=0
+int Accel_05(){
+    std::cout<<"=== Accel_ZeroState_Test ===\n";
+    AuxParam params{58000.0,58000.0,0,0};
+    params.sun = params.moon = params.planets = false;
+    Matrix eop = make_simple_eop(params.Mjd_UTC);
+    Matrix Y(6,1);
+    for(int i=1;i<=6;++i) Y(i,1)=0.0;
+    Matrix dY = Accel(0.0, Y, params, eop);
+    // debe ser todo cero
+    for(int i=1;i<=6;++i){
+        _assert(std::fabs(dY(i,1))<1e-12);
+    }
+    std::cout<<"Accel_ZeroState_Test passed\n";
+    return 0;
+}
+
+// 5) Órbita circular en x–y, prueba centrípeta
+int Accel_06(){
+    std::cout<<"=== Accel_CircularOrbit_Test ===\n";
+    AuxParam params{58000.0,58000.0,0,0};
+    params.sun = params.moon = params.planets = false;
+    Matrix eop = make_simple_eop(params.Mjd_UTC);
+
+    // Elipsoide de prueba en x–y
+    const double R = 7000e3;                   // m
+    const double mu = GM_Earth;                // m^3/s^2
+    const double v_circ = std::sqrt(mu/(R));   // m/s
+
+    // Estado: r=(R,0,0), v=(0,v_circ,0)
+    Matrix Y(6,1);
+    Y(1,1)= R;  Y(2,1)=0;      Y(3,1)=0;
+    Y(4,1)=0;   Y(5,1)=v_circ; Y(6,1)=0;
+
+    Matrix dY = Accel(0.0, Y, params, eop);
+
+    // dr/dt = v
+    _assert(std::fabs(dY(1,1) - 0.0)     < 1e-12);
+    _assert(std::fabs(dY(2,1) - v_circ)  < 1e-8);
+    _assert(std::fabs(dY(3,1) - 0.0)     < 1e-12);
+
+    // dv/dt = a_centripeta = -(mu/R^2) in x
+    double expect_ax = -mu/(R*R);
+    _assert(std::fabs(dY(4,1) - expect_ax) < 1e-6);
+    _assert(std::fabs(dY(5,1) - 0.0)       < 1e-12);
+    _assert(std::fabs(dY(6,1) - 0.0)       < 1e-12);
+
+    std::cout<<"Accel_CircularOrbit_Test passed\n";
+    return 0;
+}
 
 
 
@@ -1942,7 +1997,7 @@ int Accel_Test_CentralGravity() {
 
 int all_tests()
 {
-/*
+
     _verify(Matrix_Basico);
     _verify(Mjday_01);
     _verify(Mjday_02);
@@ -2004,12 +2059,17 @@ int all_tests()
     _verify(AzElPa_Test_03);
     _verify(VarEqn_Test_01);
     _verify(VarEqn_Test_02);
-    _verify(VarEqn_Test_03);*/
+    _verify(VarEqn_Test_03);
+    _verify(Accel_01);
+    _verify(Accel_02);
+    _verify(Accel_03);
+    _verify(Accel_04);
+    _verify(Accel_05);
+    _verify(Accel_06);
 
     //_verify(test_anglesdr_basico);//FALLA
     //_verify(anglesg_test_01);//FALLA
-    //_verify(Accel_Test_CentralGravity);//FALLA
-    //_verify(Accel_Test_VelocityPropagation);
+
 
     return 0;
 }
