@@ -15,7 +15,7 @@
 #include "NutMatrix.h"
 #include "PoleMatrix.h"
 #include "GHAMatrix.h"
-#include "rpoly.h"        // para roots()
+#include "rpoly.h"
 #include "AuxParam.h"
 
 struct AnglesGResult {
