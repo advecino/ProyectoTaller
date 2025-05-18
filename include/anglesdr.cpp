@@ -38,160 +38,200 @@
 */
 
 
-AnglesDRResult anglesdr(double az1, double az2, double az3,
-                        double el1, double el2, double el3,
-                        double Mjd1, double Mjd2, double Mjd3,
-                        const Matrix& rsite1, const Matrix& rsite2, const Matrix& rsite3,
-                        Matrix& eopdata) {
+AnglesDRResult anglesdr(
+        double az1, double az2, double az3,
+        double el1, double el2, double el3,
+        double Mjd1, double Mjd2, double Mjd3,
+        Matrix &rsite1,
+        Matrix &rsite2,
+        Matrix &rsite3,
+        AuxParam &params,
+        Matrix &eopdata
+) {
 
-    // Validate inputs
-    if (rsite1.getFilas() != 3 || rsite1.getColumnas() != 1 ||
-        rsite2.getFilas() != 3 || rsite2.getColumnas() != 1 ||
-        rsite3.getFilas() != 3 || rsite3.getColumnas() != 1) {
-        throw std::invalid_argument("Site position vectors must be 3x1");
-    }
-
-    AnglesDRResult result;
-    const double tol = 1e-8 * R_Earth;  // From Sat_const
-    const double pctchg = 0.005;
-    char direct = 'y';
-
-    // Initial guesses for magnitudes
     double magr1in = 1.1 * R_Earth;
     double magr2in = 1.11 * R_Earth;
+    const char direct = 'y';
 
-    // Time differences
+    const double tol = 1e-8 * R_Earth;
+    const double pctchg = 0.005;
+
+
     double t1 = (Mjd1 - Mjd2) * 86400.0;
     double t3 = (Mjd3 - Mjd2) * 86400.0;
 
-    // Line-of-sight vectors
+
     Matrix los1(3, 1), los2(3, 1), los3(3, 1);
-    los1(1,1) = cos(el1)*sin(az1); los1(2,1) = cos(el1)*cos(az1); los1(3,1) = sin(el1);
-    los2(1,1) = cos(el2)*sin(az2); los2(2,1) = cos(el2)*cos(az2); los2(3,1) = sin(el2);
-    los3(1,1) = cos(el3)*sin(az3); los3(2,1) = cos(el3)*cos(az3); los3(3,1) = sin(el3);
+    los1(1, 1) = std::cos(el1) * std::sin(az1);
+    los1(2, 1) = std::cos(el1) * std::cos(az1);
+    los1(3, 1) = std::sin(el1);
+    los2(1, 1) = std::cos(el2) * std::sin(az2);
+    los2(2, 1) = std::cos(el2) * std::cos(az2);
+    los2(3, 1) = std::sin(el2);
+    los3(1, 1) = std::cos(el3) * std::sin(az3);
+    los3(2, 1) = std::cos(el3) * std::cos(az3);
+    los3(3, 1) = std::sin(el3);
 
+    auto geo1 = Geodetic(rsite1);
+    auto geo2 = Geodetic(rsite2);
+    auto geo3 = Geodetic(rsite3);
 
-    GeodeticCoords geodeticCoords1;
-    geodeticCoords1 = Geodetic(rsite1);
-    GeodeticCoords geodeticCoords2;
-    geodeticCoords2 = Geodetic(rsite2);
-    GeodeticCoords geodeticCoords3;
-    geodeticCoords3 = Geodetic(rsite3);
+    Matrix M1 = LTC(geo1.longitude, geo1.latitude);
+    Matrix M2 = LTC(geo2.longitude, geo2.latitude);
+    Matrix M3 = LTC(geo3.longitude, geo3.latitude);
 
-    // Get local tangent coordinate matrices
-    Matrix M1 = LTC(geodeticCoords1.longitude, geodeticCoords1.latitude);
-    Matrix M2 = LTC(geodeticCoords2.longitude, geodeticCoords2.latitude);
-    Matrix M3 = LTC(geodeticCoords3.longitude, geodeticCoords3.latitude);
-
-    // Transform to body-fixed system
+    // body-fixed system
     los1 = M1.transpuesta() * los1;
     los2 = M2.transpuesta() * los2;
     los3 = M3.transpuesta() * los3;
 
-    // Transform to J2000 system for each time
 
-    double Mjd_UTC, Mjd_TT, Mjd_UT1;
 
-    // Time 1 transformation
-    Mjd_UTC = Mjd1;
-    IERSResult iers1 = IERS(eopdata, Mjd_UTC, 'l');
-    TimeDiffs td1 = timediff(iers1.UT1_UTC, iers1.TAI_UTC);
-    Mjd_TT = Mjd_UTC + td1.TT_UTC/86400.0;
-    Mjd_UT1 = Mjd_TT + (iers1.UT1_UTC - td1.TT_UTC)/86400.0;
-    Matrix E = PoleMatrix(iers1.x_pole, iers1.y_pole) * GHAMatrix(Mjd_UT1) *
-        (NutMatrix(Mjd_TT) * PrecMatrix(MJD_J2000, Mjd_TT));
+    // mean of date system (J2000)
+    double Mjd_UTC = Mjd1;
+    IERSResult ires = IERS(eopdata, Mjd_UTC, 'l');
+    TimeDiffs td = timediff(ires.UT1_UTC, ires.TAI_UTC);
+    // TT and UT1 in Modified Julian Days:
+    double Mjd_TT = Mjd_UTC + td.TT_UTC / 86400.0;
+    double Mjd_UT1 = Mjd_TT + (ires.UT1_UTC - td.TT_UTC) / 86400.0;
+
+    // Precession‐nutation + polar
+    Matrix P = PrecMatrix(MJD_J2000, Mjd_TT);
+    Matrix N = NutMatrix(Mjd_TT);
+    Matrix T = N * P;
+    Matrix E = PoleMatrix(ires.x_pole, ires.y_pole)
+               * GHAMatrix(Mjd_UT1)
+               * T;
+
     los1 = E.transpuesta() * los1;
-    Matrix rsite1_J2000 = E.transpuesta() * rsite1;
+    rsite1 = E.transpuesta() * rsite1;
 
-    // Time 2 transformation
+
     Mjd_UTC = Mjd2;
-    IERSResult iers2 = IERS(eopdata, Mjd_UTC, 'l');
-    TimeDiffs td2 = timediff(iers2.UT1_UTC, iers2.TAI_UTC);
-    Mjd_TT = Mjd_UTC + td2.TT_UTC/86400.0;
-    Mjd_UT1 = Mjd_TT + (iers2.UT1_UTC - td2.TT_UTC)/86400.0;
+    IERSResult ires2 = IERS(eopdata, Mjd_UTC, 'l');
+    TimeDiffs td2 = timediff(ires2.UT1_UTC, ires2.TAI_UTC);
+    // TT and UT1 in Modified Julian Days:
+    Mjd_TT = Mjd_UTC + td2.TT_UTC / 86400.0;
+    Mjd_UT1 = Mjd_TT + (ires2.UT1_UTC - td2.TT_UTC) / 86400.0;
 
-    E = PoleMatrix(iers2.x_pole, iers2.y_pole) * GHAMatrix(Mjd_UT1) *
-        (NutMatrix(Mjd_TT) * PrecMatrix(MJD_J2000, Mjd_TT));
+    // Precession‐nutation + polar
+    P = PrecMatrix(MJD_J2000, Mjd_TT);
+    N = NutMatrix(Mjd_TT);
+    T = N * P;
+    E = PoleMatrix(ires2.x_pole, ires2.y_pole)
+        * GHAMatrix(Mjd_UT1)
+        * T;
 
     los2 = E.transpuesta() * los2;
-    Matrix rsite2_J2000 = E.transpuesta() * rsite2;
+    rsite2 = E.transpuesta() * rsite2;
 
-    // Time 3 transformation
+
     Mjd_UTC = Mjd3;
-    IERSResult iers3 = IERS(eopdata, Mjd_UTC, 'l');
-    TimeDiffs td3 = timediff(iers3.UT1_UTC, iers3.TAI_UTC);
-    Mjd_TT = Mjd_UTC + td3.TT_UTC/86400.0;
-    Mjd_UT1 = Mjd_TT + (iers3.UT1_UTC - td3.TT_UTC)/86400.0;
-    E = PoleMatrix(iers3.x_pole, iers3.y_pole) * GHAMatrix(Mjd_UT1) *
-        (NutMatrix(Mjd_TT) * PrecMatrix(MJD_J2000, Mjd_TT));
-    los3 = E.transpuesta() * los3;
-    Matrix rsite3_J2000 = E.transpuesta() * rsite3;
+    IERSResult ires3 = IERS(eopdata, Mjd_UTC, 'l');
+    TimeDiffs td3 = timediff(ires3.UT1_UTC, ires3.TAI_UTC);
+    // TT and UT1 in Modified Julian Days:
+    Mjd_TT = Mjd_UTC + td3.TT_UTC / 86400.0;
+    Mjd_UT1 = Mjd_TT + (ires3.UT1_UTC - td3.TT_UTC) / 86400.0;
 
-    // Prepare for iteration
-    double magr1old = 99999999.9;
-    double magr2old = 99999999.9;
-    double magrsite1 = rsite1_J2000.norm();
-    double magrsite2 = rsite2_J2000.norm();
-    double magrsite3 = rsite3_J2000.norm();
-    double cc1 = 2.0 * Matrix::dot(los1, rsite1_J2000);
-    double cc2 = 2.0 * Matrix::dot(los2, rsite2_J2000);
+    // Precession‐nutation + polar
+    P = PrecMatrix(MJD_J2000, Mjd_TT);
+    N = NutMatrix(Mjd_TT);
+    T = N * P;
+    E = PoleMatrix(ires3.x_pole, ires3.y_pole)
+        * GHAMatrix(Mjd_UT1)
+        * T;
+
+    los3 = E.transpuesta() * los3;
+    rsite3 = E.transpuesta() * rsite3;
+
+
+
+    // 7) prepare looping
+    double magr1old = 99999999.9, magr2old = 99999999.9;
+    double magrsite1 = rsite1.norm();
+    double magrsite2 = rsite2.norm();
+    double magrsite3 = rsite3.norm();
+    double cc1 = 2.0 * Matrix::dot(los1, rsite1);
+    double cc2 = 2.0 * Matrix::dot(los2, rsite2);
     int ktr = 0;
 
-    // Main iteration loop
+    Matrix r2(3, 1), r3(3, 1), v2(3, 1);
+    double f1, f2, q1, magr1, magr2, a, deltae32;
+
+    // 8) Newton‐Raphson loop
     while (fabs(magr1in - magr1old) > tol || fabs(magr2in - magr2old) > tol) {
         ktr++;
+        auto R1 = doubler(cc1, cc2,
+                          magrsite1, magrsite2,
+                          magr1in, magr2in,
+                          los1, los2, los3,
+                          rsite1, rsite2, rsite3,
+                          t1, t3, direct);
+        r2       = R1.r2;
+        r3       = R1.r3;
+        f1       !=0.0 ? R1.f1:0;
+        f2       !=0.0 ? R1.f2:0;
+        q1       !=0.0 ? R1.q1:0;
+        magr1    = R1.magr1;
+        magr2    = R1.magr2;
+        a        !=0.0 ? R1.a:0;
+        deltae32 = R1.deltae32;
 
-        DoubleRResult dr = doubler(cc1, cc2, magrsite1, magrsite2, magr1in, magr2in,
-                                  los1, los2, los3, rsite1_J2000, rsite2_J2000, rsite3_J2000,
-                                  t1, t3, direct);
+        double f = 1.0 - a / R1.magr2 * (1.0 - cos(deltae32));
+        f !=0.0 ? f:0.0;
+        double g = t3 - sqrt(pow(a, 3) / GM_Earth) * (deltae32 - sin(deltae32));
+        v2 = (r3 - f * r2) / g;
 
-        double f = 1.0 - dr.a/dr.magr2*(1.0 - cos(dr.deltae32));
-        double g = t3 - sqrt(pow(dr.a,3)/GM_Earth)*(dr.deltae32 - sin(dr.deltae32));
-        result.v2 = (dr.r3 - f*dr.r2)/g;
-
-        // Partial derivatives calculation
         double magr1o = magr1in;
         magr1in = (1.0 + pctchg) * magr1in;
         double deltar1 = pctchg * magr1in;
-        DoubleRResult dr_dr1 = doubler(cc1, cc2, magrsite1, magrsite2, magr1in, magr2in,
-                                      los1, los2, los3, rsite1_J2000, rsite2_J2000, rsite3_J2000,
-                                      t1, t3, direct);
-        double pf1pr1 = (dr_dr1.f1 - dr.f1)/deltar1;
-        double pf2pr1 = (dr_dr1.f2 - dr.f2)/deltar1;
+        auto R2 = doubler(cc1, cc2, magrsite1, magrsite2, magr1in, magr2in,
+                          los1, los2, los3, rsite1, rsite2, rsite3, t1, t3, direct);
+        double pf1pr1 = (R2.f1 - f1) / deltar1;
+        double pf2pr1 = (R2.f2 - f2) / deltar1;
 
         magr1in = magr1o;
+        deltar1 = pctchg * magr1in;
         double magr2o = magr2in;
         magr2in = (1.0 + pctchg) * magr2in;
         double deltar2 = pctchg * magr2in;
-        DoubleRResult dr_dr2 = doubler(cc1, cc2, magrsite1, magrsite2, magr1in, magr2in,
-                                      los1, los2, los3, rsite1_J2000, rsite2_J2000, rsite3_J2000,
-                                      t1, t3, direct);
-        double pf1pr2 = (dr_dr2.f1 - dr.f1)/deltar2;
-        double pf2pr2 = (dr_dr2.f2 - dr.f2)/deltar2;
+        auto R3 = doubler(cc1, cc2, magrsite1, magrsite2, magr1in, magr2in,
+                          los1, los2, los3, rsite1, rsite2, rsite3, t1, t3, direct);
+        double pf1pr2 = (R3.f1 - f1) / deltar2;
+        double pf2pr2 = (R3.f2 - f2) / deltar2;
 
         magr2in = magr2o;
-        double delta = pf1pr1*pf2pr2 - pf2pr1*pf1pr2;
-        double delta1 = pf2pr2*dr.f1 - pf1pr2*dr.f2;
-        double delta2 = pf1pr1*dr.f2 - pf2pr1*dr.f1;
+        deltar2 = pctchg * magr2in;
 
-        deltar1 = -delta1/delta;
-        deltar2 = -delta2/delta;
+        double delta = pf1pr1 * pf2pr2 - pf2pr1 * pf1pr2;
+        double delta1 = pf2pr2 * f1 - pf1pr2 * f2;
+        double delta2 = pf1pr1 * f2 - pf2pr1 * f1;
+
+        deltar1 = -delta1 / delta;
+        deltar2 = -delta2 / delta;
 
         magr1old = magr1in;
         magr2old = magr2in;
-        magr1in += deltar1;
-        magr2in += deltar2;
+
+        magr1in = magr1in + deltar1;
+        magr2in = magr2in + deltar2;
+
     }
 
-    // Final calculation
-    DoubleRResult final_dr = doubler(cc1, cc2, magrsite1, magrsite2, magr1in, magr2in,
-                                    los1, los2, los3, rsite1_J2000, rsite2_J2000, rsite3_J2000,
-                                    t1, t3, direct);
+    auto R4 = doubler(cc1, cc2, magrsite1, magrsite2, magr1in, magr2in,
+                      los1, los2, los3, rsite1, rsite2, rsite3, t1, t3, direct);
+    r2        = R4.r2;
+    r3        = R4.r3;
+    magr2     = R4.magr2;     // so f uses the correct radius
+    a         = R4.a;
+    deltae32  = R4.deltae32;
 
-    double f = 1.0 - final_dr.a/final_dr.magr2*(1.0 - cos(final_dr.deltae32));
-    double g = t3 - sqrt(pow(final_dr.a,3)/GM_Earth)*(final_dr.deltae32 - sin(final_dr.deltae32));
-    result.r2 = final_dr.r2;
-    result.v2 = (final_dr.r3 - f*final_dr.r2)/g;
+    double f = 1.0 - a/magr2*(1.0 - std::cos(deltae32));
+    double g = t3 - std::sqrt(std::pow(a,3)/GM_Earth)*(deltae32 - std::sin(deltae32));
+    v2 = (r3 - f*r2) / g;
 
-    return result;
+    AnglesDRResult out;
+    out.r2 = r2;
+    out.v2 = v2;
+    return out;
 }

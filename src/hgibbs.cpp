@@ -28,9 +28,9 @@
 %    error       - flag indicating success        'ok',...
 %
 %--------------------------------------------------------------------------*/
-HGibbsResult hgibbs(const Matrix& r1, const Matrix& r2, const Matrix& r3,
+GibbsResult hgibbs(const Matrix& r1, const Matrix& r2, const Matrix& r3,
                     double Mjd1, double Mjd2, double Mjd3) {
-    HGibbsResult result;
+    GibbsResult result;
     const double tolangle =  1.0 * M_PI/180.0; // 1 grado en radianes
 
     // Inicialización de resultados

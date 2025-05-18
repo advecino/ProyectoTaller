@@ -2,11 +2,11 @@
 // Created by adria on 14/05/2025.
 //
 
-#include "AuxParam.h"
+#include "../include/AuxParam.h"
 
 
 // auxparam.cpp
-#include "auxparam.h"
+#include "../include/AuxParam.h"
 
 AuxParam AuxParamGlob = {
         /* Mjd_UTC  = */  0,      // asignar tu valor por defecto

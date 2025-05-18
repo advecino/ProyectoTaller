@@ -52,6 +52,13 @@ Matrix AccelHarmonic(
     if (d < 1e-16) {
         return Matrix(3,1);  // aceleración cero
     }
+
+    if (n_max==0 && m_max==0) {
+        double inv_r3 = -gm/(d*d*d);
+        Matrix a_bf(3,1);
+        for(int i=1;i<=3;++i) a_bf(i,1) = r_bf(i,1)*inv_r3;
+        return E.transpuesta() * a_bf;
+    }
     // Compute geocentric latitude and longitude
     double x = r_bf(1,1), y = r_bf(2,1), zc = r_bf(3,1);
     double latgc = std::asin(zc/d);
@@ -98,12 +105,6 @@ Matrix AccelHarmonic(
     a_bf(2,1)=ay_bf;
     a_bf(3,1)=az_bf;
 
-    {
-        double inv_r3 = -gm / (d*d*d);
-        // a_central = inv_r3 * r_bf
-        Matrix a_central = r_bf * inv_r3;
-        a_bf = a_bf + a_central;
-    }
 
     // Transform back to inertial frame: a = E' * a_bf
     return E.transpuesta() * a_bf;

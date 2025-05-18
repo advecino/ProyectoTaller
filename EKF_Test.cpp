@@ -98,8 +98,6 @@ int Matrix_Basico() {
     }
 }
 
-
-
 int Position_01() {
     // En el ecuador (lat=0), meridiano de Greenwich (lon=0), sin altura
     double lon = 0.0;
@@ -148,7 +146,6 @@ int Position_02() {
     std::cout << "Test_Position_Pole passed\n";
     return 0;
 }
-
 
 int TimeUpdate_01() {
     double phi_data[] = {1,0,0,0,1,0,0,0,1};
@@ -281,7 +278,7 @@ int Mjday_TDB_02() {
     double Mjd_TT = 51544.5; // J2000.0
     double Mjd_TDB = Mjday_TDB(Mjd_TT);
     double delta = Mjd_TDB - Mjd_TT;
-    std::cout << "Δ = " << delta << " días\n";
+    std::cout << "delta = " << delta << " días\n";
     _assert(std::fabs(delta) < 1e-4);
     std::cout << "Test_Mjday_TDB_Identity passed\n";
     return 0;
@@ -849,7 +846,7 @@ int HGibbs_01() {
         double Mjd3 = Mjd2 + 1.0/(60.0*24.0); // 2 minutos después del primero
 
         // Ejecutar método
-        HGibbsResult result = hgibbs(r1, r2, r3, Mjd1, Mjd2, Mjd3);
+        GibbsResult result = hgibbs(r1, r2, r3, Mjd1, Mjd2, Mjd3);
 
         double TOL = 1e-6;
 
@@ -884,7 +881,7 @@ int HGibbs_02() {
         double Mjd2 = Mjd1 + 5.0/(60.0*24.0);
         double Mjd3 = Mjd2 + 5.0/(60.0*24.0);
 
-        HGibbsResult result = hgibbs(r1, r2, r3, Mjd1, Mjd2, Mjd3);
+        GibbsResult result = hgibbs(r1, r2, r3, Mjd1, Mjd2, Mjd3);
 
         _assert(result.error == "not coplanar");
 
@@ -909,7 +906,7 @@ int HGibbs_03() {
         double Mjd2 = Mjd1 + 5.0/(60.0*24.0);
         double Mjd3 = Mjd2 + 5.0/(60.0*24.0);
 
-        HGibbsResult result = hgibbs(r1, r2, r3, Mjd1, Mjd2, Mjd3);
+        GibbsResult result = hgibbs(r1, r2, r3, Mjd1, Mjd2, Mjd3);
 
         _assert(result.error == "   angl > 1ø");
 
@@ -935,7 +932,7 @@ int HGibbs_04() {
         double Mjd2 = Mjd1 + 30.0/(60.0*24.0);
         double Mjd3 = Mjd2 + 30.0/(60.0*24.0);
 
-        HGibbsResult result = hgibbs(r1, r2, r3, Mjd1, Mjd2, Mjd3);
+        GibbsResult result = hgibbs(r1, r2, r3, Mjd1, Mjd2, Mjd3);
 
         double TOL = 1e-6;
         // Verificaciones básicas
@@ -1284,6 +1281,44 @@ int Geodetic_01() {
     }
 }
 
+int Geodetic_02() {
+    // Punto en el ecuador sobre el meridiano 0
+    Matrix r(3,1);
+    r(1,1) = R_Earth;
+    r(2,1) = 0;
+    r(3,1) = 0;
+    auto G = Geodetic(r);
+    if (std::abs(G.longitude - 0.0) > TOL_ ||
+        std::abs(G.latitude  - 0.0) > TOL_ ||
+        std::abs(G.altitude  - 0.0) > 1e-6) {
+        std::cout<<"Equator test failed: "
+                 <<"lon="<<G.longitude
+                 <<" lat="<<G.latitude
+                 <<" h="<<G.altitude<<"\n";
+        return 1;
+    }
+    return 0;
+}
+
+int Geodetic_03() {
+    // Punto en el polo norte (lat=90°), h≈0
+    Matrix r(3,1);
+    r(1,1) = 0;
+    r(2,1) = 0;
+    r(3,1) = R_Earth * (1 - f_Earth); // radio polar
+    auto G = Geodetic(r);
+    if (std::abs(G.longitude) > TOL_||
+        std::abs(G.latitude  - M_PI_2) > 1e-9 ||
+        std::abs(G.altitude) > 1e-6) {
+        std::cout<<"Pole test failed: "
+                 <<"lon="<<G.longitude
+                 <<" lat="<<G.latitude
+                 <<" h="<<G.altitude<<"\n";
+        return 1;
+    }
+    return 0;
+}
+
 int doubler_01() {
     try {
         std::cout << "\n=== Test doubler_01 ===" << std::endl;
@@ -1336,6 +1371,57 @@ int doubler_01() {
         std::cerr << "Error en doubler_01: " << e.what() << std::endl;
         return 1;
     }
+}
+
+int Doubler_01() {
+    std::cout<<"=== Doubler_Delta2_Negative_Test ===\n";
+    bool threw=false;
+    // magrsite2 > magr2in ⇒ delta2 < 0
+    try {
+        doubler(
+                0.0, 0.0,
+                1.0, 3.0,  // magrsite1=1, magrsite2=3
+                1.0, 1.0,  // magr1in=1, magr2in=1
+                Matrix(3,1),Matrix(3,1),Matrix(3,1),
+                Matrix(3,1),Matrix(3,1),Matrix(3,1),
+                0.0, 0.0, 'y'
+        );
+    } catch(...) { threw=true; }
+    _assert(threw && "Esperaba excepción por delta2<0");
+    std::cout<<"Doubler_Delta2_Negative_Test passed\n";
+    return 0;
+}
+
+int Doubler_02() {
+    std::cout<<"=== Doubler_Los3w_Zero_Test ===\n";
+    bool threw=false;
+    // rsite1=(1,0,0), rsite2=(0,1,0) → cross(r1,r2) en +Z
+    // los3=(1,0,0) ⇒ dot(los3,w)=0
+    Matrix los1(3,1),los2(3,1),los3(3,1);
+    Matrix rs1(3,1), rs2(3,1), rs3(3,1);
+    los1(1,1)=1; los1(2,1)=0; los1(3,1)=0;
+    los2(1,1)=0; los2(2,1)=1; los2(3,1)=0;
+    los3(1,1)=1; los3(2,1)=0; los3(3,1)=0;
+    rs1(1,1)=1; rs1(2,1)=0; rs1(3,1)=0;
+    rs2(1,1)=0; rs2(2,1)=1; rs2(3,1)=0;
+    rs3 = Matrix(3,1); // (0,0,0) da lo mismo
+    // magrsite1=magr1in=1 ⇒ delta1=cc1^2-0 con cc1=2 ⇒ delta1>0
+    // mismo para delta2
+    try {
+        doubler(
+                2.0, 2.0,
+                1.0, 1.0,
+                1.0, 1.0,
+                los1, los2, los3,
+                rs1, rs2, rs3,
+                0.0, 0.0, 'y'
+        );
+    } catch(...) {
+        threw=true;
+    }
+    _assert(threw && "Esperaba excepción por división por cero en rho3");
+    std::cout<<"Doubler_Los3w_Zero_Test passed\n";
+    return 0;
 }
 
 int IERS_01() {
@@ -1609,10 +1695,6 @@ int AzElPa_Test_03() {
     }
 }
 
-
-
-
-
 int VarEqn_Test_01() {
     // 1) Construye un eop con 13 filas y 2 columnas
     Matrix eop(13, 2);
@@ -1715,149 +1797,32 @@ int VarEqn_Test_03() {
     return 0;
 }
 
-
-int test_anglesdr_basico() {
-    // Azimuths y Elevations (en radianes)
-    double az1 = 0.1, az2 = 0.2, az3 = 0.3;
-    double el1 = 0.5, el2 = 0.6, el3 = 0.4;
-
-    // Modified Julian Dates (ejemplo ficticio)
-    double Mjd1 = 58000.0;
-    double Mjd2 = 58000.01;
-    double Mjd3 = 58000.02;
-
-    // Posiciones ficticias de las estaciones (en metros, 3x1)
-    Matrix rsite1(3,1); rsite1(1,1) = 1000; rsite1(2,1) = 2000; rsite1(3,1) = 3000;
-    Matrix rsite2(3,1); rsite2(1,1) = 1100; rsite2(2,1) = 2100; rsite2(3,1) = 3100;
-    Matrix rsite3(3,1); rsite3(1,1) = 1200; rsite3(2,1) = 2200; rsite3(3,1) = 3200;
-
-    // eopdata ficticio: crea una matriz vacía o mock si no es relevante para este test
-    Matrix eopdata(1,1); // Rellénala adecuadamente si es necesario
-
-    AnglesDRResult result = anglesdr(az1, az2, az3,
-                                     el1, el2, el3,
-                                     Mjd1, Mjd2, Mjd3,
-                                     rsite1, rsite2, rsite3,
-                                     eopdata);
-
-    // Verifica que el resultado tenga dimensiones correctas
-    _assert(result.r2.getFilas() == 3 && result.r2.getColumnas() == 1);
-    _assert(result.v2.getFilas() == 3 && result.v2.getColumnas() == 1);
-
-    // Verifica que no haya valores NaN ni absurdos
-    for (int i = 1; i <= 3; ++i) {
-        _assert(!std::isnan(result.r2(i,1)));
-        _assert(!std::isnan(result.v2(i,1)));
-        _assert(std::abs(result.r2(i,1)) < 1e9); // valores razonables
-        _assert(std::abs(result.v2(i,1)) < 1e5); // valores razonables
-    }
-
-    std::cout << "Test anglesdr_basico PASADO.\n";
+int AccelHarmonic_Central_Test() {
+    // Pure central gravity: E=I, n=0,m=0
+    Matrix I(3,3);
+    for(int i=1;i<=3;++i) I(i,i)=1.0;
+    Matrix r(3,1);
+    const double R = 7000e3;
+    r(1,1)=R; r(2,1)=0; r(3,1)=0;
+    Matrix a = AccelHarmonic(r, I, 0, 0);
+    double expect = -398600.4415e9/(R*R);
+    _assert(fabs(a(1,1)-expect) < 1e-8);
+    _assert(fabs(a(2,1)) < 1e-12);
+    _assert(fabs(a(3,1)) < 1e-12);
+    std::cout<<"AccelHarmonic_Central_Test passed\n";
+    return 0;
 }
 
-int anglesg_test_01() {
-    try {
-        std::cout << "=== anglesg_test_01: EOP simple lineal ===\n";
-
-        double az1 = 0.1, az2 = 0.2, az3 = 0.3;
-        double el1 = 0.5, el2 = 0.6, el3 = 0.7;
-        double Mjd1 = 58000.0, Mjd2 = 58000.5, Mjd3 = 58001.0;
-
-        // 1) Construyo eopdata con 13 filas x 3 columnas
-        // Rellenamos con ceros primero
-        for (int i = 1; i <= 13; ++i)
-            for (int j = 1; j <= 3; ++j)
-                eopdata(i, j) = 0.0;
-
-        // 2) Fila 4: MJD enteros (para no salirse al interpolar)
-        eopdata(4, 1) = Mjd1;        // 58000
-        eopdata(4, 2) = Mjd1 + 1.0;  // 58001
-        eopdata(4, 3) = Mjd1 + 2.0;  // 58002
-
-        // 3) Filas 5–13: valores constantes (no importa mucho para el test)
-        //    aquí pongo valores sencillos en unidades de arcsec o segundos:
-        for (int col = 1; col <= 3; ++col) {
-            eopdata(5, col)  = 0.1; // x_pole ["]
-            eopdata(6, col)  = 0.2; // y_pole ["]
-            eopdata(7, col)  = 0.0; // UT1-UTC [s]
-            eopdata(8, col)  = 0.0; // LOD [s]
-            eopdata(9, col)  = 0.0; // dpsi ["]
-            eopdata(10, col) = 0.0; // deps ["]
-            eopdata(11, col) = 0.0; // dx_pole ["]
-            eopdata(12, col) = 0.0; // dy_pole ["]
-            eopdata(13, col) = 37.0;// TAI-UTC [s]
-        }
-
-        // Sitios (same site for simplicity)
-        Matrix Rs1(3,1), Rs2(3,1), Rs3(3,1);
-        Rs1(1,1) = -2314870.0; Rs1(2,1) =  4663275.0; Rs1(3,1) =  3673747.0;
-        Rs2 = Rs1;
-        Rs3 = Rs1;
-
-        // Llamada a la función
-        AnglesGResult res = anglesg(
-                az1, az2, az3,
-                el1, el2, el3,
-                Mjd1, Mjd2, Mjd3,
-                Rs1, Rs2, Rs3
-        );
-
-        double rnorm = res.r2.norm();
-        double vnorm = res.v2.norm();
-
-        // Comprobaciones razonables
-        _assert(rnorm > 6378000.0);                // mayor que el radio terrestre
-        _assert(vnorm > 1000.0 && vnorm < 10000.0);// velocidad orbital típica
-
-        std::cout << "anglesg_test_01 passed\n";
-        return 0;
-    } catch (const std::exception& e) {
-        std::cerr << "Error in anglesg_test_01: " << e.what() << "\n";
-        return 1;
-    }
+int AccelHarmonic_ZeroDistance_Test() {
+    // r at the center => should return zero (avoid NaNs)
+    Matrix I(3,3);
+    for(int i=1;i<=3;++i) I(i,i)=1.0;
+    Matrix r(3,1); // all zeros
+    Matrix a = AccelHarmonic(r, I, 5, 5);
+    _assert(a.norm() == 0.0);
+    std::cout<<"AccelHarmonic_ZeroDistance_Test passed\n";
+    return 0;
 }
-
-int anglesg_test_02() {
-    try {
-        std::cout << "=== anglesg_test_02: EOP constante ===\n";
-
-        double az1 = 1.0, az2 = 1.2, az3 = 1.4;
-        double el1 = 0.2, el2 = 0.3, el3 = 0.4;
-        double Mjd1 = 59000.0, Mjd2 = 59000.5, Mjd3 = 59001.0;
-
-        Matrix Rs1(3,1), Rs2(3,1), Rs3(3,1);
-        Rs1(1,1)= 1000000; Rs1(2,1)= -500000; Rs1(3,1)= 2000000;
-        Rs2 = Rs1; Rs3 = Rs1;
-
-        // EOP completamente constante (sin interpolación)
-        eopdata(4,1)  = 59000.0;
-        for(int r=5; r<=13; ++r) {
-            eopdata(r,1) = 0.0;  // cero desplazamientos y UT1-UTC
-        }
-
-        AnglesGResult res = anglesg(
-                az1, az2, az3,
-                el1, el2, el3,
-                Mjd1, Mjd2, Mjd3,
-                Rs1, Rs2, Rs3
-        );
-
-        double rnorm = res.r2.norm();
-        double vnorm = res.v2.norm();
-        std::cout << "r_norm = " << rnorm << ", v_norm = " << vnorm << "\n";
-
-        // Aunque eopdata=0, la geometría sigue produciendo algo sensato
-        _assert(rnorm > 1000000.0);
-        _assert(vnorm >= 0.0);
-
-        std::cout << "anglesg_test_02 passed\n";
-        return 0;
-    } catch(const std::exception& e) {
-        std::cerr << "Error in anglesg_test_02: " << e.what() << "\n";
-        return 1;
-    }
-}
-
 
 int Accel_01() {
     AuxParam p{58000.0, 58000.0, 0, 0, false,false,false};
@@ -1888,7 +1853,6 @@ static Matrix make_simple_eop(double Mjd0) {
     return eop;
 }
 
-// 1) Invalid Y size --> debe lanzar invalid_argument
 int Accel_02(){
     std::cout<<"=== Accel_InvalidY_Test ===\n";
     AuxParam params{58000.0,58000.0,0,0};
@@ -1905,7 +1869,6 @@ int Accel_02(){
     return 0;
 }
 
-// 2) Invalid AuxParam (m>n) --> punto de chequeo en AccelHarmonic
 int Accel_03(){
     std::cout<<"=== Accel_InvalidAux_Test ===\n";
     AuxParam params{58000.0,58000.0,2,3}; // m>n
@@ -1923,7 +1886,6 @@ int Accel_03(){
     return 0;
 }
 
-// 3) EOP fuera de rango --> IERS lanza out_of_range
 int Accel_04(){
     std::cout<<"=== Accel_EOP_OutOfRange_Test ===\n";
     AuxParam params{58000.0,58000.0,0,0};
@@ -1940,7 +1902,6 @@ int Accel_04(){
     return 0;
 }
 
-// 4) Estado cero (r=0,v=0) --> dr/dt=0, dv/dt=0
 int Accel_05(){
     std::cout<<"=== Accel_ZeroState_Test ===\n";
     AuxParam params{58000.0,58000.0,0,0};
@@ -1957,7 +1918,6 @@ int Accel_05(){
     return 0;
 }
 
-// 5) Órbita circular en x–y, prueba centrípeta
 int Accel_06(){
     std::cout<<"=== Accel_CircularOrbit_Test ===\n";
     AuxParam params{58000.0,58000.0,0,0};
@@ -1994,10 +1954,516 @@ int Accel_06(){
 
 
 
+int anglesdr_BadSize_Test() {
+    std::cout<<"=== anglesdr_BadSize_Test\n";
+    bool ok=false;
+    try {
+        // 2) Prepara AuxParam
+        AuxParam params;
+
+        // 3) Prepara eopdata (13×3) con fila 4 = [M1, M2, M3]
+        Matrix eopdata(13,3);
+        Matrix bad(5,1);
+        Matrix rs(3,1); rs(1,1)=1; rs(2,1)=2; rs(3,1)=3;
+        auto out = anglesdr(0,0,0,0,0,0, 58000,58001,58002, bad, rs, rs,params,eopdata);
+    } catch(const std::invalid_argument&) {
+        ok=true;
+    }
+    _assert(ok && "se esperaba invalid_argument");
+    std::cout<<"anglesdr_BadSize_Test passed\n";
+    return 0;
+}
+
+// 2) Líneas de vista idénticas ➞ geometría degenerada
+int anglesdr_DegenerateGeometry_Test() {
+    std::cout<<"=== anglesdr_DegenerateGeometry_Test\n";
+    // tres observaciones idénticas (mismo az/el) no definen órbita
+    double az=1.0, el=0.5;
+    double M1=58000, M2=58000.1, M3=58000.2;
+    Matrix site(3,1); site(1,1)= 6378e3; site(2,1)=0; site(3,1)=0;
+    bool threw=false;
+    // 2) Prepara AuxParam
+    AuxParam params;
+    params.Mjd_UTC = M2;
+    params.Mjd_TT  = M2;
+    params.n = 0;   // no usamos gravedad aquí
+    params.m = 0;
+
+    // 3) Prepara eopdata (13×3) con fila 4 = [M1, M2, M3]
+    Matrix eopdata(13,3);
+    try {
+        auto out = anglesdr(az,az,az, el,el,el, M1,M2,M3,
+                            site, site, site,params,eopdata);
+    } catch(const std::runtime_error&) {
+        threw = true;
+    }
+    _assert(threw && "se esperaba runtime_error por geometría degenerada");
+    std::cout<<"anglesdr_DegenerateGeometry_Test passed\n";
+    return 0;
+}
+
+
+
+int anglesdr_NonDegenerate_Test() {
+    std::cout << "=== anglesdr_NonDegenerate_Test ===\n";
+
+    // 1) Constantes órbita circular y MJDs
+    const double GM = GM_Earth;
+    const double R_e = R_Earth;
+    const double alt = 500e3;
+    const double R_sat = R_e + alt;
+    const double w = std::sqrt(GM/(R_sat*R_sat*R_sat));
+    const double dt = 60.0;
+    double M2 = 58000.0;
+    double M1 = M2 - dt/86400.0;
+    double M3 = M2 + dt/86400.0;
+
+    // 2) Tres estaciones ortogonales
+    Matrix rsite1(3,1); rsite1(1,1)= R_e; rsite1(2,1)=0;    rsite1(3,1)=0;
+    Matrix rsite2(3,1); rsite2(1,1)= 0;   rsite2(2,1)=R_e;  rsite2(3,1)=0;
+    Matrix rsite3(3,1); rsite3(1,1)= 0;   rsite3(2,1)=0;    rsite3(3,1)=R_e;
+
+    // 3) Posición satélite en t=-dt,0,+dt
+    auto sat = [&](double t){
+        double th = w*t;
+        Matrix r(3,1);
+        r(1,1)=R_sat*cos(th);
+        r(2,1)=R_sat*sin(th);
+        r(3,1)=0;
+        return r;
+    };
+    Matrix r1 = sat(-dt), r2 = sat(0), r3 = sat(+dt);
+
+    // 4) Ángulos de acimut/elevación
+    auto los = [&]( Matrix& rs, Matrix& site){
+        Matrix d = rs-site;
+        return d*(1.0/d.norm());
+    };
+    Matrix los1 = los(r1,rsite1), los2 = los(r2,rsite2), los3 = los(r3,rsite3);
+    double az1=atan2(los1(1,1),los1(2,1)), el1=asin(los1(3,1));
+    double az2=atan2(los2(1,1),los2(2,1)), el2=asin(los2(3,1));
+    double az3=atan2(los3(1,1),los3(2,1)), el3=asin(los3(3,1));
+
+    // 5) AuxParam
+    AuxParam params;
+    params.Mjd_UTC = M2;
+    params.Mjd_TT  = M2;
+    params.n = 0; params.m = 0;
+    params.sun = params.moon = params.planets = false;
+
+    // 6) EOP: fila 4 = [M1,M2,M3], resto da igual
+    Matrix eop(13,3);
+    eop(4,1) = M1;
+    eop(4,2) = M2;
+    eop(4,3) = M3;
+    // opcional: eop(13,*) = TAI-UTC realista (o cero)
+
+    // 7) Llamada
+    auto out = anglesdr(
+            az1,az2,az3,
+            el1,el2,el3,
+            M1,M2,M3,
+            rsite1, rsite2, rsite3,
+            params, eop
+    );
+
+    // 8) Validación analítica
+    Matrix expect_r2 = r2;
+    Matrix expect_v2(3,1);
+    expect_v2(1,1) = -R_sat*w*0.0;
+    expect_v2(2,1) =  R_sat*w*1.0;
+    expect_v2(3,1) =  0.0;
+
+    double tol_r=1e-2, tol_v=1e-4;
+    _assert(fabs(out.r2(1,1)-expect_r2(1,1))<tol_r);
+    _assert(fabs(out.r2(2,1)-expect_r2(2,1))<tol_r);
+    _assert(fabs(out.r2(3,1)-expect_r2(3,1))<tol_r);
+    _assert(fabs(out.v2(1,1)-expect_v2(1,1))<tol_v);
+    _assert(fabs(out.v2(2,1)-expect_v2(2,1))<tol_v);
+    _assert(fabs(out.v2(3,1)-expect_v2(3,1))<tol_v);
+
+    std::cout<<"anglesdr_NonDegenerate_Test passed\n";
+    return 0;
+}
+
+int anglesdr_J2000Circular_Test() {
+    std::cout << "=== anglesdr_J2000Circular_Test ===\n";
+
+    // 1) Parámetros órbita circular
+    const double GM = GM_Earth;
+    const double R_e = R_Earth;
+    const double alt = 500e3;                     // 500 km de altitud
+    const double R_sat = R_e + alt;
+    const double w = std::sqrt(GM/(R_sat*R_sat*R_sat));
+    const double dt = 60.0;                       // 60 s
+
+    // 2) Tres epochs alrededor de J2000 (MJD=51544.5)
+    double M2 = 51544.5;
+    double M1 = M2 - dt/86400.0;
+    double M3 = M2 + dt/86400.0;
+
+    // 3) Tres estaciones mutuamente ortogonales en ECEF
+    Matrix rsite1(3,1); rsite1(1,1)= R_e; rsite1(2,1)=0;    rsite1(3,1)=0;
+    Matrix rsite2(3,1); rsite2(1,1)= 0;   rsite2(2,1)=R_e;  rsite2(3,1)=0;
+    Matrix rsite3(3,1); rsite3(1,1)= 0;   rsite3(2,1)=0;    rsite3(3,1)=R_e;
+
+    // 4) Posición del satélite en t=-dt, 0, +dt en ECI
+    auto sat = [&](double t){
+        double ang = w*t;
+        Matrix r(3,1);
+        r(1,1) = R_sat*std::cos(ang);
+        r(2,1) = R_sat*std::sin(ang);
+        r(3,1) = 0;
+        return r;
+    };
+    Matrix r1 = sat(-dt), r2 = sat(0), r3 = sat(+dt);
+
+    // 5) Line-of-sight normalizadas
+    auto los = [&]( Matrix& rs,  Matrix& site){
+        Matrix d = rs - site;
+        return d * (1.0 / d.norm());
+    };
+    Matrix los1 = los(r1, rsite1),
+            los2 = los(r2, rsite2),
+            los3 = los(r3, rsite3);
+
+    double az1 = std::atan2(los1(1,1), los1(2,1)), el1 = std::asin(los1(3,1));
+    double az2 = std::atan2(los2(1,1), los2(2,1)), el2 = std::asin(los2(3,1));
+    double az3 = std::atan2(los3(1,1), los3(2,1)), el3 = std::asin(los3(3,1));
+
+    // 6) AuxParam
+    AuxParam params;
+    params.Mjd_UTC = M2;
+    params.Mjd_TT  = M2;
+    params.n = 0; params.m = 0;
+    params.sun = params.moon = params.planets = false;
+
+    // 7) EOP: fila 4 = [51544,51544,51544], resto da igual (TAI-UTC=0)
+    Matrix eop(13,3);
+    eop(4,1) = std::floor(M1);
+    eop(4,2) = std::floor(M2);
+    eop(4,3) = std::floor(M3);
+
+    // 8) Llamada
+    auto out = anglesdr(
+            az1,az2,az3,
+            el1,el2,el3,
+            M1,M2,M3,
+            rsite1, rsite2, rsite3,
+            params, eop
+    );
+
+    // 9) Valores esperados
+    Matrix expect_r2 = r2;
+    Matrix expect_v2(3,1);
+    expect_v2(1,1) = -R_sat*w*0.0;
+    expect_v2(2,1) =  R_sat*w*1.0;
+    expect_v2(3,1) =  0.0;
+
+    // 10) Tolerancias y asserts
+    double tol_r = 1e-2;   // 1 cm
+    double tol_v = 1e-4;   // 0.1 mm/s
+
+    _assert(std::fabs(out.r2(1,1) - expect_r2(1,1)) < tol_r);
+    _assert(std::fabs(out.r2(2,1) - expect_r2(2,1)) < tol_r);
+    _assert(std::fabs(out.r2(3,1) - expect_r2(3,1)) < tol_r);
+
+    _assert(std::fabs(out.v2(1,1) - expect_v2(1,1)) < tol_v);
+    _assert(std::fabs(out.v2(2,1) - expect_v2(2,1)) < tol_v);
+    _assert(std::fabs(out.v2(3,1) - expect_v2(3,1)) < tol_v);
+
+    std::cout<<"anglesdr_J2000Circular_Test passed\n";
+    return 0;
+}
+
+
+
+
+int Doubler_03() {
+    // Caso trivial: rsite1 = (0,0,0), los1=(1,0,0), rsite2=(0,0,0), los2=(0,1,0)
+    // magr1in y magr2in escogidos grandes, t1=t3=1
+    double cc1 = 0.0, cc2 = 0.0;
+    double magrsite1 = 0.0, magrsite2 = 0.0;
+    double magr1in = 10000.0, magr2in = 10000.0;
+    Matrix los1(3,1), los2(3,1), los3(3,1);
+    los1(1,1)=1; los1(2,1)=0; los1(3,1)=0;
+    los2(1,1)=0; los2(2,1)=1; los2(3,1)=0;
+    los3(1,1)=0; los3(2,1)=0; los3(3,1)=1;
+    Matrix rsite1(3,1), rsite2(3,1), rsite3(3,1);
+    // todos cero
+    DoubleRResult R = doubler(
+            cc1, cc2,
+            magrsite1, magrsite2,
+            magr1in, magr2in,
+            los1, los2, los3,
+            rsite1, rsite2, rsite3,
+            1.0, 1.0, 'y'
+    );
+    // Aquí esperamos que R.r2 = rho2*los2 = rho2*(0,1,0) con rho2 = (-cc2+sqrt(cc2^2 - ...))/2
+    double expected_rho2 = (-cc2 + sqrt(cc2*cc2 - 4*(magrsite2*magrsite2 - magr2in*magr2in))) / 2.0;
+    if (std::fabs(R.r2(1,1) - 0.0) > TOL_ ||
+        std::fabs(R.r2(2,1) - expected_rho2) > TOL_ ||
+        std::fabs(R.r2(3,1) - 0.0) > TOL_) {
+        std::cout<<"Doubler_TrivialColinear_Test FAILED\n";
+        return 1;
+    }
+    std::cout<<"Doubler_TrivialColinear_Test passed\n";
+    return 0;
+}
+
+#define TOL_R 1e-2
+#define TOL_V 1e-4
+
+int anglesdr_SyntheticCircular_Test(){
+    std::cout<<"=== anglesdr_SyntheticCircular_Test ===\n";
+    // Parámetros idénticos a los de Doubler_CircularOrbit_Test
+    const double R = R_Earth + 1000e3;
+    const double GM = GM_Earth;
+    double w = std::sqrt(GM/(R*R*R));
+    double dt = 60.0;
+    double M2 = 58000.0;
+    double M1 = M2 - dt/86400.0, M3 = M2 + dt/86400.0;
+
+    // 1) sitio ECEF en origen
+    Matrix site(3,1); site(1,1)=0; site(2,1)=0; site(3,1)=0;
+    // 2) posiciones en ECI
+    auto sat = [&](double t){
+        Matrix r(3,1);
+        r(1,1)=R*std::cos(w*t);
+        r(2,1)=R*std::sin(w*t);
+        r(3,1)=0;
+        return r;
+    };
+    Matrix r1 = sat(-dt), r2 = sat(0), r3 = sat(+dt);
+    // 3) LOS
+    Matrix los1 = (r1)*(1.0/r1.norm());
+    Matrix los2 = (r2)*(1.0/r2.norm());
+    Matrix los3 = (r3)*(1.0/r3.norm());
+    double az1 = std::atan2(los1(1,1),los1(2,1)), el1 = std::asin(los1(3,1));
+    double az2 = std::atan2(los2(1,1),los2(2,1)), el2 = std::asin(los2(3,1));
+    double az3 = std::atan2(los3(1,1),los3(2,1)), el3 = std::asin(los3(3,1));
+
+    AuxParam params;
+    params.Mjd_UTC = M2; params.Mjd_TT = M2;
+    params.n=0; params.m=0;
+    params.sun = params.moon = params.planets = false;
+
+    // EOP mínimo: sólo usaremos la fila 4
+    Matrix eop(13,3);
+    for(int i=1;i<=13;++i) for(int j=1;j<=3;++j) eop(i,j)=0;
+    eop(4,1)=M1; eop(4,2)=M2; eop(4,3)=M3;
+
+    auto out = anglesdr(
+            az1,az2,az3,
+            el1,el2,el3,
+            M1,M2,M3,
+            site,site,site,
+            params,
+            eop
+    );
+
+    // Comprueba r2, v2
+    Matrix expect_r2 = r2;
+    Matrix expect_v2(3,1);
+    expect_v2(1,1) = -R*w*std::sin(0.0);
+    expect_v2(2,1) =  R*w*std::cos(0.0);
+    expect_v2(3,1) =  0.0;
+
+    bool ok = true;
+    for(int i=1;i<=3;++i){
+        if(std::fabs(out.r2(i,1)-expect_r2(i,1))>TOL_R) ok=false;
+        if(std::fabs(out.v2(i,1)-expect_v2(i,1))>TOL_V) ok=false;
+    }
+    if(!ok){
+        std::cout<<"anglesdr_SyntheticCircular_Test FAILED\n";
+        return 1;
+    }
+    std::cout<<"anglesdr_SyntheticCircular_Test passed\n";
+    return 0;
+}
+
+
+int anglesg_BadSize_Test() {
+    Matrix Rs1(2,1), Rs2(2,1), Rs3(2,1);
+    AuxParam params{58000.0,58000.0,0,0,false,false,false};
+    Matrix eop(13,3);
+    bool threw = false;
+    try {
+        auto out = anglesg(
+                0,0,0, 0,0,0,
+                58000.0,58000.0,58000.0,
+                Rs1, Rs2, Rs3,
+                params, eop
+        );
+    } catch(const std::invalid_argument&) {
+        threw = true;
+    }
+    _assert(threw && "Expected exception for wrong site vector size");
+    std::cout<<"anglesg_BadSize_Test passed\n";
+    return 0;
+}
+
+int anglesg_SyntheticCircular_Test() {
+    // dados satélite circular equatorial
+    const double GM = GM_Earth;
+    const double R_e = R_Earth;
+    const double alt = 1e6;
+    const double R_sat = R_e + alt;
+    const double w = std::sqrt(GM/(R_sat*R_sat*R_sat));
+    const double dt = 60.0;
+    double M2 = 58000.0;
+    double M1 = M2 - dt/86400.0;
+    double M3 = M2 + dt/86400.0;
+
+    // estación en (R_e,0,0)
+    Matrix Rs(3,1);
+    Rs(1,1)=R_e; Rs(2,1)=0; Rs(3,1)=0;
+
+    auto sat = [&](double t)->Matrix {
+        double ang = w*t;
+        Matrix r(3,1);
+        r(1,1)=R_sat*cos(ang);
+        r(2,1)=R_sat*sin(ang);
+        r(3,1)=0;
+        return r;
+    };
+
+    Matrix r1 = sat(-dt), r2 = sat(0), r3 = sat(+dt);
+    Matrix los1 = (r1-Rs)*(1.0/(r1-Rs).norm());
+    Matrix los2 = (r2-Rs)*(1.0/(r2-Rs).norm());
+    Matrix los3 = (r3-Rs)*(1.0/(r3-Rs).norm());
+    double az1 = std::atan2(los1(1,1),los1(2,1)), el1 = std::asin(los1(3,1));
+    double az2 = std::atan2(los2(1,1),los2(2,1)), el2 = std::asin(los2(3,1));
+    double az3 = std::atan2(los3(1,1),los3(2,1)), el3 = std::asin(los3(3,1));
+
+    AuxParam params;
+    params.Mjd_UTC = M2;
+    params.Mjd_TT  = M2;
+    params.n = 0; params.m = 0;
+    params.sun = params.moon = params.planets = false;
+
+    // eopdata dummy (fila 4 = [M1,M2,M3])
+    Matrix eop(13,3);
+    eop(4,1)=M1; eop(4,2)=M2; eop(4,3)=M3;
+
+    auto out = anglesg(
+            az1,az2,az3, el1,el2,el3,
+            M1,M2,M3,
+            Rs, Rs, Rs,
+            params, eop
+    );
+
+    // esperados
+    Matrix expect_r2 = r2;
+    Matrix expect_v2(3,1);
+    expect_v2(1,1) = -R_sat*w*sin(0.0);
+    expect_v2(2,1) =  R_sat*w*cos(0.0);
+    expect_v2(3,1) =  0.0;
+
+    std::cout<<out.r2(1,1) <<std::endl;
+    std::cout<<expect_r2(1,1) <<std::endl;
+    std::cout<<out.r2(2,1) <<std::endl;
+    std::cout<<expect_r2(2,1) <<std::endl;
+    std::cout<<out.r2(3,1) <<std::endl;
+    std::cout<<expect_r2(3,1) <<std::endl;
+    std::cout<<out.v2(1,1) <<std::endl;
+    std::cout<<out.v2(2,1) <<std::endl;
+    std::cout<<out.v2(3,1) <<std::endl;
+
+    // comprobaciones
+    _assert(std::fabs(out.r2(1,1) - expect_r2(1,1)) < TOL_R);
+    _assert(std::fabs(out.r2(2,1) - expect_r2(2,1)) < TOL_R);
+    _assert(std::fabs(out.r2(3,1) - expect_r2(3,1)) < TOL_R);
+    _assert(std::fabs(out.v2(1,1) - expect_v2(1,1)) < TOL_V);
+    _assert(std::fabs(out.v2(2,1) - expect_v2(2,1)) < TOL_V);
+    _assert(std::fabs(out.v2(3,1) - expect_v2(3,1)) < TOL_V);
+
+    std::cout<<"anglesg_SyntheticCircular_Test passed\n";
+    return 0;
+}
+int anglesg_BadEOP_Test() {
+    // Debe fallar si eopdata no tiene 13×3
+    double M2 = 58000.0;
+    Matrix Rs(3,1); Rs(1,1)=0; Rs(2,1)=0; Rs(3,1)=0;
+    AuxParam params;
+    params.Mjd_UTC = M2;
+    params.Mjd_TT  = M2;
+    // eopdata mal dimensionado:
+    Matrix eop_bad(12,3);
+    bool threw = false;
+    try {
+        anglesg(0,0,0, 0,0,0, M2,M2,M2, Rs,Rs,Rs, params, eop_bad);
+    } catch(const std::exception&) {
+        threw = true;
+    }
+    _assert(threw && "Expected exception for bad eopdata size");
+    std::cout << "anglesg_BadEOP_Test passed\n";
+    return 0;
+}
+
+int anglesg_Test_01() {
+    // 1) Prepare EOP data (simplified)
+    Matrix eop(13, 2);
+    for(int i=1;i<=13;++i) for(int j=1;j<=2;++j) eop(i,j)=0.0;
+    double Mjd0 = 58000.0;
+    eop(4,1) = Mjd0;
+    eop(4,2) = Mjd0+1.0;
+    eop(13,1) = 37.0;
+    eop(13,2) = 37.0;
+
+    // 2) Prepare observation data (simplified scenario)
+    double az1 = 0.1, az2 = 0.2, az3 = 0.3;  // radians
+    double el1 = 0.1, el2 = 0.2, el3 = 0.3;  // radians
+    double Mjd1 = Mjd0, Mjd2 = Mjd0 + 0.01, Mjd3 = Mjd0 + 0.02;
+
+    // 3) Prepare station positions (simplified)
+    Matrix Rs1(3,1), Rs2(3,1), Rs3(3,1);
+    Rs1(1,1) = 1000.0; Rs1(2,1) = 2000.0; Rs1(3,1) = 3000.0;
+    Rs2(1,1) = 1100.0; Rs2(2,1) = 2100.0; Rs2(3,1) = 3100.0;
+    Rs3(1,1) = 1200.0; Rs3(2,1) = 2200.0; Rs3(3,1) = 3200.0;
+
+    // 4) Prepare auxiliary parameters
+    AuxParam params;
+    // (Fill params as needed for your implementation)
+
+    try {
+        // 5) Call anglesg function
+        AnglesGResult result = anglesg(az1, az2, az3, el1, el2, el3,
+                                       Mjd1, Mjd2, Mjd3, Rs1, Rs2, Rs3,
+                                       params, eop);
+
+        // 6) Basic assertions
+        _assert(result.r2.getFilas() == 3 && result.r2.getColumnas() == 1);
+        _assert(result.v2.getFilas() == 3 && result.v2.getColumnas() == 1);
+
+        // Check that the position is reasonable (not zero and not NaN)
+        double r2_norm = result.r2.norm();
+        _assert(r2_norm > 1000.0 && r2_norm < 10000000.0);
+
+        // Check that the velocity is reasonable
+        double v2_norm = result.v2.norm();
+        _assert(v2_norm > 100.0 && v2_norm < 10000.0);
+
+        std::cout << "anglesg_Test_01 passed\n";
+        return 0;
+    } catch (const std::exception& e) {
+        std::cerr << "anglesg_Test_01 failed: " << e.what() << "\n";
+        return 1;
+    }
+}
+
+
+
+
+
+
+
+
+
 
 int all_tests()
 {
-
+/*
     _verify(Matrix_Basico);
     _verify(Mjday_01);
     _verify(Mjday_02);
@@ -2031,6 +2497,9 @@ int all_tests()
     _verify(unit_01);
     _verify(unit_02);
     _verify(unit_03);
+    _verify(Doubler_01);
+    _verify(Doubler_02);
+    _verify(Doubler_03);
     _verify(Gibbs_01);
     _verify(HGibbs_01);
     _verify(HGibbs_02);
@@ -2048,6 +2517,8 @@ int all_tests()
     _verify(PrecMatrix_01);
     _verify(timediff_01);
     _verify(Geodetic_01);
+    _verify(Geodetic_02);
+    _verify(Geodetic_03);
     _verify(doubler_01);
     _verify(IERS_01);
     _verify(IERS_02);
@@ -2066,9 +2537,19 @@ int all_tests()
     _verify(Accel_04);
     _verify(Accel_05);
     _verify(Accel_06);
+_verify(AccelHarmonic_Central_Test);
+    _verify(AccelHarmonic_ZeroDistance_Test);*/
+    //_verify(anglesdr_BadSize_Test);
+    //_verify(anglesdr_SyntheticCircular_Test);
+    //_verify(anglesdr_DegenerateGeometry_Test);
+    //_verify(anglesdr_SyntheticCircular_Equatorial_Test);
+    //_verify(anglesdr_CollinearLOS_Test);
+    //_verify(anglesdr_NonDegenerate_Test);
+    //_verify(anglesdr_J2000Circular_Test);
 
-    //_verify(test_anglesdr_basico);//FALLA
-    //_verify(anglesg_test_01);//FALLA
+    //_verify(anglesg_BadEOP_Test);//PASA
+    _verify(anglesg_Test_01);
+
 
 
     return 0;

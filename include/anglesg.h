@@ -5,36 +5,37 @@
 #ifndef PROYECTOTALLER_ANGLESG_H
 #define PROYECTOTALLER_ANGLESG_H
 
-
 #include "Matrix.h"
 #include "Sat_const.h"
+#include "Geodetic.h"
+#include "LTC.h"
+#include "IERS.h"
+#include "TimeDiff.h"
+#include "PrecMatrix.h"
+#include "NutMatrix.h"
+#include "PoleMatrix.h"
+#include "GHAMatrix.h"
+#include "rpoly.h"        // para roots()
+#include "AuxParam.h"
 
-/**
- * @brief Result of Gauss angles-only orbit determination
- */
 struct AnglesGResult {
-    Matrix r2;  ///< Position at t2 [m]
-    Matrix v2;  ///< Velocity at t2 [m/s]
-    AnglesGResult();
-    AnglesGResult(const Matrix& r, const Matrix& v);
+    Matrix r2;  // posición en t2 [m]
+    Matrix v2;  // velocidad en t2 [m/s]
+    AnglesGResult(): r2(3,1), v2(3,1) {}
 };
 
 /**
- * @brief Solves orbit determination from three optical sightings (Gauss method)
- * @param az1,az2,az3  Azimuths at t1,t2,t3 [rad]
- * @param el1,el2,el3  Elevations at t1,t2,t3 [rad]
- * @param Mjd1,Mjd2,Mjd3  Modified Julian Dates of observations
- * @param Rs1,Rs2,Rs3    Site position vectors in ICRF [m]
- * @param eopdata        Earth‐orientation parameters matrix
- * @return Position and velocity at t2
+ * @brief Orbit determination from three optical sightings, “Gibbs” method.
  */
 AnglesGResult anglesg(
         double az1, double az2, double az3,
         double el1, double el2, double el3,
         double Mjd1, double Mjd2, double Mjd3,
-        const Matrix& Rs1,
-        const Matrix& Rs2,
-        const Matrix& Rs3
+        Matrix& Rs1,
+        Matrix& Rs2,
+        Matrix& Rs3,
+        AuxParam& params,
+        Matrix& eopdata
 );
 
 

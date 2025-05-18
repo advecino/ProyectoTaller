@@ -17,6 +17,7 @@
 #include "PoleMatrix.h"
 #include "GHAMatrix.h"
 #include "doubler.h"
+#include "AuxParam.h"
 #include <cstring>
 
 struct AnglesDRResult {
@@ -26,20 +27,25 @@ struct AnglesDRResult {
 };
 
 /**
- * @brief Solves orbit determination using three optical sightings
- *
- * @param az1,az2,az3 Azimuth angles [rad]
- * @param el1,el2,el3 Elevation angles [rad]
- * @param Mjd1,Mjd2,Mjd3 Modified Julian Dates
- * @param rsite1,rsite2,rsite3 Site position vectors [m]
- * @param eopdata Earth Orientation Parameters data
- * @return AnglesDRResult Contains position and velocity vectors at t2
+ * @brief Orbit determination from three optical sightings, “double‐r” method.
+ * @param az1,az2,az3   azimuths at t1/t2/t3 [rad]
+ * @param el1,el2,el3   elevations at t1/t2/t3 [rad]
+ * @param Mjd1,Mjd2,Mjd3  observation MJDs
+ * @param rsite1,rsite2,rsite3  site ECEF positions [m]
+ * @param params       auxiliary params (Mjd_UTC, Mjd_TT, n, m, flags)
+ * @param eopdata      Earth orientation data matrix
+ * @return r2,v2       position & velocity at t2
  */
-AnglesDRResult anglesdr(double az1, double az2, double az3,
-                        double el1, double el2, double el3,
-                        double Mjd1, double Mjd2, double Mjd3,
-                        const Matrix& rsite1, const Matrix& rsite2, const Matrix& rsite3,
-                        Matrix& eopdata);
+AnglesDRResult anglesdr(
+        double az1, double az2, double az3,
+        double el1, double el2, double el3,
+        double Mjd1, double Mjd2, double Mjd3,
+        Matrix& rsite1,
+        Matrix& rsite2,
+        Matrix& rsite3,
+        AuxParam& params,
+        Matrix& eopdata
+);
 
 #endif //PROYECTOTALLER_ANGLESDR_H
 

@@ -10,16 +10,9 @@
 #include "Sat_const.h"
 #include "unit.h"
 #include "angl.h"
+#include "gibbs.h"
 
 
-struct HGibbsResult {
-    Matrix v2;
-    double theta;
-    double theta1;
-    double copa;
-    std::string error;
-    HGibbsResult() : v2(3, 1) {}
-};
 
 /**
  * @brief Implementa el método de Herrick-Gibbs para determinación orbital
@@ -32,7 +25,7 @@ struct HGibbsResult {
  * @param Mjd3 Fecha juliana de la observación 3
  * @return HGibbsResult Estructura con resultados
  */
-HGibbsResult hgibbs(const Matrix& r1, const Matrix& r2, const Matrix& r3,
+GibbsResult hgibbs(const Matrix& r1, const Matrix& r2, const Matrix& r3,
                     double Mjd1, double Mjd2, double Mjd3);
 
 
