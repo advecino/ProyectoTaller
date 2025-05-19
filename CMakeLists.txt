@@ -97,6 +97,6 @@ add_executable(ProyectoTaller
         include/Accel.h
         src/AuxParam.cpp
         include/AuxParam.h
-        include/rpoly.cpp
+        src/rpoly.cpp
         include/rpoly.h
 )

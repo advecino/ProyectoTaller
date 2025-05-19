@@ -2,7 +2,9 @@
 // Created by adria on 10/05/2025.
 //
 
+#include <stdexcept>
 #include "../include/elements.h"
+
 /*
 %--------------------------------------------------------------------------
 %
@@ -29,53 +31,53 @@
 % Last modified:   2015/08/12   M. Mahooti
 %
 %--------------------------------------------------------------------------*/
-KeplerianElements elements(const Matrix& y) {
-    const double pi2 = 2.0 * M_PI;
-    KeplerianElements el;
 
-    // Extract position and velocity from state vector
-    Matrix r = y.getSubMatrix(1, 3, 1, 1);  // First 3 elements are position
-    Matrix v = y.getSubMatrix(4, 6, 1, 1);  // Next 3 elements are velocity
 
-    // Compute areal velocity (h = r × v)
+KeplerianElements elements(const Matrix& r, const Matrix& v) {
+
+    const double TWO_PI = 2 * M_PI;
+
+    // 1) angular momentum
     Matrix h = Matrix::cross(r, v);
-    double magh = h.norm();
-    el.p = magh * magh / GM_Earth;
-
-    // Longitude of ascending node (Ω)
-    el.Omega = atan2(h(1,1), -h(2,1));
-    el.Omega = fmod(el.Omega, pi2);
-
-    // Inclination (i)
-    el.i = atan2(sqrt(h(1,1)*h(1,1) + h(2,1)*h(2,1)), h(3,1));
-
-    // Argument of latitude (u)
     double H = h.norm();
-    double u = atan2(r(3,1)*H, -r(1,1)*h(2,1) + r(2,1)*h(1,1));
+    double p = H*H / GM_Earth;
 
-    // Distance (R)
+    // check non-circular, non-equatorial
+    if (p <= 0) throw std::invalid_argument("elements: degenerate orbit");
+    double hx = h(1,1), hy = h(2,1), hz = h(3,1);
+    double n2 = hx*hx + hy*hy;
+    if (n2 < 1e-12) throw std::invalid_argument("elements: equatorial orbit");
+
+    // 2) node vector and Omega
+    double Omega = std::atan2(hx, -hy);
+    Omega = fmod(Omega + TWO_PI, TWO_PI);
+
+    // 3) inclination
+    double inc = std::atan2(std::sqrt(n2), hz);
+
+    // 4) semimajor axis
     double R = r.norm();
+    double V2 = Matrix::dot(v,v);
+    double a = 1.0 / (2.0/R - V2/GM_Earth);
 
-    // Semi-major axis (a)
-    el.a = 1.0 / (2.0/R - Matrix::dot(v,v)/GM_Earth);
-
-    // Eccentricity (e)
-    double eCosE = 1.0 - R/el.a;
-    double eSinE = Matrix::dot(r,v)/sqrt(GM_Earth * el.a);
+    // 5) eccentricity vector
+    // e cos E = 1 - R/a ; e sin E = (r·v)/sqrt(GM a)
+    double eCosE = 1 - R/a;
+    double eSinE = Matrix::dot(r,v)/std::sqrt(GM_Earth*a);
     double e2 = eCosE*eCosE + eSinE*eSinE;
-    el.e = sqrt(e2);
+    double ecc = std::sqrt(e2);
+    if (ecc < 1e-8) throw std::invalid_argument("elements: circular orbit");
 
-    // Eccentric anomaly (E)
-    double E = atan2(eSinE, eCosE);
+    // 6) eccentric and mean anomalies
+    double E = std::atan2(eSinE, eCosE);
+    double M = fmod(E - eSinE + TWO_PI, TWO_PI);
 
-    // Mean anomaly (M)
-    el.M = fmod(E - eSinE, pi2);
+    // 7) argument of latitude u and true anomaly nu
+    double u = std::atan2(r(3,1)*H, -r(1,1)*hy + r(2,1)*hx);
+    double nu = std::atan2(std::sqrt(1-e2)*eSinE, eCosE-e2);
 
-    // True anomaly (ν)
-    double nu = atan2(sqrt(1.0 - e2)*eSinE, eCosE - e2);
+    // 8) argument of pericenter
+    double omega = fmod(u - nu + TWO_PI, TWO_PI);
 
-    // Argument of pericenter (ω)
-    el.omega = fmod(u - nu, pi2);
-
-    return el;
+    return { p, a, ecc, inc, Omega, omega, M };
 }

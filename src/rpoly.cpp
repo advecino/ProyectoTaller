@@ -2,7 +2,7 @@
 // Created by adria on 18/05/2025.
 //
 
-#include "rpoly.h"
+#include "../include/rpoly.h"
 
 // Adapted in 2013 by Ethan Eade from NETLIB program 493:
 //    rpoly.f, Jenkins and Traub, 1972

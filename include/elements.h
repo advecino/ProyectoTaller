@@ -20,6 +20,10 @@ struct KeplerianElements {
     double M;
 };
 
-KeplerianElements elements(const Matrix& y);
+/**
+ * @brief Osculating Keplerian elements from r and v for elliptic, inclined orbits
+ * @throws std::invalid_argument if orbit is circular or equatorial
+ */
+KeplerianElements elements(const Matrix& r, const Matrix& v);
 
 #endif //PROYECTOTALLER_ELEMENTS_H
