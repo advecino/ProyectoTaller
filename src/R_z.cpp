@@ -1,5 +1,5 @@
 #include "../include/R_z.h"
-#include <valarray>
+#include <cmath>
 
 
 Matrix R_z(double angle)

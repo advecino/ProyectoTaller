@@ -1,6 +1,4 @@
-#include <iostream>
-#include <iomanip>
-#include <valarray>
+#include <cmath>
 #include "../include/Matrix.h"
 #include "../include/R_x.h"
 

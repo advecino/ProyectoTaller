@@ -66,31 +66,25 @@ bool MatrixEqual(const Matrix& a, const Matrix& b, double tol = TOL_) {
 
 int Matrix_Basico() {
     try {
-        std::cout << "=== Test de inicialización básica ===" << std::endl;
 
-        // Test 1: Creación simple
         Matrix m(2, 3);
-        std::cout << "Matriz 2x3 creada. Filas: " << m.getFilas()
-                  << ", Columnas: " << m.getColumnas() << std::endl;
 
-        // Verificar dimensiones
         _assert(m.getFilas() == 2);
         _assert(m.getColumnas() == 3);
 
-        // Verificar inicialización a cero
+
         for (int i = 1; i <= 2; ++i) {
             for (int j = 1; j <= 3; ++j) {
                 _assert(m(i,j) == 0.0);
             }
         }
 
-        // Test 2: Asignación de valores
+
         m(1,1) = 1.5;
         m(2,3) = 2.0;
         _assert(m(1,1) == 1.5);
         _assert(m(2,3) == 2.0);
 
-        std::cout << "Test de inicialización pasado con éxito!\n";
         return 0;
     } catch(const std::exception& e) {
         std::cerr << "Error en Test_Matrix_Basico: " << e.what() << std::endl;
@@ -198,6 +192,51 @@ int R_x_01()
 
     return 0;
 }
+
+int R_y_01()
+{
+    double alpha = 1.0;
+    Matrix sol(3, 3);
+
+    sol = R_y(alpha);
+
+    _assert(fabs(sol(1,1) - 0.54030230586814) < TOL_);
+    _assert(fabs(sol(1,2)) < TOL_);
+    _assert(fabs(sol(1,3) + 0.841470984807897) < TOL_);
+
+    _assert(fabs(sol(2,1)) < TOL_);
+    _assert(fabs(sol(2,2) - 1.0) < TOL_);
+    _assert(fabs(sol(2,3)) < TOL_);
+
+    _assert(fabs(sol(3,1) - 0.841470984807897) < TOL_);
+    _assert(fabs(sol(3,2)) < TOL_);
+    _assert(fabs(sol(3,3) - 0.54030230586814) < TOL_);
+
+    return 0;
+}
+
+int R_z_01()
+{
+    double alpha = 1.0;
+    Matrix sol(3, 3);
+
+    sol = R_z(alpha);
+
+    _assert(fabs(sol(1,1) - 0.54030230586814) < TOL_);
+    _assert(fabs(sol(1,2) - 0.841470984807897) < TOL_);
+    _assert(fabs(sol(1,3)) < TOL_);
+
+    _assert(fabs(sol(2,1) + 0.841470984807897) < TOL_);
+    _assert(fabs(sol(2,2) - 0.54030230586814) < TOL_);
+    _assert(fabs(sol(2,3)) < TOL_);
+
+    _assert(fabs(sol(3,1)) < TOL_);
+    _assert(fabs(sol(3,2)) < TOL_);
+    _assert(fabs(sol(3,3) - 1.0) < TOL_);
+
+    return 0;
+}
+
 
 int Legendre_01()
 {
@@ -549,6 +588,33 @@ int AccelHarmonic_02() {
     _assert(fabs(a(3,1))<TOL_);
 
     std::cout<<"AccelHarmonic_Test_02 passed\n";
+    return 0;
+}
+
+int AccelHarmonic_03() {
+    // Pure central gravity: E=I, n=0,m=0
+    Matrix I(3,3);
+    for(int i=1;i<=3;++i) I(i,i)=1.0;
+    Matrix r(3,1);
+    const double R = 7000e3;
+    r(1,1)=R; r(2,1)=0; r(3,1)=0;
+    Matrix a = AccelHarmonic(r, I, 0, 0);
+    double expect = -398600.4415e9/(R*R);
+    _assert(fabs(a(1,1)-expect) < 1e-8);
+    _assert(fabs(a(2,1)) < 1e-12);
+    _assert(fabs(a(3,1)) < 1e-12);
+    std::cout<<"AccelHarmonic_Central_Test passed\n";
+    return 0;
+}
+
+int AccelHarmonic_04() {
+    // r at the center => should return zero (avoid NaNs)
+    Matrix I(3,3);
+    for(int i=1;i<=3;++i) I(i,i)=1.0;
+    Matrix r(3,1); // all zeros
+    Matrix a = AccelHarmonic(r, I, 5, 5);
+    _assert(a.norm() == 0.0);
+    std::cout<<"AccelHarmonic_ZeroDistance_Test passed\n";
     return 0;
 }
 
@@ -1757,33 +1823,6 @@ int VarEqn_Test_03() {
     return 0;
 }
 
-int AccelHarmonic_Central_Test() {
-    // Pure central gravity: E=I, n=0,m=0
-    Matrix I(3,3);
-    for(int i=1;i<=3;++i) I(i,i)=1.0;
-    Matrix r(3,1);
-    const double R = 7000e3;
-    r(1,1)=R; r(2,1)=0; r(3,1)=0;
-    Matrix a = AccelHarmonic(r, I, 0, 0);
-    double expect = -398600.4415e9/(R*R);
-    _assert(fabs(a(1,1)-expect) < 1e-8);
-    _assert(fabs(a(2,1)) < 1e-12);
-    _assert(fabs(a(3,1)) < 1e-12);
-    std::cout<<"AccelHarmonic_Central_Test passed\n";
-    return 0;
-}
-
-int AccelHarmonic_ZeroDistance_Test() {
-    // r at the center => should return zero (avoid NaNs)
-    Matrix I(3,3);
-    for(int i=1;i<=3;++i) I(i,i)=1.0;
-    Matrix r(3,1); // all zeros
-    Matrix a = AccelHarmonic(r, I, 5, 5);
-    _assert(a.norm() == 0.0);
-    std::cout<<"AccelHarmonic_ZeroDistance_Test passed\n";
-    return 0;
-}
-
 int Accel_01() {
     AuxParam p{58000.0, 58000.0, 0, 0, false,false,false};
     Matrix eop(13,2);
@@ -1934,7 +1973,6 @@ int anglesdr_BadSize_Test() {
     return 0;
 }
 
-// 2) Líneas de vista idénticas ➞ geometría degenerada
 int anglesdr_DegenerateGeometry_Test() {
     std::cout<<"=== anglesdr_DegenerateGeometry_Test\n";
     // tres observaciones idénticas (mismo az/el) no definen órbita
@@ -2615,6 +2653,8 @@ int all_tests()
     _verify(Mjday_01);
     _verify(Mjday_02);
     _verify(R_x_01);
+    _verify(R_y_01);
+    _verify(R_z_01);
     _verify(TimeUpdate_01);
     _verify(Position_01);
     _verify(Position_02);
@@ -2634,6 +2674,8 @@ int all_tests()
     _verify(NutAngles_03);
     _verify(AccelHarmonic_01);
     _verify(AccelHarmonic_02);
+    _verify(AccelHarmonic_03);
+    _verify(AccelHarmonic_04);
     _verify(G_AccelHarmonic_01);
     _verify(G_AccelHarmonic_02);
     _verify(EqnEquinox_01);
@@ -2683,8 +2725,8 @@ int all_tests()
     _verify(Accel_04);
     _verify(Accel_05);
     _verify(Accel_06);
-    _verify(AccelHarmonic_Central_Test);
-    _verify(AccelHarmonic_ZeroDistance_Test);
+
+
     //_verify(anglesdr_BadSize_Test);
     //_verify(anglesdr_SyntheticCircular_Test);
     //_verify(anglesdr_DegenerateGeometry_Test);
