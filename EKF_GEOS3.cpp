@@ -1,4 +1,4 @@
-/*#include <iostream>
+#include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,7 +23,14 @@
 using namespace std;
 
 int main(){
-	double Cnm[362][362], Snm[362][362], **eopdata;
+	//double Cnm[362][362], Snm[362][362], **eopdata;
+    double  **eopdata;
+    double** Cnm = (double**) malloc(362 * sizeof(double*));
+    double** Snm = (double**) malloc(362 * sizeof(double*));
+    for (int i = 0; i < 362; ++i) {
+        Cnm[i] = (double*) malloc(362 * sizeof(double));
+        Snm[i] = (double*) malloc(362 * sizeof(double));
+    }
     FILE *fp;
     int f, c;
     double aux1, aux2;
@@ -137,9 +144,13 @@ int main(){
         free(eopdata[i]);
     }
     free(eopdata);
-    
+    for (int i = 0; i < 362; ++i) {
+        free(Cnm[i]);
+        free(Snm[i]);
+    }
+    free(Cnm);
+    free(Snm);
     return 0;
 
 }
 	
-*/
