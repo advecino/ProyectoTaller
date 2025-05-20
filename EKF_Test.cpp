@@ -93,51 +93,45 @@ int Matrix_Basico() {
 }
 
 int Position_01() {
-    // En el ecuador (lat=0), meridiano de Greenwich (lon=0), sin altura
+
     double lon = 0.0;
     double lat = 0.0;
     double h   = 0.0;
     Matrix r = Position(lon, lat, h, R_Earth, f_Earth);
 
-    std::cout << "Position@Equator: ["
-              << r(1,1) << ", " << r(2,1) << ", " << r(3,1) << "]\n";
 
     double TOL = 1e-6;
-    // Debe ser (R_equ, 0, 0)
     _assert(std::fabs(r(1,1) - R_Earth) < TOL);
     _assert(std::fabs(r(2,1))          < TOL);
     _assert(std::fabs(r(3,1))          < TOL);
 
-    std::cout << "Test_Position_Equator passed\n";
     return 0;
 }
 
 int Position_02() {
-    // En el polo Norte (lat=90°), lon irrelevante, con h=1000 m
-    double lon = 1.234;                      // puede ser cualquier valor
-    double lat = M_PI/2.0;                   // 90°
-    double h   = 1000.0;                     // 1 km sobre el elipsoide
 
-    // excentricidad al cuadrado
+    double lon = 1.234;
+    double lat = M_PI/2.0;                   // 90°
+    double h   = 1000.0;
+
+
     const double e2 = f_Earth * (2.0 - f_Earth);
-    // N en el polo
+
     double N = R_Earth / std::sqrt(1.0 - e2);
-    // z esperado
+
     double expected_z = (1.0 - e2) * N + h;
 
     Matrix r = Position(lon, lat, h, R_Earth, f_Earth);
-    std::cout << "Position@Pole: ["
-              << r(1,1) << ", " << r(2,1) << ", " << r(3,1) << "]\n";
+
 
     constexpr double TOL_POS = 1e-6;
     constexpr double TOL_Z   = 1e-3; // 1 mm
 
-    // X,Y ≈ 0, Z ≈ expected_z
+
     _assert(std::fabs(r(1,1))             < TOL_POS);
     _assert(std::fabs(r(2,1))             < TOL_POS);
     _assert(std::fabs(r(3,1) - expected_z) < TOL_Z);
 
-    std::cout << "Test_Position_Pole passed\n";
     return 0;
 }
 
@@ -165,10 +159,6 @@ int Mjday_01()
 {
     _assert(fabs(Mjday(2025,4,3,15,37,5)-60768.6507523148) < pow(10,-10));
 
-    /*   cout << setprecision(20);
-       cout << Mjday(2025,4,3,15,37,5) << endl;
-       cout << 60768.6507523148;
-      */
     return 0;
 }
 
@@ -242,11 +232,9 @@ int Legendre_01()
 {
     int n = 2, m = 2;
     double fi = M_PI/6; // 30°
-    // Inicializar con dimensiones mínimas para usar operator=
     Matrix pnm(0,0), dpnm(0,0);
     Legendre(n, m, fi, pnm, dpnm);
 
-    // Comprueba valores conocidos de P0, P1
     _assert(fabs(pnm(1,1) - 1.0) < TOL_);
     _assert(fabs(pnm(2,2) - std::sqrt(3.0)*std::cos(fi)) < TOL_);
     _assert(fabs(dpnm(2,2) + std::sqrt(3.0)*std::sin(fi)) < TOL_);
@@ -271,20 +259,17 @@ int sign_() {
 }
 
 int AccelPointMass_01() {
-    // Caso de prueba 1: Masa en el origen
     Matrix r(3, 1, new double[3]{7000.0, 0.0, 0.0}, 3);
     Matrix s(3, 1, new double[3]{0.0, 0.0, 0.0}, 3);
     double GM = 3.986004418e14; // GM de la Tierra
 
     Matrix a = AccelPointMass(r, s, GM);
 
-    // Valor esperado: aceleración puramente radial
     double expected = -GM / (7000.0*7000.0*7000.0) * 7000.0;
 
     if(fabs(a(1,1) - expected) > TOL_ ||
        fabs(a(2,1)) > TOL_ ||
        fabs(a(3,1)) > TOL_) {
-        std::cout << "AccelPointMass_01 failed!\n";
         return 1;
     }
 
@@ -292,20 +277,15 @@ int AccelPointMass_01() {
 }
 
 int Mjday_TDB_01() {
-    // Test case from Vallado's book example
-    double Mjd_TT = 54930.5; // 2009-04-09 00:00:00 TT
+
+    double Mjd_TT = 54930.5;
 
     double Mjd_TDB = Mjday_TDB(Mjd_TT);
 
-    // Expected value calculated from reference implementation
+
     double expected = 54930.5000007235;
 
     if(fabs(Mjd_TDB - expected) > 1e-5) {
-        std::cout << std::setprecision(15);
-        std::cout << "Mjday_TDB_01 failed!\n";
-        std::cout << "Expected: " << expected << "\n";
-        std::cout << "Got:      " << Mjd_TDB << "\n";
-        std::cout << "Diff:     " << fabs(Mjd_TDB - expected) << "\n";
         return 1;
     }
 
@@ -313,32 +293,32 @@ int Mjday_TDB_01() {
 }
 
 int Mjday_TDB_02() {
-    // Para cualquier Mjd_TT la corrección es muy pequeña
-    double Mjd_TT = 51544.5; // J2000.0
+
+    double Mjd_TT = 51544.5;
     double Mjd_TDB = Mjday_TDB(Mjd_TT);
     double delta = Mjd_TDB - Mjd_TT;
-    std::cout << "delta = " << delta << " días\n";
+
     _assert(std::fabs(delta) < 1e-4);
-    std::cout << "Test_Mjday_TDB_Identity passed\n";
+
     return 0;
 }
 
 int Mjday_TDB_03() {
-    // Si cambio Mjd_TT en N días, Mjday_TDB debe cambiar en ~N días
+
     double Mjd0 = 58000.0;
     double Mjd1 = Mjd0 + 10.5;
     double TDB0 = Mjday_TDB(Mjd0);
     double TDB1 = Mjday_TDB(Mjd1);
     double dt_in  = Mjd1 - Mjd0;
     double dt_out = TDB1 - TDB0;
-    std::cout << "dt_in = " << dt_in << ", dt_out = " << dt_out << "\n";
+
     _assert(std::fabs(dt_out - dt_in) < 1e-4);
-    std::cout << "Test_Mjday_TDB_Difference passed\n";
+
     return 0;
 }
 
 int angl_01() {
-    // Vectores paralelos
+
     Matrix vec1(3, 1, new double[3]{1.0, 0.0, 0.0}, 3);
     Matrix vec2(3, 1, new double[3]{2.0, 0.0, 0.0}, 3);
 
@@ -353,7 +333,7 @@ int angl_01() {
 }
 
 int angl_02() {
-    // Vectores perpendiculares
+
     Matrix vec1(3, 1, new double[3]{1.0, 0.0, 0.0}, 3);
     Matrix vec2(3, 1, new double[3]{0.0, 1.0, 0.0}, 3);
 
@@ -370,24 +350,21 @@ int angl_02() {
 
 int Cheb3D_01() {
     try {
-        // Coeficientes para f(t) = t en [0,1]
+
         const int N = 2;
         double Ta = 0.0;
         double Tb = 1.0;
 
-        // Coeficientes exactos para f(t) = t:
-        // t = 0.5*T0(tau) + 0.5*T1(tau)
+
+
         Matrix Cx(N,1, new double[N]{0.5, 0.5}, N);
 
-        // Coeficientes para f(t) = t^2:
-        // t^2 = 0.5*T0(tau) + 0.5*T1(tau) + 0.25*T2(tau)
         Matrix Cy(3,1, new double[3]{0.5, 0.5, 0.25}, 3);
 
-        // Evaluar en t=0.5
         double t = 0.5;
         Matrix result = Cheb3D(t, 2, Ta, Tb, Cx, Cx, Cx);
 
-        // Valores esperados
+
         double expected = 0.5;
         const double TOL = 1e-10;
 
@@ -407,11 +384,9 @@ int Cheb3D_01() {
 
 int Cheb3D_02() {
     try {
-        // Coeficientes para f(t) = t en [0,1]
-        // f(t) = 0.5*T0 + 0.5*T1
+
         Matrix Cx(2,1, new double[2]{0.5, 0.5}, 2);
 
-        // Evaluar en t=1 (debería dar 1 para f(t)=t)
         Matrix result = Cheb3D(1.0, 2, 0.0, 1.0, Cx, Cx, Cx);
 
         const double TOL = 1e-10;
@@ -433,17 +408,16 @@ int Cheb3D_02() {
 }
 
 int MeanObliquity_01() {
-    // Valores de constantes
-    const double MJD_J2000 = 51544.5;
-    const double Rad = M_PI / 180.0; // Factor de conversión a radianes
 
-    // Fecha de prueba (J2000)
+    const double MJD_J2000 = 51544.5;
+    const double Rad = M_PI / 180.0;
+
+
     double Mjd_TT = MJD_J2000;
 
-    // Calcular oblicuidad
+
     double MOblq = MeanObliquity(Mjd_TT);
 
-    // Valor esperado para J2000 (23.4392911 grados en radianes)
     double expected = 23.4392911 * Rad;
 
     if(fabs(MOblq - expected) > 1e-4) {
@@ -458,14 +432,11 @@ int MeanObliquity_01() {
 
 int EqnEquinox_01() {
     try {
-        // Fecha J2000 (1.5 enero 2000)
+
         double Mjd_TT = 51544.5;
 
-        // Calcular ecuación de los equinoccios
         double EqE = EqnEquinox(Mjd_TT);
 
-        // El valor debería ser muy pequeño cerca de J2000
-        // Usamos una tolerancia más relajada (1e-12 radianes ≈ 0.2 milliarcseconds)
         _assert(fabs(EqE) < 1e-3);
         return 0;
     } catch(const std::exception& e) {
@@ -476,17 +447,12 @@ int EqnEquinox_01() {
 
 int EqnEquinox_02() {
     try {
-        // Fecha aleatoria (1 Jan 2020)
         double Mjd_TT = 58849.0;
 
-        // Calcular ecuación de los equinoccios
         double EqE = EqnEquinox(Mjd_TT);
 
-        // Valor de referencia más preciso (usando SOFA o JPL Horizons)
-        // Para 1 Jan 2020 00:00:00 TT:
-        double expected = -0.0033534 * M_PI/180.0/3600.0; // -0.0033534 arcsec en radianes
+        double expected = -0.0033534 * M_PI/180.0/3600.0;
 
-        // Tolerancia relajada a 1e-9 radianes (≈ 0.2 microarcseconds)
         _assert(fabs(EqE - expected) < 1e-3);
         return 0;
     } catch(const std::exception& e) {
@@ -497,13 +463,11 @@ int EqnEquinox_02() {
 
 int NutAngles_01() {
     try {
-        // Fecha J2000 (1.5 enero 2000)
         double Mjd_TT = 51544.5;
 
         double dpsi, deps;
         NutAngles(Mjd_TT, dpsi, deps);
 
-        // Valores esperados cercanos a cero
         if(fabs(dpsi) > 1e-3 || fabs(deps) > 1e-3) {
             return 1;
         }
@@ -516,37 +480,32 @@ int NutAngles_01() {
 
 int NutAngles_02() {
     double dpsi, deps;
-    NutAngles(51544.5, dpsi, deps); // J2000
+    NutAngles(51544.5, dpsi, deps);
 
-    std::cout << "NutAngles@J2000: dpsi=" << dpsi
-              << " rad, deps=" << deps << " rad\n";
 
-    // Debe estar en ±0.01 rad
+
+
     _assert(std::fabs(dpsi) < 1e-2);
     _assert(std::fabs(deps) < 1e-2);
 
-    std::cout << "Test_NutAngles_Range passed\n";
     return 0;
 }
 
 int NutAngles_03() {
     double dpsi0, deps0, dpsi1, deps1;
     NutAngles(51544.5,     dpsi0, deps0);
-    NutAngles(51544.5+18262.5, dpsi1, deps1); // +0.5 siglo
+    NutAngles(51544.5+18262.5, dpsi1, deps1);
 
-    std::cout << "Δdpsi=" << (dpsi1-dpsi0)
-              << ", Δdeps=" << (deps1-deps0) << " rad\n";
 
-    // Debe cambiar al menos unos μrad
     _assert(std::fabs(dpsi1-dpsi0) > 1e-6 ||
             std::fabs(deps1-deps0) > 1e-6);
 
-    std::cout << "Test_NutAngles_Variation passed\n";
+
     return 0;
 }
 
 int AccelHarmonic_01() {
-    // Monopole puro: n_max=m_max=0, Cnm[1][1]=1.0
+
     for(int i=0;i<300;i++) for(int j=0;j<300;j++){
             Cnm[i][j]=0; Snm[i][j]=0;
         }
@@ -564,12 +523,12 @@ int AccelHarmonic_01() {
     _assert(fabs(a(2,1))<TOL_);
     _assert(fabs(a(3,1))<TOL_);
 
-    std::cout<<"AccelHarmonic_Test_01 passed\n";
+
     return 0;
 }
 
 int AccelHarmonic_02() {
-    // Monopole puro y posición en y
+
     for(int i=0;i<300;i++) for(int j=0;j<300;j++){
             Cnm[i][j]=0; Snm[i][j]=0;
         }
@@ -587,12 +546,10 @@ int AccelHarmonic_02() {
     _assert(fabs(a(2,1)-expected_ay)<TOL_);
     _assert(fabs(a(3,1))<TOL_);
 
-    std::cout<<"AccelHarmonic_Test_02 passed\n";
     return 0;
 }
 
 int AccelHarmonic_03() {
-    // Pure central gravity: E=I, n=0,m=0
     Matrix I(3,3);
     for(int i=1;i<=3;++i) I(i,i)=1.0;
     Matrix r(3,1);
@@ -603,23 +560,22 @@ int AccelHarmonic_03() {
     _assert(fabs(a(1,1)-expect) < 1e-8);
     _assert(fabs(a(2,1)) < 1e-12);
     _assert(fabs(a(3,1)) < 1e-12);
-    std::cout<<"AccelHarmonic_Central_Test passed\n";
+
     return 0;
 }
 
 int AccelHarmonic_04() {
-    // r at the center => should return zero (avoid NaNs)
     Matrix I(3,3);
     for(int i=1;i<=3;++i) I(i,i)=1.0;
-    Matrix r(3,1); // all zeros
+    Matrix r(3,1);
     Matrix a = AccelHarmonic(r, I, 5, 5);
     _assert(a.norm() == 0.0);
-    std::cout<<"AccelHarmonic_ZeroDistance_Test passed\n";
+
     return 0;
 }
 
 int G_AccelHarmonic_01() {
-    // Monopole field test at r = [R,0,0]
+
     for(int i=0;i<300;i++) for(int j=0;j<300;j++){
             Cnm[i][j]=0.0; Snm[i][j]=0.0;
         }
@@ -641,17 +597,17 @@ int G_AccelHarmonic_01() {
     _assert(fabs(G(1,1) - Gxx) < 1e-6);
     _assert(fabs(G(2,2) - Gyy) < 1e-6);
     _assert(fabs(G(3,3) - Gzz) < 1e-6);
-    // off-diagonals zero
+
     for(int i=1;i<=3;i++) for(int j=1;j<=3;j++){
             if(i!=j) _assert(fabs(G(i,j)) < TOL_);
         }
 
-    std::cout<<"G_AccelHarmonic_Test_01 passed\n";
+
     return 0;
 }
 
 int G_AccelHarmonic_02() {
-    // Monopole field test at r = [0,R,0]
+
     for(int i=0;i<300;i++) for(int j=0;j<300;j++){
             Cnm[i][j]=0.0; Snm[i][j]=0.0;
         }
@@ -673,12 +629,12 @@ int G_AccelHarmonic_02() {
     _assert(fabs(G(2,2) - Gyy) < 1e-6);
     _assert(fabs(G(1,1) - Gxx) < 1e-6);
     _assert(fabs(G(3,3) - Gzz) < 1e-6);
-    // off-diagonals zero
+
     for(int i=1;i<=3;i++) for(int j=1;j<=3;j++){
             if(i!=j) _assert(fabs(G(i,j)) < TOL_);
         }
 
-    std::cout<<"G_AccelHarmonic_Test_02 passed\n";
+
     return 0;
 }
 
@@ -687,24 +643,24 @@ int MeasUpdate_01() {
     Matrix x(n,1), P(n,n), K(0,0);
     Matrix z(m,1), g(m,1), s(m,1), G(m,n);
 
-    // Initialize state and covariance
+
     x(1,1) = 1.0; x(2,1) = -2.0;
     P(1,1) = 2.0; P(1,2) = 0.5;
     P(2,1) = 0.5; P(2,2) = 1.0;
 
-    // Measurement = prediction
+
     z(1,1) = 10.0; g(1,1) = 10.0;
     z(2,1) = -5.0; g(2,1) = -5.0;
 
-    // Measurement noise std deviations
+
     s(1,1) = 1.0;
     s(2,1) = 2.0;
 
-    // Sensitivity matrix G
+
     G(1,1) = 1.0; G(1,2) = 0.0;
     G(2,1) = 0.0; G(2,2) = 1.0;
 
-    // Perform update
+
     MeasUpdate(x, P, K, z, g, s, G, n);
 
 
@@ -718,47 +674,38 @@ int MeasUpdate_01() {
     _assert(fabs(P(2,1) - P21) < TOL_);
     _assert(fabs(P(2,2) - P22) < TOL_);
 
-    // El estado x no cambia porque z-g = 0
     _assert(fabs(x(1,1) - 1.0) < TOL_);
     _assert(fabs(x(2,1) + 2.0) < TOL_);
 
-    std::cout << "Test_MeasUpdate_Identity passed\n";
+
     return 0;
 }
 
 int MeasUpdate_02() {
-    // Scalar case: n=1, m=1
+
     int n = 1, m = 1;
     Matrix x(n,1), P(n,n), K(0,0);
     Matrix z(m,1), g(m,1), s(m,1), G(m,n);
 
-    // Prior state and covariance
+
     x(1,1) = 0.0;
     P(1,1) = 1.0;
 
-    // Measurement and prediction
     z(1,1) = 2.0;
     g(1,1) = 1.0;
 
-    // Measurement noise std dev
     s(1,1) = 1.0;
 
-    // Sensitivity = 1
     G(1,1) = 1.0;
 
-    // Perform update
     MeasUpdate(x, P, K, z, g, s, G, n);
 
-    // Kalman gain should be 0.5
     _assert(fabs(K(1,1) - 0.5) < TOL_);
 
-    // Updated state: x = 0 + 0.5*(2-1) = 0.5
     _assert(fabs(x(1,1) - 0.5) < TOL_);
 
-    // Updated covariance: (1 - 0.5*1)*1 = 0.5
     _assert(fabs(P(1,1) - 0.5) < TOL_);
 
-    std::cout << "Test_MeasUpdate_Scalar passed\n";
     return 0;
 }
 
@@ -777,7 +724,7 @@ int gstime_01() {
 
 int unit_01() {
     try {
-        std::cout << "\n=== Test unit_01 ===" << std::endl;
+
 
         // Caso 1: Vector no nulo (debe normalizarse)
         double vec_data[] = {1.0, 2.0, 3.0};
@@ -787,7 +734,7 @@ int unit_01() {
         // Calcular magnitud del resultado
         double mag = sqrt(outvec(1,1)*outvec(1,1) + outvec(2,1)*outvec(2,1) + outvec(3,1)*outvec(3,1));
 
-        // Verificar que es unitario (magnitud ≈ 1.0)
+        // Verificar que es unitario
         _assert(fabs(mag - 1.0) < 1e-6);
 
         // Verificar valores esperados (normalizados)
@@ -796,7 +743,6 @@ int unit_01() {
             _assert(fabs(outvec(i,1) - expected[i-1]) < 1e-6);
         }
 
-        std::cout << "Caso 1 pasado: Vector normalizado correctamente.\n";
         return 0;
     } catch(const std::exception& e) {
         std::cerr << "Error en unit_01 (Caso 1): " << e.what() << std::endl;
@@ -806,7 +752,7 @@ int unit_01() {
 
 int unit_02() {
     try {
-        std::cout << "\n=== Test unit_02 ===" << std::endl;
+
 
         // Caso 2: Vector casi cero (debe devolver cero)
         double vec_data[] = {1e-7, 1e-7, 1e-7};
@@ -818,7 +764,7 @@ int unit_02() {
             _assert(outvec(i,1) == 0.0);
         }
 
-        std::cout << "Caso 2 pasado: Vector cero manejado correctamente.\n";
+
         return 0;
     } catch(const std::exception& e) {
         std::cerr << "Error en unit_02 (Caso 2): " << e.what() << std::endl;
@@ -828,7 +774,7 @@ int unit_02() {
 
 int unit_03() {
     try {
-        std::cout << "\n=== Test unit_03 ===" << std::endl;
+
 
         // Caso 3: Vector ya unitario (no debe cambiar)
         double vec_data[] = {0.577350, 0.577350, 0.577350}; // ~1/√3
@@ -840,7 +786,6 @@ int unit_03() {
             _assert(fabs(outvec(i,1) - vec(i,1)) < 1e-6);
         }
 
-        std::cout << "Caso 3 pasado: Vector unitario no se modifica.\n";
         return 0;
     } catch(const std::exception& e) {
         std::cerr << "Error en unit_03 (Caso 3): " << e.what() << std::endl;
@@ -849,7 +794,7 @@ int unit_03() {
 }
 
 int Gibbs_01() {
-    std::cout << "=== Prueba 1: Órbita circular ===" << std::endl;
+
 
     // Configurar vectores de posición (órbita circular)
     Matrix r1(3, 1);
@@ -876,20 +821,16 @@ int Gibbs_01() {
     _assert(fabs(result.theta1 - 1.570796) < TOL);
     _assert(fabs(result.copa) < TOL);
 
-    // Verificar velocidad (valores de tu salida MATLAB)
+    // Verificar velocidad
     _assert((std::abs(result.v2(1,1)) - (7546.05329011)) < TOL);
     _assert(fabs(result.v2(2,1)) < TOL);
     _assert(fabs(result.v2(3,1)) < TOL);
 
-    std::cout << "Prueba 1 pasada!\n" << std::endl;
     return 0;
 }
 
 int HGibbs_01() {
     try {
-        std::cout << "\n=== Test HGibbs_SmallAngles: Ángulos <= 1 grado ===" << std::endl;
-
-        // Configurar vectores con ángulos pequeños (0.5 grados)
         Matrix r1(3, 1), r2(3, 1), r3(3, 1);
 
         // Vector base
@@ -926,7 +867,6 @@ int HGibbs_01() {
         _assert(fabs(result.v2(2,1)) > 1.0);
         _assert(fabs(result.v2(3,1)) < TOL);
 
-        std::cout << "Test HGibbs_01 pasado: Ángulos pequeños aceptados correctamente.\n";
         return 0;
     } catch(const std::exception& e) {
         std::cerr << "Error en HGibbs_01: " << e.what() << std::endl;
@@ -936,7 +876,7 @@ int HGibbs_01() {
 
 int HGibbs_02() {
     try {
-        std::cout << "\n=== Test HGibbs_02: Vectores no coplanares ===" << std::endl;
+
 
         Matrix r1(3, 1), r2(3, 1), r3(3, 1);
         r1(1,1) = 7000e3; r1(2,1) = 0;    r1(3,1) = 0;
@@ -951,7 +891,6 @@ int HGibbs_02() {
 
         _assert(result.error == "not coplanar");
 
-        std::cout << "Test HGibbs_02 pasado: Detecta vectores no coplanares.\n";
         return 0;
     } catch(const std::exception& e) {
         std::cerr << "Error en test_HGibbs_02: " << e.what() << std::endl;
@@ -961,7 +900,6 @@ int HGibbs_02() {
 
 int HGibbs_03() {
     try {
-        std::cout << "\n=== Test HGibbs_03: Angulos > 1 grado ===" << std::endl;
 
         Matrix r1(3, 1), r2(3, 1), r3(3, 1);
         r1(1,1) = 7000e3; r1(2,1) = 0;      r1(3,1) = 0;
@@ -976,7 +914,6 @@ int HGibbs_03() {
 
         _assert(result.error == "   angl > 1ø");
 
-        std::cout << "Test HGibbs_03 pasado: Detecta angulos grandes.\n";
         return 0;
     } catch(const std::exception& e) {
         std::cerr << "Error en test_HGibbs_03: " << e.what() << std::endl;
@@ -986,7 +923,6 @@ int HGibbs_03() {
 
 int HGibbs_04() {
     try {
-        std::cout << "\n=== Test HGibbs_04: Orbita eliptica ===" << std::endl;
 
         Matrix r1(3, 1), r2(3, 1), r3(3, 1);
         r1(1,1) = 7000e3; r1(2,1) = 0;      r1(3,1) = 0;
@@ -1007,7 +943,6 @@ int HGibbs_04() {
         _assert(fabs(result.theta1 - 1.570796) < TOL);
         _assert(fabs(result.copa - 0.0) < TOL);
 
-        std::cout << "Test HGibbs_04 pasado: Orbita eliptica calculada.\n";
         return 0;
     } catch(const std::exception& e) {
         std::cerr << "Error en test_HGibbs_04: " << e.what() << std::endl;
@@ -1039,7 +974,7 @@ int Elements_01() {
     _assert(std::fabs(E.a - a) < 1e-3);
     _assert(std::fabs(E.e - e) < 1e-6);
     _assert(std::fabs(E.i - i) < 1e-6);
-    std::cout<<"Elements_InclinedElliptic_Test passed\n";
+
     return 0;
 }
 
@@ -1052,7 +987,6 @@ int Elements_02() {
     try {
         auto E = elements(r,v);
     } catch(const std::invalid_argument&) {
-        std::cout<<"Elements_CircularEquatorial_Test passed\n";
         return 0;
     }
     std::cout<<"Elements_CircularEquatorial_Test failed\n";
@@ -1061,28 +995,21 @@ int Elements_02() {
 
 int LTC_01() {
     try {
-        std::cout << "\n=== Test 1: Latitud 0°, Longitud 0° ===\n";
 
         double lon = 0.0;
         double lat = 0.0;
 
         Matrix result = LTC(lon, lat);
 
-        // Resultado esperado (matriz identidad con filas permutadas)
+
         Matrix expected(3, 3);
         expected(1,1) = 0.0; expected(1,2) = 1.0; expected(1,3) = 0.0;
         expected(2,1) = 0.0; expected(2,2) = 0.0; expected(2,3) = 1.0;
         expected(3,1) = 1.0; expected(3,2) = 0.0; expected(3,3) = 0.0;
 
-        std::cout << "Matriz resultante:\n";
-        result.print();
-
-        std::cout << "Matriz esperada:\n";
-        expected.print();
 
         _assert(MatrixEqual(result, expected));
 
-        std::cout << "Test 1 pasado: LTC en (0°,0°) calculada correctamente.\n";
         return 0;
     } catch(const std::exception& e) {
         std::cerr << "Error en LTC_test_01: " << e.what() << std::endl;
@@ -1092,7 +1019,6 @@ int LTC_01() {
 
 int LTC_02() {
     try {
-        std::cout << "\n=== Test 2: Latitud 45°, Longitud 30° ===\n";
 
         double lon = M_PI/6;      // 30°
         double lat = M_PI/4;      // 45°
@@ -1105,15 +1031,8 @@ int LTC_02() {
         expected(2,1) = -0.612372; expected(2,2) = -0.353553; expected(2,3) = 0.707107;
         expected(3,1) = 0.612372;  expected(3,2) = 0.353553;  expected(3,3) = 0.707107;
 
-        std::cout << "Matriz resultante:\n";
-        result.print();
-
-        std::cout << "Matriz esperada:\n";
-        expected.print();
-
         _assert(MatrixEqual(result, expected, 1e-6));
 
-        std::cout << "Test 2 pasado: LTC en (30°,45°) calculada correctamente.\n";
         return 0;
     } catch(const std::exception& e) {
         std::cerr << "Error en LTC_test_02: " << e.what() << std::endl;
@@ -1123,7 +1042,6 @@ int LTC_02() {
 
 int GHAMatrix_01() {
     try {
-        std::cout << "\n=== Test 1: GHAMatrix en J2000 (MJD 51544.5) ===\n";
 
         double Mjd_UT1 = 51544.5;  // J2000.0
         Matrix result = GHAMatrix(Mjd_UT1);
@@ -1134,15 +1052,8 @@ int GHAMatrix_01() {
         // Matriz esperada (rotación alrededor del eje Z por GAST)
         Matrix expected = R_z(expected_GAST);
 
-        std::cout << "Matriz resultante:\n";
-        result.print();
-
-        std::cout << "Matriz esperada:\n";
-        expected.print();
-
         _assert(MatrixEqual(result, expected));
 
-        std::cout << "Test 1 pasado: GHAMatrix en J2000 calculada correctamente.\n";
         return 0;
     } catch(const std::exception& e) {
         std::cerr << "Error en GHAMatrix_test_01: " << e.what() << std::endl;
@@ -1152,26 +1063,19 @@ int GHAMatrix_01() {
 
 int GHAMatrix_02() {
     try {
-        std::cout << "\n=== Test 2: GHAMatrix en fecha actual (MJD 59754.0) ===\n";
 
-        double Mjd_UT1 = 59754.0;  // 2022/06/15 00:00:00 UTC
+
+        double Mjd_UT1 = 59754.0;
         Matrix result = GHAMatrix(Mjd_UT1);
 
-        // Calcular GAST esperado
+
         double expected_GAST = gstime(Mjd_UT1);
 
         // Matriz esperada (rotación alrededor del eje Z por GAST)
         Matrix expected = R_z(expected_GAST);
 
-        std::cout << "Matriz resultante:\n";
-        result.print();
-
-        std::cout << "Matriz esperada:\n";
-        expected.print();
-
         _assert(MatrixEqual(result, expected));
 
-        std::cout << "Test 2 pasado: GHAMatrix en fecha actual calculada correctamente.\n";
         return 0;
     } catch(const std::exception& e) {
         std::cerr << "Error en GHAMatrix_test_02: " << e.what() << std::endl;
@@ -1181,7 +1085,7 @@ int GHAMatrix_02() {
 
 int PoleMatrix_01() {
     try {
-        std::cout << "\n=== Test 2: PoleMatrix con xp=0.1\", yp=0.2\" (en radianes) ===\n";
+
 
         // Convertir segundos de arco a radianes
         double arcsec_to_rad = M_PI/(180.0*3600.0);
@@ -1193,15 +1097,8 @@ int PoleMatrix_01() {
         // Calcular manualmente la matriz esperada
         Matrix expected = R_y(-xp) * R_x(-yp);
 
-        std::cout << "Matriz resultante:\n";
-        result.print();
-
-        std::cout << "Matriz esperada:\n";
-        expected.print();
-
         _assert(MatrixEqual(result, expected, 1e-12));
 
-        std::cout << "Test 1 pasado: PoleMatrix con pequeños valores calculada correctamente.\n";
         return 0;
     } catch(const std::exception& e) {
         std::cerr << "Error en PoleMatrix_test_02: " << e.what() << std::endl;
@@ -1211,7 +1108,7 @@ int PoleMatrix_01() {
 
 int NutMatrix_01() {
     try {
-        std::cout << "\n=== Test 1: NutMatrix en J2000 ===\n";
+
 
         double Mjd_TT = 51544.5;  // J2000.0
         Matrix result = NutMatrix(Mjd_TT);
@@ -1224,7 +1121,6 @@ int NutMatrix_01() {
 
         _assert(MatrixEqual(result, expected, 1e-12));
 
-        std::cout << "Test 1 pasado correctamente.\n";
         return 0;
     } catch(const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
@@ -1234,7 +1130,7 @@ int NutMatrix_01() {
 
 int PrecMatrix_01() {
     try {
-        std::cout << "\n=== Test 2: PrecMatrix de J2000 a 2020 ===\n";
+
 
         double Mjd_1 = 51544.5;  // J2000.0
         double Mjd_2 = 58952.0;  // 2020-03-21 12:00:00 TT
@@ -1247,15 +1143,10 @@ int PrecMatrix_01() {
         expected(2,1) = 0.0000271361741621; expected(2,2) = 0.9999999999996318; expected(2,3) = -0.0000000000000000;
         expected(3,1) = 0.0000117760568353; expected(3,2) = -0.0000000000000000; expected(3,3) = 0.9999999999993063;
 
-        std::cout << "Matriz resultante:\n";
-        result.print();
 
-        std::cout << "Matriz esperada:\n";
-        expected.print();
 
         _assert(MatrixEqual(result, expected, 1e-2));
 
-        std::cout << "Test 1 pasado: PrecMatrix a 2020 calculada correctamente.\n";
         return 0;
     } catch(const std::exception& e) {
         std::cerr << "Error en PrecMatrix_01: " << e.what() << std::endl;
@@ -1265,7 +1156,6 @@ int PrecMatrix_01() {
 
 int timediff_01() {
     try {
-        std::cout << "\n=== Test 2: Valores límite (UT1-UTC=0, TAI-UTC=0) ===\n";
 
         double UT1_UTC = 0.0;
         double TAI_UTC = 0.0;
@@ -1278,8 +1168,6 @@ int timediff_01() {
         _assert(fabs(result.UT1_GPS - 19.0) < TOL_);
         _assert(fabs(result.TT_UTC - 32.184) < TOL_);
         _assert(fabs(result.GPS_UTC - (-19.0)) < TOL_);
-
-        std::cout << "Test 1 pasado: Valores límite calculados correctamente.\n";
         return 0;
     } catch(const std::exception& e) {
         std::cerr << "Error en timediff_01: " << e.what() << std::endl;
@@ -1289,7 +1177,6 @@ int timediff_01() {
 
 int Geodetic_01() {
     try {
-        std::cout << "\n=== Test 1: Punto en el ecuador ===\n";
 
         Matrix r(3, 1);
         r(1,1) = R_Earth; r(2,1) = 0.0; r(3,1) = 0.0;
@@ -1347,7 +1234,6 @@ int Geodetic_03() {
 
 int doubler_01() {
     try {
-        std::cout << "\n=== Test doubler_01 ===" << std::endl;
 
         // Datos simulados para un caso válido
         double los1_data[] = {0.2673, 0.5345, 0.8018};
@@ -1391,7 +1277,6 @@ int doubler_01() {
         _assert(!std::isnan(res.a) && !std::isinf(res.a));
         _assert(!std::isnan(res.deltae32) && !std::isinf(res.deltae32));
 
-        std::cout << "Test doubler_01 pasado correctamente.\n";
         return 0;
     } catch(const std::exception& e) {
         std::cerr << "Error en doubler_01: " << e.what() << std::endl;
@@ -1400,7 +1285,6 @@ int doubler_01() {
 }
 
 int Doubler_01() {
-    std::cout<<"=== Doubler_Delta2_Negative_Test ===\n";
     bool threw=false;
     // magrsite2 > magr2in ⇒ delta2 < 0
     try {
@@ -1414,12 +1298,11 @@ int Doubler_01() {
         );
     } catch(...) { threw=true; }
     _assert(threw && "Esperaba excepción por delta2<0");
-    std::cout<<"Doubler_Delta2_Negative_Test passed\n";
+
     return 0;
 }
 
 int Doubler_02() {
-    std::cout<<"=== Doubler_Los3w_Zero_Test ===\n";
     bool threw=false;
     // rsite1=(1,0,0), rsite2=(0,1,0) → cross(r1,r2) en +Z
     // los3=(1,0,0) ⇒ dot(los3,w)=0
@@ -1446,7 +1329,37 @@ int Doubler_02() {
         threw=true;
     }
     _assert(threw && "Esperaba excepción por división por cero en rho3");
-    std::cout<<"Doubler_Los3w_Zero_Test passed\n";
+    return 0;
+}
+
+int Doubler_03() {
+    // Caso trivial: rsite1 = (0,0,0), los1=(1,0,0), rsite2=(0,0,0), los2=(0,1,0)
+    // magr1in y magr2in escogidos grandes, t1=t3=1
+    double cc1 = 0.0, cc2 = 0.0;
+    double magrsite1 = 0.0, magrsite2 = 0.0;
+    double magr1in = 10000.0, magr2in = 10000.0;
+    Matrix los1(3,1), los2(3,1), los3(3,1);
+    los1(1,1)=1; los1(2,1)=0; los1(3,1)=0;
+    los2(1,1)=0; los2(2,1)=1; los2(3,1)=0;
+    los3(1,1)=0; los3(2,1)=0; los3(3,1)=1;
+    Matrix rsite1(3,1), rsite2(3,1), rsite3(3,1);
+    // todos cero
+    DoubleRResult R = doubler(
+            cc1, cc2,
+            magrsite1, magrsite2,
+            magr1in, magr2in,
+            los1, los2, los3,
+            rsite1, rsite2, rsite3,
+            1.0, 1.0, 'y'
+    );
+    // Aquí esperamos que R.r2 = rho2*los2 = rho2*(0,1,0) con rho2 = (-cc2+sqrt(cc2^2 - ...))/2
+    double expected_rho2 = (-cc2 + sqrt(cc2*cc2 - 4*(magrsite2*magrsite2 - magr2in*magr2in))) / 2.0;
+    if (std::fabs(R.r2(1,1) - 0.0) > TOL_ ||
+        std::fabs(R.r2(2,1) - expected_rho2) > TOL_ ||
+        std::fabs(R.r2(3,1) - 0.0) > TOL_) {
+        std::cout<<"Doubler_TrivialColinear_Test FAILED\n";
+        return 1;
+    }
     return 0;
 }
 
@@ -1489,7 +1402,6 @@ int IERS_01() {
     _assert(fabs(r.dx_pole - ((0.7 + (0.8-0.7)*frac)/Arcs)) < TOL);
     _assert(fabs(r.dy_pole - ((0.8 + (0.9-0.8)*frac)/Arcs)) < TOL);
     _assert(fabs(r.TAI_UTC - 37.0) < TOL);
-    std::cout << "Test_IERS_Linear passed\n";
     return 0;
 }
 
@@ -1536,7 +1448,6 @@ int IERS_02() {
     _assert(fabs(r.dy_pole  - ((0.8 + (0.9 - 0.8)*frac) * ARCSEC_TO_RAD)) < TOL);
     _assert(fabs(r.TAI_UTC  - 37.0) < TOL);
 
-    std::cout << "Test_IERS_Linear passed\n";
     return 0;
 }
 
@@ -1578,22 +1489,20 @@ int JPL_Eph_01() {
     checkZero(pos.r_Neptune);
     checkZero(pos.r_Pluto);
 
-    std::cout << "JPL_Eph_01 passed: all zero coefficients yield zero positions\n";
     return 0;
 }
 
 int JPL_Eph_02() {
-    Matrix PC(1,2);
+    PC(1,2);
     PC(1,1) = 59000.0; PC(1,2) = 59010.0;
     bool caught = false;
     try {
         auto p = JPL_Eph_DE430(59050.0);
     } catch(const std::exception& e) {
         caught = true;
-        std::cout << "Caught expected exception: " << e.what() << "\n";
     }
     _assert(caught);
-    std::cout << "Test_JPL_Eph_OutOfRange passed\n";
+
     return 0;
 }
 
@@ -1611,13 +1520,11 @@ int JPL_Eph_03() {
         _assert(std::string(e.what()).find("JD fuera de rango")!=std::string::npos);
     }
     _assert(threw);
-    std::cout<<"JPL_Eph_03 passed\n";
     return 0;
 }
 
 int AzElPa_Test_01() {
     try {
-        std::cout << "\n=== Test 1: Directly North ===\n";
 
         Matrix s(3, 1);
         s(1,1) = 0.0;  // East
@@ -1638,10 +1545,6 @@ int AzElPa_Test_01() {
         expected_dEds(1,2) = 0.0;
         expected_dEds(1,3) = 1.0;
 
-        // Verify results
-        std::cout << "Azimuth: " << result.Az << " (expected: " << expected_Az << ")\n";
-        std::cout << "Elevation: " << result.El << " (expected: " << expected_El << ")\n";
-
         _assert(fabs(result.Az - expected_Az) < 1e-9);
         _assert(fabs(result.El - expected_El) < 1e-9);
         /*
@@ -1655,7 +1558,7 @@ int AzElPa_Test_01() {
         std::cout<<"==================="<<std::endl;*/
 
 
-        std::cout << "Test 1 passed: Directly North case correct.\n";
+
         return 0;
     } catch(const std::exception& e) {
         std::cerr << "Error in AzElPa_Test_01: " << e.what() << std::endl;
@@ -1665,7 +1568,6 @@ int AzElPa_Test_01() {
 
 int AzElPa_Test_02() {
     try {
-        std::cout << "\n=== Test 2: 45° NE, 45° elevation ===\n";
 
         Matrix s(3, 1);
         s(1,1) = 1.0;  // East
@@ -1678,9 +1580,6 @@ int AzElPa_Test_02() {
         double expected_Az = M_PI/4.0; // 45°
         double expected_El = M_PI/4.0; // 45°
 
-        // Verify results
-        std::cout << "Azimuth: " << result.Az << " (expected: " << expected_Az << ")\n";
-        std::cout << "Elevation: " << result.El << " (expected: " << expected_El << ")\n";
 
         _assert(fabs(result.Az - expected_Az) < 1e-9);
         _assert(fabs(result.El - expected_El) < 1e-9);
@@ -1690,7 +1589,6 @@ int AzElPa_Test_02() {
         _assert(fabs(result.dAds(1,2) - (-0.5)) < 1e-9);
         _assert(fabs(result.dAds(1,3) - 0.0) < 1e-9);
 
-        std::cout << "Test 2 passed: 45° NE case correct.\n";
         return 0;
     } catch(const std::exception& e) {
         std::cerr << "Error in AzElPa_Test_02: " << e.what() << std::endl;
@@ -1700,7 +1598,6 @@ int AzElPa_Test_02() {
 
 int AzElPa_Test_03() {
     try {
-        std::cout << "\n=== Test 3: Invalid input dimensions ===\n";
 
         Matrix s(2, 2); // Wrong dimensions
 
@@ -1709,11 +1606,9 @@ int AzElPa_Test_03() {
             std::cerr << "Error: Expected exception not thrown\n";
             return 1;
         } catch (const std::invalid_argument& e) {
-            std::cout << "Correctly caught exception: " << e.what() << "\n";
             _assert(std::string(e.what()).find("3x1") != std::string::npos);
         }
 
-        std::cout << "Test 3 passed: Invalid input handled correctly.\n";
         return 0;
     } catch(const std::exception& e) {
         std::cerr << "Error in AzElPa_Test_03: " << e.what() << std::endl;
@@ -1733,10 +1628,7 @@ int VarEqn_Test_01() {
     // 4) Pon un TAI-UTC realista en fila 13
     eop(13,1) = 37.0;
     eop(13,2) = 37.0;
-    // (Opcionalmente rellena filas 5–12 con valores de prueba o ceros,
-    // convertirás a radianes dentro de IERS.)
 
-    // Ahora prepara los demás argumentos
     AuxParam params;
     params.Mjd_UTC = Mjd0;
     params.Mjd_TT  = Mjd0;  // o Mjd0 + offset
@@ -1758,15 +1650,12 @@ int VarEqn_Test_01() {
     // Comprueba que, con gravedad cero, tus primeras 6 entradas sean ceros,
     // y que el sub-bloque de dΦ/dt sea la 6×6 con ceros también.
     _assert(std::fabs(yPhip(1,1)) < 1e-12);
-    _assert(std::fabs(yPhip(6,1)) < 1e-2);//falla este assert
-    // … etc …
+    _assert(std::fabs(yPhip(6,1)) < 1e-2);
 
-    std::cout<<"VarEqn_Test_01 passed\n";
     return 0;
 }
 
 int VarEqn_Test_02() {
-    // Preparo yPhi de tamaño incorrecto (por ejemplo 10×1)
     Matrix yPhi_bad(10,1);
     AuxParam params{59000.0, 59000.0, 0, 0};
     Matrix eop(1,2);
@@ -1780,13 +1669,11 @@ int VarEqn_Test_02() {
         threw = true;
     }
     _assert(threw && "Expected exception for wrong yPhi size");
-    std::cout << "VarEqn_Test_02 passed\n";
+
     return 0;
 }
 
 int VarEqn_Test_03() {
-    std::cout << "=== VarEqn_CentralGravity_Test ===\n";
-    // montamos un eop trivial en MJD_J2000 para que E ~ I
     double Mjd0 = 51544.5;
     Matrix eop(13, 2);
     for (int i = 1; i <= 13; ++i) for (int j = 1; j <= 2; ++j) eop(i,j) = 0.0;
@@ -1814,12 +1701,8 @@ int VarEqn_Test_03() {
     for(int i=1;i<=3;++i) _assert(fabs(yPhip(i,1))<1e-12);
     //  dv/dt = a = -GM/R^2 en x
     double expect_ax = -GM_Earth/(R*R);
-    std::cout<< yPhip(4,1)<< std::endl;
-    std::cout<< expect_ax<< std::endl;
     _assert(fabs(yPhip(4,1)-expect_ax)<1e-6);
     _assert(fabs(yPhip(5,1))<1e-12 && fabs(yPhip(6,1))<1e-12);
-
-    std::cout<<"VarEqn_CentralGravity_Test passed\n";
     return 0;
 }
 
@@ -1853,7 +1736,6 @@ static Matrix make_simple_eop(double Mjd0) {
 }
 
 int Accel_02(){
-    std::cout<<"=== Accel_InvalidY_Test ===\n";
     AuxParam params{58000.0,58000.0,0,0};
     Matrix eop = make_simple_eop(params.Mjd_UTC);
     Matrix Y_bad(5,1);
@@ -1864,12 +1746,10 @@ int Accel_02(){
         threw=true;
     }
     _assert(threw);
-    std::cout<<"Accel_InvalidY_Test passed\n";
     return 0;
 }
 
 int Accel_03(){
-    std::cout<<"=== Accel_InvalidAux_Test ===\n";
     AuxParam params{58000.0,58000.0,2,3}; // m>n
     Matrix eop = make_simple_eop(params.Mjd_UTC);
     Matrix Y(6,1);
@@ -1881,14 +1761,12 @@ int Accel_03(){
         threw=true;
     }
     _assert(threw);
-    std::cout<<"Accel_InvalidAux_Test passed\n";
     return 0;
 }
 
 int Accel_04(){
-    std::cout<<"=== Accel_EOP_OutOfRange_Test ===\n";
     AuxParam params{58000.0,58000.0,0,0};
-    Matrix eop(13,2); // todo cero, no fila 4 == Mjd_UTC
+    Matrix eop(13,2); // tod0 cero, no fila 4 == Mjd_UTC
     Matrix Y(6,1);
     bool threw=false;
     try {
@@ -1897,28 +1775,26 @@ int Accel_04(){
         threw=true;
     }
     _assert(threw);
-    std::cout<<"Accel_EOP_OutOfRange_Test passed\n";
+
     return 0;
 }
 
 int Accel_05(){
-    std::cout<<"=== Accel_ZeroState_Test ===\n";
     AuxParam params{58000.0,58000.0,0,0};
     params.sun = params.moon = params.planets = false;
     Matrix eop = make_simple_eop(params.Mjd_UTC);
     Matrix Y(6,1);
     for(int i=1;i<=6;++i) Y(i,1)=0.0;
     Matrix dY = Accel(0.0, Y, params, eop);
-    // debe ser todo cero
+    // debe ser tod0 cero
     for(int i=1;i<=6;++i){
         _assert(std::fabs(dY(i,1))<1e-12);
     }
-    std::cout<<"Accel_ZeroState_Test passed\n";
+
     return 0;
 }
 
 int Accel_06(){
-    std::cout<<"=== Accel_CircularOrbit_Test ===\n";
     AuxParam params{58000.0,58000.0,0,0};
     params.sun = params.moon = params.planets = false;
     Matrix eop = make_simple_eop(params.Mjd_UTC);
@@ -1946,7 +1822,6 @@ int Accel_06(){
     _assert(std::fabs(dY(5,1) - 0.0)       < 1e-12);
     _assert(std::fabs(dY(6,1) - 0.0)       < 1e-12);
 
-    std::cout<<"Accel_CircularOrbit_Test passed\n";
     return 0;
 }
 
@@ -2177,37 +2052,7 @@ int anglesdr_J2000Circular_Test() {
 
 
 
-int Doubler_03() {
-    // Caso trivial: rsite1 = (0,0,0), los1=(1,0,0), rsite2=(0,0,0), los2=(0,1,0)
-    // magr1in y magr2in escogidos grandes, t1=t3=1
-    double cc1 = 0.0, cc2 = 0.0;
-    double magrsite1 = 0.0, magrsite2 = 0.0;
-    double magr1in = 10000.0, magr2in = 10000.0;
-    Matrix los1(3,1), los2(3,1), los3(3,1);
-    los1(1,1)=1; los1(2,1)=0; los1(3,1)=0;
-    los2(1,1)=0; los2(2,1)=1; los2(3,1)=0;
-    los3(1,1)=0; los3(2,1)=0; los3(3,1)=1;
-    Matrix rsite1(3,1), rsite2(3,1), rsite3(3,1);
-    // todos cero
-    DoubleRResult R = doubler(
-            cc1, cc2,
-            magrsite1, magrsite2,
-            magr1in, magr2in,
-            los1, los2, los3,
-            rsite1, rsite2, rsite3,
-            1.0, 1.0, 'y'
-    );
-    // Aquí esperamos que R.r2 = rho2*los2 = rho2*(0,1,0) con rho2 = (-cc2+sqrt(cc2^2 - ...))/2
-    double expected_rho2 = (-cc2 + sqrt(cc2*cc2 - 4*(magrsite2*magrsite2 - magr2in*magr2in))) / 2.0;
-    if (std::fabs(R.r2(1,1) - 0.0) > TOL_ ||
-        std::fabs(R.r2(2,1) - expected_rho2) > TOL_ ||
-        std::fabs(R.r2(3,1) - 0.0) > TOL_) {
-        std::cout<<"Doubler_TrivialColinear_Test FAILED\n";
-        return 1;
-    }
-    std::cout<<"Doubler_TrivialColinear_Test passed\n";
-    return 0;
-}
+
 
 #define TOL_R 1e-2
 #define TOL_V 1e-4
@@ -2641,6 +2486,25 @@ int DEInteg_SHO_Test() {
     return 0;
 }
 
+int anglesg_BadEOP_Test() {
+    // Debe fallar si eopdata no tiene 13×3
+    double M2 = 58000.0;
+    Matrix Rs(3,1); Rs(1,1)=0; Rs(2,1)=0; Rs(3,1)=0;
+    AuxParam params;
+    params.Mjd_UTC = M2;
+    params.Mjd_TT  = M2;
+    // eopdata mal dimensionado:
+    Matrix eop_bad(12,3);
+    bool threw = false;
+    try {
+        anglesg(0,0,0, 0,0,0, M2,M2,M2, Rs,Rs,Rs, params, eop_bad);
+    } catch(const std::exception&) {
+        threw = true;
+    }
+    _assert(threw && "Expected exception for bad eopdata size");
+    std::cout << "anglesg_BadEOP_Test passed\n";
+    return 0;
+}
 
 
 
@@ -2727,21 +2591,19 @@ int all_tests()
     _verify(Accel_06);
 
 
-    //_verify(anglesdr_BadSize_Test);
-    //_verify(anglesdr_SyntheticCircular_Test);
-    //_verify(anglesdr_DegenerateGeometry_Test);
-    //_verify(anglesdr_SyntheticCircular_Equatorial_Test);
-    //_verify(anglesdr_CollinearLOS_Test);
-    //_verify(anglesdr_NonDegenerate_Test);
-    //_verify(anglesdr_J2000Circular_Test);
+    //_verify(anglesdr_BadSize_Test);//NO
+    _verify(anglesdr_SyntheticCircular_Test);//SI
+    //_verify(anglesdr_DegenerateGeometry_Test);//NO
+    //_verify(anglesdr_NonDegenerate_Test);//NO
+    //_verify(anglesdr_J2000Circular_Test);//NO
 
-    //_verify(anglesg_BadEOP_Test);//PASA
-    //_verify(anglesg_BasicFinite_Test);//PASA
+    _verify(anglesg_BadEOP_Test);//SI
+    _verify(anglesg_01);//SI
     //_verify(DEInteg_ExponentialGrowth_Test);
-    //_verify(DEInteg_HarmonicOscillator_Test);
-    //_verify(DEInteg_ZeroStep_Test);//PASA
-    _verify(DEInteg_SHO_Test);
-    //_verify(DEInteg_ExpGrowth_Test);
+    //_verify(DEInteg_HarmonicOscillator_Test);//CASI
+    _verify(DEInteg_ZeroStep_Test);//SI
+    _verify(DEInteg_SHO_Test);//SI
+    //_verify(DEInteg_ExpGrowth_Test);//NO
 
 
 
