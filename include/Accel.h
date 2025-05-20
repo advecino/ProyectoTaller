@@ -1,7 +1,3 @@
-//
-// Created by adria on 12/05/2025.
-//
-
 #ifndef PROYECTOTALLER_ACCEL_H
 #define PROYECTOTALLER_ACCEL_H
 
@@ -10,19 +6,13 @@
 #include "JPL_Eph_DE430.h"
 
 /**
- * @brief Calcula la derivada del estado [v; a] para un satélite en órbita terrestre.
- *
- * @param x      Tiempo desde la época en segundos.
- * @param Y      Vector de estado [r; v] (6×1) en ICRF/EME2000.
- * @param params Parámetros auxiliares (fechas MJD, grado/orden de gravidad, flags).
- * @param eop    Matriz de parámetros EOP para IERS (13 filas × N columnas).
- * @return dY    Vector (6×1) donde dY(1:3)=v, dY(4:6)=a.
+ * @brief Calcula la aceleración total que actúa sobre un satélite en órbita terrestre.
+ * @param x Tiempo transcurrido desde la época de referencia, en segundos.
+ * @param Y Vector de estado (6x1) del satélite en el sistema ICRF/EME2000. Contiene posición [km] y velocidad [km/s].
+ * @param params Estructura con parámetros auxiliares, incluyendo fecha MJD, coeficientes armónicos, y opciones activadas.
+ * @param eop Matriz de parámetros de orientación terrestre (EOP) del IERS, usada para correcciones de precesión/nutación y rotación terrestre.
+ * @return Vector (6x1) de derivadas del estado: dY(1:3) = velocidad, dY(4:6) = aceleración total.
  */
-Matrix Accel(
-        double x,
-        const Matrix& Y,
-        AuxParam& params,
-        Matrix& eop
-);
+Matrix Accel(double x,const Matrix& Y, AuxParam& params,Matrix& eop);
 
 #endif //PROYECTOTALLER_ACCEL_H

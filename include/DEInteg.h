@@ -1,7 +1,3 @@
-//
-// Created by adria on 12/05/2025.
-//
-
 #ifndef PROYECTOTALLER_DEINTEG_H
 #define PROYECTOTALLER_DEINTEG_H
 
@@ -13,16 +9,19 @@
 #include <stdexcept>
 #include <functional>
 
+/**
+ * @brief Integración numérica de EDOs con método variable de Shampine and Gordon.
+ */
 class DEInteg {
 private:
     // Constantes de estado
     enum DE_STATE {
-        DE_INIT = 1,    // Restart integration
-        DE_DONE = 2,    // Successful step
-        DE_BADACC = 3,  // Accuracy requirement could not be achieved
-        DE_NUMSTEPS = 4,// Permitted number of steps exceeded
-        DE_STIFF = 5,   // Stiff problem suspected
-        DE_INVPARAM = 6 // Invalid input parameters
+        DE_INIT = 1,    ///< Reinicio de integración
+        DE_DONE = 2,    ///< Paso exitoso
+        DE_BADACC = 3,  ///< Precisión no alcanzada
+        DE_NUMSTEPS = 4,///< Exceso de pasos permitidos
+        DE_STIFF = 5,   ///< Problema rígido sospechado
+        DE_INVPARAM = 6 ///< Parámetros inválidos
     };
 
     // Variables miembro
@@ -66,9 +65,24 @@ private:
     static const std::vector<double> gstr;
 
 public:
+    /**
+     * @brief Constructor por defecto.
+     */
     DEInteg();
+
+    /**
+     * @brief Ejecuta la integración del sistema de EDOs.
+     * @param func Función del sistema dy/dt = f(t, y).
+     * @param t Tiempo inicial.
+     * @param tout Tiempo final.
+     * @param relerr Error relativo permitido.
+     * @param abserr Error absoluto permitido.
+     * @param y Vector estado inicial (modificado con el resultado final).
+     * @return Vector estado final en tout.
+     */
     Matrix integrate(std::function<Matrix(double, const Matrix&)> func,
                      double t, double tout, double relerr, double abserr,
                      Matrix& y);
 };
+
 #endif //PROYECTOTALLER_DEINTEG_H

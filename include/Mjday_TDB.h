@@ -1,17 +1,11 @@
-/**
- * @file Mjday_TDB.h
- * @brief Calcula la Fecha Juliana Modificada para tiempo dinámico baricéntrico (TDB)
- */
-
-
 #ifndef PROYECTOTALLER_MJDAY_TDB_H
 #define PROYECTOTALLER_MJDAY_TDB_H
 
 
 /**
- * @brief Calcula el Modified Julian Date para TDB
- * @param Mjd_TT Fecha Juliana Modificada (Tiempo Terrestre)
- * @return Mjd_TDB Fecha Juliana Modificada (Tiempo Dinámico Baricéntrico)
+ * @brief Fecha juliana modificada para tiempo dinámico baricéntrico (TDB).
+ * @param Mjd_TT Fecha juliana modificada en Tiempo Terrestre.
+ * @return Fecha juliana modificada en TDB.
  */
 double Mjday_TDB(double Mjd_TT);
 

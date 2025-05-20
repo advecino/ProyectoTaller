@@ -1,7 +1,3 @@
-//
-// Created by adria on 10/05/2025.
-//
-
 #ifndef PROYECTOTALLER_HGIBBS_H
 #define PROYECTOTALLER_HGIBBS_H
 
@@ -15,18 +11,17 @@
 
 
 /**
- * @brief Implementa el método de Herrick-Gibbs para determinación orbital
+ * @brief Método de Herrick-Gibbs para determinación orbital.
  *
- * @param r1 Vector posición 1 (m)
- * @param r2 Vector posición 2 (m)
- * @param r3 Vector posición 3 (m)
- * @param Mjd1 Fecha juliana de la observación 1 (días desde 4713 a.C.)
- * @param Mjd2 Fecha juliana de la observación 2
- * @param Mjd3 Fecha juliana de la observación 3
- * @return HGibbsResult Estructura con resultados
+ * @param r1 Vector de posición 1 [m].
+ * @param r2 Vector de posición 2 [m].
+ * @param r3 Vector de posición 3 [m].
+ * @param Mjd1 Fecha juliana de la primera observación.
+ * @param Mjd2 Fecha juliana de la segunda observación.
+ * @param Mjd3 Fecha juliana de la tercera observación.
+ * @return Resultados del método (velocidad en r2, ángulos, etc.).
  */
-GibbsResult hgibbs(const Matrix& r1, const Matrix& r2, const Matrix& r3,
-                    double Mjd1, double Mjd2, double Mjd3);
+GibbsResult hgibbs(const Matrix& r1, const Matrix& r2, const Matrix& r3,double Mjd1, double Mjd2, double Mjd3);
 
 
 #endif //PROYECTOTALLER_HGIBBS_H

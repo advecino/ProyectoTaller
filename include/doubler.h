@@ -1,7 +1,3 @@
-//
-// Created by adria on 11/05/2025.
-//
-
 #ifndef PROYECTOTALLER_DOUBLER_H
 #define PROYECTOTALLER_DOUBLER_H
 
@@ -10,38 +6,29 @@
 #include "Sat_const.h"
 
 struct DoubleRResult {
-    Matrix r2;
-    Matrix r3;
-    double f1;
-    double f2;
-    double q1;
-    double magr1;
-    double magr2;
-    double a;
-    double deltae32;
-    DoubleRResult() : r2(3,1), r3(3,1){};
+    Matrix r2;           ///< Vector de posición en t2
+    Matrix r3;           ///< Vector de posición en t3
+    double f1;           ///< Función auxiliar f1
+    double f2;           ///< Función auxiliar f2
+    double q1;           ///< Norma de [f1 f2]
+    double magr1;        ///< Módulo de r1
+    double magr2;        ///< Módulo de r2
+    double a;            ///< Semieje mayor de la órbita
+    double deltae32;     ///< Diferencia de anomalías excéntricas entre r3 y r2
+    DoubleRResult() : r2(3,1), r3(3,1) {};
 };
 
 /**
- * @brief Implementación del algoritmo Double-R para determinación orbital
+ * @brief Determinación orbital usando el método Double-R.
  *
- * @param cc1
- * @param cc2
- * @param magrsite1
- * @param magrsite2
- * @param magr1in
- * @param magr2in
- * @param los1 Vector unitario dirección 1
- * @param los2 Vector unitario dirección 2
- * @param los3 Vector unitario dirección 3
- * @param rsite1 Vector sitio 1
- * @param rsite2 Vector sitio 2
- * @param rsite3 Vector sitio 3
- * @param t1 Tiempo 1
- * @param t3 Tiempo 3
- * @param direct Dirección ('y' o 'n')
- * @param GM_Earth Constante gravitacional terrestre
- * @return DoubleRResult
+ * @param cc1, cc2 Parámetros intermedios relacionados con ángulos y distancias.
+ * @param magrsite1, magrsite2 Módulos de los vectores de sitio.
+ * @param magr1in, magr2in Estimaciones iniciales de r1 y r2.
+ * @param los1, los2, los3 Vectores de dirección desde los sitios de observación.
+ * @param rsite1, rsite2, rsite3 Posiciones de los sitios de observación.
+ * @param t1, t3 Tiempos t1 y t3 (segundos respecto a t2).
+ * @param direct Dirección del movimiento ('y' directo, 'n' retrógrado).
+ * @return Estructura con resultados orbitales intermedios.
  */
 DoubleRResult doubler(double cc1, double cc2,
                       double magrsite1, double magrsite2,

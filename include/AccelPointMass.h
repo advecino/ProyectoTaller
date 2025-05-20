@@ -1,7 +1,3 @@
-//
-// Created by adria on 20/04/2025.
-//
-
 #ifndef PROYECTOTALLER_ACCELPOINTMASS_H
 #define PROYECTOTALLER_ACCELPOINTMASS_H
 

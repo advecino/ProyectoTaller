@@ -1,7 +1,3 @@
-//
-// Created by adria on 12/05/2025.
-//
-
 #ifndef PROYECTOTALLER_ANGLESG_H
 #define PROYECTOTALLER_ANGLESG_H
 
@@ -19,13 +15,13 @@
 #include "AuxParam.h"
 
 struct AnglesGResult {
-    Matrix r2;  // posición en t2 [m]
-    Matrix v2;  // velocidad en t2 [m/s]
+    Matrix r2;  ///< Posición en t2 [m]
+    Matrix v2;  ///< Velocidad en t2 [m/s]
     AnglesGResult(): r2(3,1), v2(3,1) {}
 };
 
 /**
- * @brief Orbit determination from three optical sightings, “Gibbs” method.
+ * @brief Determinación de órbita usando tres observaciones ópticas.
  */
 AnglesGResult anglesg(
         double az1, double az2, double az3,

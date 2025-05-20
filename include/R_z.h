@@ -7,6 +7,12 @@
 
 #include "Matrix.h"
 
+
+/**
+ * @brief Matriz de rotación en torno al eje Z.
+ * @param angle Ángulo de rotación [rad].
+ * @return Matriz de rotación 3x3.
+ */
 Matrix R_z(double angle);
 
 

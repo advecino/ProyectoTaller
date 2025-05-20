@@ -1,7 +1,3 @@
-//
-// Created by adria on 12/05/2025.
-//
-
 #ifndef PROYECTOTALLER_ANGLESDR_H
 #define PROYECTOTALLER_ANGLESDR_H
 
@@ -21,20 +17,20 @@
 #include <cstring>
 
 struct AnglesDRResult {
-    Matrix r2;  // Position vector at t2 [m]
-    Matrix v2;  // Velocity vector at t2 [m/s]
+    Matrix r2;  ///<  Vector de posición en t2 [m]
+    Matrix v2;  ///<  Vector de velocidad en t2 [m/s]
     AnglesDRResult() : r2(3, 1), v2(3, 1){};
 };
 
 /**
- * @brief Orbit determination from three optical sightings, “double‐r” method.
- * @param az1,az2,az3   azimuths at t1/t2/t3 [rad]
- * @param el1,el2,el3   elevations at t1/t2/t3 [rad]
- * @param Mjd1,Mjd2,Mjd3  observation MJDs
- * @param rsite1,rsite2,rsite3  site ECEF positions [m]
- * @param params       auxiliary params (Mjd_UTC, Mjd_TT, n, m, flags)
- * @param eopdata      Earth orientation data matrix
- * @return r2,v2       position & velocity at t2
+ * @brief Determinación de órbita usando tres observaciones ópticas.
+ * @param az1, az2, az3 Acimutes en t1, t2 y t3 [rad]
+ * @param el1, el2, el3 Elevaciones en t1, t2 y t3 [rad]
+ * @param Mjd1, Mjd2, Mjd3 Fechas julianas modificadas de observación
+ * @param rsite1, rsite2, rsite3 Vectores de posición del sitio en ECEF [m]
+ * @param params Parámetros auxiliares (fechas, orden de armónicos, etc.)
+ * @param eopdata Matriz de parámetros de orientación terrestre
+ * @return Estructura con r2 y v2 (posición y velocidad en t2)
  */
 AnglesDRResult anglesdr(
         double az1, double az2, double az3,

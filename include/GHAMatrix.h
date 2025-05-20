@@ -1,7 +1,3 @@
-//
-// Created by adria on 11/05/2025.
-//
-
 #ifndef PROYECTOTALLER_GHAMATRIX_H
 #define PROYECTOTALLER_GHAMATRIX_H
 
@@ -11,10 +7,9 @@
 
 
 /**
- * @brief Transformation from true equator and equinox to Earth equator and Greenwich meridian system
- *
- * @param Mjd_UT1 Modified Julian Date UT1
- * @return Matrix Greenwich Hour Angle matrix
+ * @brief Transformación al sistema ecuatorial de la Tierra y meridiano de Greenwich.
+ * @param Mjd_UT1 Fecha juliana modificada (UT1).
+ * @return Matriz del ángulo horario de Greenwich.
  */
 Matrix GHAMatrix(double Mjd_UT1);
 

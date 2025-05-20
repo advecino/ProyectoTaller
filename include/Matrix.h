@@ -39,91 +39,69 @@ public:
     */
     Matrix(const Matrix& m);
 
+    /**
+    * @brief Constructor que inicializa una matriz columna a partir de un vector de valores.
+    * @param values Vector con los valores de la matriz.
+    */
     explicit Matrix(const std::vector<double>& values);
+
+    /**
+     * @brief Constructor que inicializa una matriz con una lista de inicialización.
+     * @param values Lista de valores para inicializar la matriz.
+     * @param cols Número de columnas (por defecto 1).
+     */
     Matrix(const std::initializer_list<double>& values, int cols = 1);
 
 
     /**
- * @brief Constructor que inicializa la matriz con un array de datos.
- * @param fil Número de filas.
- * @param col Número de columnas.
- * @param v Array con los datos a cargar.
- */
+    * @brief Constructor que inicializa la matriz con un array de datos.
+    * @param fil Número de filas.
+    * @param col Número de columnas.
+    * @param v Array con los datos a cargar.
+    */
     Matrix(int fil, int col, double v[]);
 
+    /**
+     * @brief Devuelve una columna específica de la matriz.
+     * @param col Índice de la columna a obtener.
+     * @return Matriz columna correspondiente.
+     */
     Matrix getColumn(int col) const;
+
+    /**
+     * @brief Asigna una matriz columna a una columna específica.
+     * @param col Índice de la columna a modificar.
+     * @param column Matriz columna a asignar.
+     */
     void setColumn(int col, const Matrix& column);
 
 
+    /**
+     * @brief Concatena esta matriz con otra a lo largo de un eje.
+     * @param other Matriz a concatenar.
+     * @param axis Eje de concatenación (0 = vertical, 1 = horizontal).
+     * @return Nueva matriz concatenada.
+     */
     Matrix concatenate(const Matrix& other, int axis = 0) const;
 
     /**
-    * @brief Destructor de la matriz.
-    */
+  * @brief Destructor de la matriz.
+  */
     ~Matrix();
 
+    /** @name Operadores */
+    ///@{
 
-    /**
-    * @brief Sobrecarga del operador de asignación.
-    * @param matrix2 Matriz a asignar.
-    * @return Referencia a la matriz resultante.
-    */
     Matrix& operator= (const Matrix& matrix2);
-    /**
-    * @brief Sobrecarga del operador de suma.
-    * @param matrix2 Matriz a sumar.
-    * @return Matriz resultante de la suma.
-    */
     Matrix operator+ (const Matrix& matrix2);
-    /**
-     * @brief Sobrecarga del operador de resta.
-     * @param matrix2 Matriz a restar.
-     * @return Matriz resultante de la resta.
-     */
     Matrix operator- (const Matrix& matrix2);
-    /**
-    * @brief Sobrecarga del operador de multiplicación.
-    * @param matrix2 Matriz a multiplicar.
-    * @return Matriz resultante de la multiplicación.
-    */
     Matrix operator* (const Matrix& matrix2) const;
     Matrix& operator/=(double scalar);
+    double& operator()(int i, int j) const;
 
-
-
-    /**
-     * @brief Sobrecarga del operador de acceso a elementos de la matriz.
-     * @param i Índice de la fila.
-     * @param j Índice de la columna.
-     * @return Referencia al valor en la posición (i, j).
-     */
-    double& operator()( int i,  int j) const;
-
-
-    /**
-     * @brief Suma un escalar a la matriz (modifica la matriz actual)
-     * @param scalar El valor escalar a sumar
-     * @return Referencia a la matriz resultante
-     */
     Matrix& operator+=(double scalar);
-
-    /**
-     * @brief Resta un escalar a la matriz (modifica la matriz actual)
-     * @param scalar El valor escalar a restar
-     * @return Referencia a la matriz resultante
-     */
     Matrix& operator-=(double scalar);
-    /**
-    * @brief Multiplica la matriz por un escalar
-    * @param scalar El valor escalar a multiplicar
-    * @return Referencia a la matriz resultante (para encadenar operaciones)
-    */
     Matrix& operator*=(double scalar);
-    /**
-     * @brief Versiones no-miembro para suma/resta con escalar
-     */
-
-
 
     friend Matrix operator+(const Matrix& m, double scalar);
     friend Matrix operator+(double scalar, const Matrix& m);
@@ -134,63 +112,80 @@ public:
     friend Matrix operator/(const Matrix& m, double scalar);
     friend Matrix operator/(double scalar, const Matrix& m);
 
-
-
-
+    ///@}
 
     /**
-    * @brief Imprime la matriz en la consola.
-    */
+     * @brief Imprime la matriz por consola.
+     */
     void print() const;
+
+    /**
+     * @brief Calcula la norma euclídea de la matriz.
+     * @return Valor de la norma.
+     */
     double norm() const;
 
-
-
-
+    /**
+     * @brief Devuelve el número de filas.
+     * @return Número de filas de la matriz.
+     */
     int getFilas() const;
-    int getColumnas() const;
-    Matrix transpuesta() const;
-    Matrix inversa() const;
-
 
     /**
-     * @brief Calcula el producto punto (dot product) entre dos vectores
-     * @param a Primer vector (debe ser matriz nx1 o 1xn)
-     * @param b Segundo vector (debe ser matriz nx1 o 1xn)
-     * @return Resultado del producto punto
-     * @throw std::invalid_argument Si las dimensiones no son compatibles
+     * @brief Devuelve el número de columnas.
+     * @return Número de columnas de la matriz.
+     */
+    int getColumnas() const;
+
+    /**
+     * @brief Devuelve la transpuesta de la matriz.
+     * @return Matriz transpuesta.
+     */
+    Matrix transpuesta() const;
+
+    /**
+     * @brief Devuelve la inversa de la matriz (si existe).
+     * @return Matriz inversa.
+     */
+    Matrix inversa() const;
+
+    /**
+     * @brief Calcula el producto punto entre dos vectores.
+     * @param a Primer vector (nx1 o 1xn).
+     * @param b Segundo vector (nx1 o 1xn).
+     * @return Resultado del producto escalar.
+     * @throw std::invalid_argument Si las dimensiones no son compatibles.
      */
     static double dot(const Matrix& a, const Matrix& b);
 
     /**
-     * @brief Calcula el producto cruz (cross product) entre dos vectores 3D
-     * @param a Primer vector (debe ser matriz 3x1 o 1x3)
-     * @param b Segundo vector (debe ser matriz 3x1 o 1x3)
-     * @return Matriz resultante del producto cruz (3x1)
-     * @throw std::invalid_argument Si los vectores no son 3D
+     * @brief Calcula el producto cruz entre dos vectores tridimensionales.
+     * @param a Primer vector (3x1 o 1x3).
+     * @param b Segundo vector (3x1 o 1x3).
+     * @return Vector resultante del producto cruz.
+     * @throw std::invalid_argument Si los vectores no son tridimensionales.
      */
     static Matrix cross(const Matrix& a, const Matrix& b);
 
     /**
-    * @brief Obtiene una submatriz de la matriz actual
-    * @param startRow Fila inicial (1-based)
-    * @param endRow Fila final (1-based)
-    * @param startCol Columna inicial (1-based)
-    * @param endCol Columna final (1-based)
-    * @return Nueva matriz con la submatriz extraída
-    */
+     * @brief Obtiene una submatriz.
+     * @param startRow Fila inicial (1-based).
+     * @param endRow Fila final (1-based).
+     * @param startCol Columna inicial (1-based).
+     * @param endCol Columna final (1-based).
+     * @return Submatriz extraída.
+     */
     Matrix getSubMatrix(int startRow, int endRow, int startCol, int endCol) const;
-
 
 private:
     /**
-     * @brief Inicializa la matriz con valores en cero.
+     * @brief Inicializa la matriz con ceros.
      */
     void initMatrix();
-    int fil;  ///< Número de filas de la matriz.
-    int col; ///< Número de columnas de la matriz.
-    double** matrix; ///< Puntero a la memoria donde se almacenan los valores de la matriz.
 
+    int fil; ///< Número de filas.
+    int col; ///< Número de columnas.
+    double** matrix; ///< Puntero a la memoria de los elementos de la matriz.
 };
 
 

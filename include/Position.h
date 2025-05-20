@@ -1,8 +1,3 @@
-/**
- * @file Position.h
- * @brief Calcula el vector de posición a partir de coordenadas geodésicas
- */
-
 #ifndef PROYECTOTALLER_POSITION_H
 #define PROYECTOTALLER_POSITION_H
 
@@ -10,13 +5,13 @@
 #include "Matrix.h"
 
 /**
- * @brief Calcula el vector de posición desde coordenadas geodésicas
- * @param lon Longitud en radianes
- * @param lat Latitud en radianes
- * @param h Altitud en metros
- * @param R_equ Radio ecuatorial de la Tierra
- * @param f Achatamiento de la Tierra
- * @return Vector de posición (Matrix 3x1)
+ * @brief Vector de posición desde coordenadas geodésicas.
+ * @param lon Longitud [rad].
+ * @param lat Latitud [rad].
+ * @param h Altitud [m].
+ * @param R_equ Radio ecuatorial de la Tierra [m].
+ * @param f Achatamiento de la Tierra.
+ * @return Vector de posición (3x1) en coordenadas cartesianas [m].
  */
 Matrix Position(double lon, double lat, double h, double R_equ, double f);
 

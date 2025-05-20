@@ -1,7 +1,3 @@
-//
-// Created by adria on 10/05/2025.
-//
-
 #ifndef PROYECTOTALLER_ELEMENTS_H
 #define PROYECTOTALLER_ELEMENTS_H
 
@@ -11,18 +7,18 @@
 #include "SAT_Const.h"
 
 struct KeplerianElements {
-    double p;
-    double a;
-    double e;
-    double i;
-    double Omega;
-    double omega;
-    double M;
+    double p;      ///< Semilatus rectum [m]
+    double a;      ///< Semieje mayor [m]
+    double e;      ///< Excentricidad
+    double i;      ///< Inclinación [rad]
+    double Omega;  ///< Longitud del nodo ascendente [rad]
+    double omega;  ///< Argumento del pericentro [rad]
+    double M;      ///< Anomalía media [rad]
 };
 
 /**
- * @brief Osculating Keplerian elements from r and v for elliptic, inclined orbits
- * @throws std::invalid_argument if orbit is circular or equatorial
+ * @brief Calcula los elementos keplerianos osculantes para órbitas elípticas.
+ * @throws std::invalid_argument si la órbita es circular o ecuatorial.
  */
 KeplerianElements elements(const Matrix& r, const Matrix& v);
 

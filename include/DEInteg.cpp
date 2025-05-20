@@ -1,4 +1,5 @@
-
+#include "DEInteg.h"
+#include "sign_.h"
 
 /*
 %----------------------------------------------------------------------------
@@ -19,10 +20,9 @@
 %----------------------------------------------------------------------------*/
 
 
-#include "DEInteg.h"
-#include "sign_.h"
 
-// Inicialización de constantes estáticas
+
+
 const std::vector<double> DEInteg::two = {1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0,
                                           256.0, 512.0, 1024.0, 2048.0, 4096.0, 8192.0};
 
@@ -30,7 +30,7 @@ const std::vector<double> DEInteg::gstr = {1.0, 0.5, 0.0833, 0.0417, 0.0264, 0.0
                                            0.0143, 0.0114, 0.00936, 0.00789, 0.00679,
                                            0.00592, 0.00524, 0.00468};
 
-// Constructor
+
 DEInteg::DEInteg() : PermitTOUT(true), told(0), OldPermit(false), delsgn(0), start(false),
                      x(0), yy(Matrix(1,1)), h(0), hold(0), hnew(0), k(0), kold(0),
                      phase1(false), nornd(false), stiff(false), nostep(0), kle4(0),
@@ -39,7 +39,7 @@ DEInteg::DEInteg() : PermitTOUT(true), told(0), OldPermit(false), delsgn(0), sta
                      rho(14, 0.0), w(13, 0.0), alpha(13, 0.0), beta(13, 0.0),
                      v(13, 0.0), psi_(13, 0.0), State_(DE_INIT) {}
 
-// Método principal de integración
+
 Matrix DEInteg::integrate(std::function<Matrix(double, const Matrix&)> func,double t, double tout, double relerr, double abserr,Matrix& y) {
 
     int neq = y.getFilas();
@@ -51,7 +51,7 @@ Matrix DEInteg::integrate(std::function<Matrix(double, const Matrix&)> func,doub
     double twou = 2.0 * std::numeric_limits<double>::epsilon();
     double fouru = 4.0 * std::numeric_limits<double>::epsilon();
 
-    // Redimensionar matrices según n_eqn
+
     yy = Matrix(n_eqn, 1);
     wt = Matrix(n_eqn, 1);
     p = Matrix(n_eqn, 1);

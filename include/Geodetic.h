@@ -1,7 +1,3 @@
-//
-// Created by adria on 11/05/2025.
-//
-
 #ifndef PROYECTOTALLER_GEODETIC_H
 #define PROYECTOTALLER_GEODETIC_H
 
@@ -10,25 +6,18 @@
 
 
 struct GeodeticCoords {
-    double longitude;  // Longitud en radianes
-    double latitude;   // Latitud en radianes
-    double altitude;   // Altitud en metros
+    double longitude;  ///< Longitud [rad]
+    double latitude;   ///< Latitud [rad]
+    double altitude;   ///< Altitud [m]
 
-    // Constructor por defecto
     GeodeticCoords() : longitude(0.0), latitude(0.0), altitude(0.0) {}
-
-    // Constructor con parámetros
-    GeodeticCoords(double lon, double lat, double h)
-            : longitude(lon), latitude(lat), altitude(h) {}
+    GeodeticCoords(double lon, double lat, double h): longitude(lon), latitude(lat), altitude(h) {}
 };
 
 /**
- * @brief Calcula coordenadas geodésicas a partir de un vector de posición
- *
- * @param r Vector de posición [m] (Matrix 3x1)
- * @param R_equ Radio ecuatorial de la Tierra [m]
- * @param f Achatamiento de la Tierra
- * @return GeodeticCoords Estructura con coordenadas geodésicas
+ * @brief Coordenadas geodésicas desde vector de posición.
+ * @param r Vector de posición cartesiano (3x1) [m].
+ * @return Coordenadas geodésicas: longitud, latitud y altitud.
  */
 GeodeticCoords Geodetic(const Matrix& r);
 

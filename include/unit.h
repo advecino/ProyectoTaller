@@ -8,7 +8,11 @@
 #include <cmath>
 #include "Matrix.h"
 
-
+/**
+ * @brief Devuelve el vector unitario correspondiente a un vector dado.
+ * @param vec Vector de entrada (3x1).
+ * @return Vector unitario (3x1) o vector cero si la magnitud es muy pequeña.
+ */
 Matrix unit(const Matrix& vec);
 
 

@@ -1,7 +1,3 @@
-//
-// Created by adria on 11/05/2025.
-//
-
 #ifndef PROYECTOTALLER_NUTMATRIX_H
 #define PROYECTOTALLER_NUTMATRIX_H
 
@@ -13,12 +9,9 @@
 #include "R_z.h"
 
 /**
- * @brief Transformation from mean to true equator and equinox
- *
- * @param Mjd_TT Modified Julian Date (Terrestrial Time)
- * @return Matrix Nutation matrix
- *
- * Last modified: 2015/08/12 M. Mahooti
+ * @brief Matriz de transformación por nutación (ecuador/equinoctio medio → verdadero).
+ * @param Mjd_TT Fecha juliana modificada (Tiempo Terrestre).
+ * @return Matriz de nutación.
  */
 Matrix NutMatrix(double Mjd_TT);
 
