@@ -2321,14 +2321,14 @@ int anglesg_Nondegenerate_Test() {
 
     // generar observaciones
     auto st1 = state2(M1);
-        Matrix r_1 = st1.first;
-        Matrix v_1 = st1.second;
-        auto st2 = state2(M2);
-        Matrix r_2 = st2.first;
-        Matrix v_2 = st2.second;
-        auto st3 = state2(M3);
-        Matrix r_3 = st3.first;
-        Matrix v_3 = st3.second;
+    Matrix r_1 = st1.first;
+    Matrix v_1 = st1.second;
+    auto st2 = state2(M2);
+    Matrix r_2 = st2.first;
+    Matrix v_2 = st2.second;
+    auto st3 = state2(M3);
+    Matrix r_3 = st3.first;
+    Matrix v_3 = st3.second;
     Matrix los1=(r_1-Rs1)*(1.0/(r_1-Rs1).norm());
     Matrix los2=(r_2-Rs2)*(1.0/(r_2-Rs2).norm());
     Matrix los3=(r_3-Rs3)*(1.0/(r_3-Rs3).norm());
