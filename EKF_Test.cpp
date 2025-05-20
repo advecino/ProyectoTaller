@@ -2591,6 +2591,7 @@ int all_tests()
     _verify(Accel_06);
 
 
+
     //_verify(anglesdr_BadSize_Test);//NO
     _verify(anglesdr_SyntheticCircular_Test);//SI
     //_verify(anglesdr_DegenerateGeometry_Test);//NO
