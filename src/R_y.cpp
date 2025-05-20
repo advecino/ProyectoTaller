@@ -1,7 +1,3 @@
-//
-// Created by advecino on 10/04/2025.
-//
-
 #include <valarray>
 #include "../include/R_y.h"
 /*
@@ -21,7 +17,6 @@ Matrix R_y(double angle)
 
     C = cos(angle);
     S = sin(angle);
-    // rotmat = zeros(3,3);
 
     rotmat(1,1) = C;  rotmat(1,2) =    0.0;  rotmat(1,3) = -1.0*S;
     rotmat(2,1) = 0.0;  rotmat(2,2) =      1.0;  rotmat(2,3) =   0.0;

@@ -1,9 +1,4 @@
-//
-// Created by adria on 11/05/2025.
-//
-
 #include <limits>
-#include <stdexcept>
 #include "../include/Geodetic.h"
 #include <cmath>
 
@@ -19,6 +14,8 @@
 % Last modified:   2015/08/12   M. Mahooti
 %
 %--------------------------------------------------------------------------*/
+
+
 GeodeticCoords Geodetic(const Matrix& r) {
     const double eps = std::numeric_limits<double>::epsilon();
     const double epsRequ = eps * R_Earth; //Convergence criterion

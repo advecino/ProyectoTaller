@@ -1,7 +1,3 @@
-//
-// Created by adria on 20/04/2025.
-//
-
 #include "../include/sign_.h"
 
 

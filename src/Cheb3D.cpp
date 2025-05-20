@@ -24,16 +24,12 @@ Matrix Cheb3D(double t, int N, double Ta, double Tb,
         throw std::runtime_error("Time out of range in Cheb3D");
     }
 
-    // Transformar al intervalo [-1,1]
     double tau = (2.0*t - Ta - Tb)/(Tb - Ta);
 
-    // Implementación directa usando polinomios de Chebyshev
     Matrix result(3, 1);
 
-    // Evaluar para X
     result(1,1) = 0.0;
     for (int i = 1; i <= N; ++i) {
-        // Calcular T_{i-1}(tau)
         double T;
         if (i == 1) T = 1.0;
         else if (i == 2) T = tau;
@@ -42,7 +38,6 @@ Matrix Cheb3D(double t, int N, double Ta, double Tb,
         result(1,1) += Cx(i,1) * T;
     }
 
-    // Evaluar para Y
     result(2,1) = 0.0;
     for (int i = 1; i <= N; ++i) {
         double T;
@@ -53,7 +48,6 @@ Matrix Cheb3D(double t, int N, double Ta, double Tb,
         result(2,1) += Cy(i,1) * T;
     }
 
-    // Evaluar para Z
     result(3,1) = 0.0;
     for (int i = 1; i <= N; ++i) {
         double T;
@@ -67,7 +61,7 @@ Matrix Cheb3D(double t, int N, double Ta, double Tb,
     return result;
 }
 
-// Función auxiliar para calcular T_n(x)
+// Función auxiliar para calcular Tn(x)
 double ChebT(double x, int n) {
     if (n == 0) return 1.0;
     if (n == 1) return x;

@@ -1,7 +1,3 @@
-//
-// Created by adria on 20/04/2025.
-//
-
 #include "../include/AccelPointMass.h"
 #include <cmath>
 /*
@@ -20,17 +16,13 @@
 %
 % Last modified:   2018/01/27   M. Mahooti
 %
-%--------------------------------------------------------------------------*//**
- * @file AccelPointMass.cpp
- * @brief Implementación de la función AccelPointMass
- */
+%--------------------------------------------------------------------------*/
 
 Matrix AccelPointMass( Matrix& r, const Matrix& s, double GM)
 {
     // Relative position vector of satellite w.r.t. point mass
     Matrix d = r - s;
 
-    // Acceleration
     double norm_d = 0.0;
     double norm_s = 0.0;
 

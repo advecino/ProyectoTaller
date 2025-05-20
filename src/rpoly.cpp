@@ -1,7 +1,3 @@
-//
-// Created by adria on 18/05/2025.
-//
-
 #include "../include/rpoly.h"
 
 // Adapted in 2013 by Ethan Eade from NETLIB program 493:

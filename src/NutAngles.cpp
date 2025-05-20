@@ -136,34 +136,33 @@ const std::vector<NutCoeff> C = {
 void NutAngles(double Mjd_TT, double& dpsi, double& deps)
 {
     const double MJD_J2000 = 51544.5;
-    const double arcsecToRad = M_PI / (180.0 * 3600.0); // Factor de conversión
+    const double arcsecToRad = M_PI / (180.0 * 3600.0);
 
     double T = (Mjd_TT - MJD_J2000) / 36525.0;
     double T2 = T * T;
     double T3 = T2 * T;
 
-    // 1. Calcular argumentos lunares y solares medios (en arcosegundos)
+
     double l  = 485866.733 + (1325.0*360.0*3600.0 +  715922.633)*T + 31.310*T2 + 0.064*T3;
     double lp = 1287099.804 + (  99.0*360.0*3600.0 + 1292581.224)*T -  0.577*T2 - 0.012*T3;
     double F  = 335778.877 + (1342.0*360.0*3600.0 +  295263.137)*T - 13.257*T2 + 0.011*T3;
     double D  = 1072261.307 + (1236.0*360.0*3600.0 + 1105601.328)*T -  6.891*T2 + 0.019*T3;
     double Om = 450160.280 - (   5.0*360.0*3600.0 +  482890.539)*T +  7.455*T2 + 0.008*T3;
 
-    // Convertir a radianes
+
     l  *= arcsecToRad;
     lp *= arcsecToRad;
     F  *= arcsecToRad;
     D  *= arcsecToRad;
     Om *= arcsecToRad;
 
-    // 2. Calcular nutación
+
     dpsi = 0.0;
     deps = 0.0;
 
     for (const auto& coeff : C) {
         double arg = coeff.l*l + coeff.lp*lp + coeff.F*F + coeff.D*D + coeff.Om*Om;
 
-        // Los coeficientes están en 0.0001 arcosegundos
         dpsi += (coeff.dpsi0 + coeff.dpsi1*T) * sin(arg) * 0.0001 * arcsecToRad;
         deps += (coeff.deps0 + coeff.deps1*T) * cos(arg) * 0.0001 * arcsecToRad;
     }

@@ -1,6 +1,3 @@
-//
-// Created by advecino on 09/04/2025.
-//
 /*
 %--------------------------------------------------------------------------
 %
@@ -10,10 +7,7 @@
 %
 %--------------------------------------------------------------------------
  */
-/**
- * @file Frac.cpp
- * @brief Implementación de la función para obtener la parte fraccionaria de un número
- */
+
 #include "../include/Frac.h"
 #include <cmath>
 

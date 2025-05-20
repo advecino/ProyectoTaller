@@ -27,14 +27,9 @@
 %--------------------------------------------------------------------------*/
 
 
-#define IDX(i,j) PC(i,j)
 
-// Corta una subsecuencia de PCtemp en un vector<double>
-// Cambia slice por esta versión:
 static void slice(const Matrix& row, int start, int len, std::vector<double>& out) {
-    // Aseguramos capacidad
     out.reserve(out.size() + len);
-    // row es una matriz 1×N, usamos siempre fila 1 y columnas start..start+len-1
     for (int k = 0; k < len; ++k) {
         out.push_back(row(1, start + k));
     }
@@ -44,7 +39,6 @@ static void slice(const Matrix& row, int start, int len, std::vector<double>& ou
 PlanetaryPositions JPL_Eph_DE430(double Mjd_TDB) {
     PlanetaryPositions pos;
 
-    // --- Sección 1: buscar fila válida en PC ---
     double JD = Mjd_TDB + 2400000.5;
     int nRows = PC.getFilas(), nCols = PC.getColumnas();
     int i = -1;
@@ -57,10 +51,9 @@ PlanetaryPositions JPL_Eph_DE430(double Mjd_TDB) {
     double t1 = PCtemp(1,1) - 2400000.5;
     double dt = Mjd_TDB - t1;
 
-    // --- Sección 2: Tierra (Earth) ---
-    // bloques de 13 coeficientes, dos subseqs de 16 días cada uno
+
     std::vector<double> Cx_E, Cy_E, Cz_E, tmp;
-    int base = 231; // inicio MATLAB
+    int base = 231;
     slice(PCtemp, base, 13, Cx_E);
     slice(PCtemp, base+13, 13, Cy_E);
     slice(PCtemp, base+26, 13, Cz_E);
@@ -78,7 +71,7 @@ PlanetaryPositions JPL_Eph_DE430(double Mjd_TDB) {
     }
     pos.r_Earth = 1e3 * Cheb3D(Mjd_TDB,13,Mjd0,Mjd0+16, mCx_E,mCy_E,mCz_E);
 
-    // --- Sección 3: Luna (Moon) ---
+
     std::vector<double> Cx_M, Cy_M, Cz_M;
     base = 441;
     slice(PCtemp, base, 13, Cx_M);
@@ -89,7 +82,7 @@ PlanetaryPositions JPL_Eph_DE430(double Mjd_TDB) {
         slice(PCtemp, base+39*rep+13, 13, tmp); Cy_M.insert(Cy_M.end(), tmp.begin(), tmp.end()); tmp.clear();
         slice(PCtemp, base+39*rep+26, 13, tmp); Cz_M.insert(Cz_M.end(), tmp.begin(), tmp.end()); tmp.clear();
     }
-    // Subintervalos de 4 días
+
     j = int(dt/4); j = std::min(j,7);
     Mjd0 = t1 + 4*j;
     Matrix mCx_M(13*8,1), mCy_M(13*8,1), mCz_M(13*8,1);
@@ -100,7 +93,6 @@ PlanetaryPositions JPL_Eph_DE430(double Mjd_TDB) {
     }
     pos.r_Moon = 1e3 * Cheb3D(Mjd_TDB,13,Mjd0,Mjd0+4,mCx_M,mCy_M,mCz_M);
 
-    // --- Sección 4: Sol (Sun) ---
     std::vector<double> Cx_Su, Cy_Su, Cz_Su; tmp.clear();
     base = 753;
     slice(PCtemp, base, 11, Cx_Su);
@@ -119,8 +111,7 @@ PlanetaryPositions JPL_Eph_DE430(double Mjd_TDB) {
     }
     pos.r_Sun = 1e3 * Cheb3D(Mjd_TDB,11,Mjd0,Mjd0+16,mCx_S,mCy_S,mCz_S);
 
-    // --- Secciones 5–11: Mercurio, Venus, Marte, Júpiter, Saturno, Urano, Neptuno, Plutón ---
-    // Repite exactamente el mismo patrón:
+
     auto loadBody=[&](int bstart,int block,int reps,double span){
         std::vector<double> Cx, Cy, Cz,tmp2;
         slice(PCtemp, bstart, block, Cx);
@@ -154,13 +145,10 @@ PlanetaryPositions JPL_Eph_DE430(double Mjd_TDB) {
     pos.r_Neptune = loadBody( 405, 6,1,32);
     pos.r_Pluto   = loadBody( 423, 6,1,32);
 
-    // --- Sección 12: Nutaciones y Libraciones ---
-    // En JPL_Eph_DE430.cpp, dentro de la sección 12:
 
-    // Nutaciones: offset=819, block=10, reps=4, span=8
     {
         std::vector<double> Cx, Cy, tmp;
-        std::vector<double> Cz;  // zeros
+        std::vector<double> Cz;
         int base = 819;
         slice(PCtemp, base,     10, Cx);
         slice(PCtemp, base+10,  10, Cy);
@@ -168,7 +156,6 @@ PlanetaryPositions JPL_Eph_DE430(double Mjd_TDB) {
         for (int rep = 1; rep < 4; ++rep) {
             slice(PCtemp, base + rep*20,    10, Cx);
             slice(PCtemp, base + rep*20+10, 10, Cy);
-            // Cz permanece en cero
         }
         int jn = std::min(int(dt/8), 3);
         double M0n = t1 + 8*jn;
@@ -181,7 +168,7 @@ PlanetaryPositions JPL_Eph_DE430(double Mjd_TDB) {
         pos.Nutations = Cheb3D(Mjd_TDB, 10, M0n, M0n+8, mCx, mCy, mCz);
     }
 
-    // Libraciones: offset=899, block=10, reps=4, span=8
+
     {
         std::vector<double> Cx, Cy, Cz, tmp;
         int base = 899;
@@ -205,7 +192,7 @@ PlanetaryPositions JPL_Eph_DE430(double Mjd_TDB) {
     }
 
 
-    // --- Correcciones finales ---
+
     const double EMRAT=81.30056907419062;
     pos.r_Earth = pos.r_Earth - (1.0/(1.0+EMRAT)) * pos.r_Moon;
     auto rel=[&](const Matrix& v){ return -1*pos.r_Earth + v; };

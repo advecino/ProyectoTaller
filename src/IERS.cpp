@@ -1,7 +1,3 @@
-//
-// Created by adria on 11/05/2025.
-//asta squi
-
 #include <stdexcept>
 #include "../include/IERS.h"
 #include "../include/global.h"
@@ -19,17 +15,9 @@
 %--------------------------------------------------------------------------*/
 
 
-
-// IERS.cpp (parche sobre tu versión existente)
-#include <stdexcept>
-#include "../include/IERS.h"
-#include "../include/Sat_const.h"
-
 IERSResult IERS(Matrix& eop, double Mjd_UTC, char interp) {
-    // Asegurarnos de un modo válido
     if (interp!='l' && interp!='n') interp='n';
 
-    // Buscamos la columna cuyo MJD entero coincide con floor(Mjd_UTC)
     double mjd_floor = std::floor(Mjd_UTC);
     int cols = eop.getColumnas();
     int idx = -1;
@@ -39,14 +27,10 @@ IERSResult IERS(Matrix& eop, double Mjd_UTC, char interp) {
     if (idx < 1 || idx > cols)
         throw std::out_of_range("Mjd_UTC fuera de rango en eop");
 
-    // Si pedíamos interpolación pero estamos en la última columna,
-    // no podemos usar idx+1: caemos sin interpolación
     if (interp=='l' && idx==cols) interp='n';
 
-    // Extraemos la fila “pre”
     Matrix pre = eop.getSubMatrix(1,13,idx,idx);
 
-    // Si interp='l', también extraemos “nxt” y calculamos el factor
     Matrix nxt(0,0);
     double fixf = 0.0;
     if (interp=='l') {
@@ -54,7 +38,6 @@ IERSResult IERS(Matrix& eop, double Mjd_UTC, char interp) {
         fixf  = Mjd_UTC - mjd_floor;
     }
 
-    // Función auxiliar para sacar cada componente (con o sin lerp)
     auto lerp = [&](int row)->double {
         double v0 = pre(row,1);
         if (interp=='l') {

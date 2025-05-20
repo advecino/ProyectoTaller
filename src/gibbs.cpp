@@ -1,7 +1,3 @@
-//
-// Created by adria on 10/05/2025.
-//asta aqui
-
 #include "../include/gibbs.h"
 #include "../include/Sat_const.h"
 #include "../include/angl.h"
@@ -34,36 +30,29 @@ GibbsResult gibbs(const Matrix& r1, const Matrix& r2, const Matrix& r3) {
     GibbsResult result;
     const double small = 1e-8;
 
-    // Inicialización de resultados
     result.theta = 0.0;
     result.theta1 = 0.0;
     result.error = "          ok";
     result.v2 = Matrix(3, 1);
 
-    // Calcular magnitudes
     const double magr1 = r1.norm();
     const double magr2 = r2.norm();
     const double magr3 = r3.norm();
 
-    // Productos cruz
     Matrix p = Matrix::cross(r2, r3);
     Matrix q = Matrix::cross(r3, r1);
     Matrix w = Matrix::cross(r1, r2);
 
-    // Vectores unitarios
     const Matrix pn = unit(p);
     const Matrix r1n = unit(r1);
 
-    // Ángulo de coplanaridad
     result.copa = asin(Matrix::dot(pn, r1n));
 
-    // Verificar coplanaridad
     if (std::abs(Matrix::dot(r1n, pn)) > 0.017452406) {
         result.error = "not coplanar";
         return result;
     }
 
-    // Vectores intermedios
     const Matrix d = p + q + w;
     const double magd = d.norm();
 

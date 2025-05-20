@@ -1,7 +1,3 @@
-//
-// Created by advecino on 09/04/2025.
-//
-
 #include <iostream>
 #include <iomanip>
 #include <valarray>
@@ -24,7 +20,6 @@ Matrix R_x(double alpha)
 
     C = cos(alpha);
     S = sin(alpha);
-    // rotmat = zeros(3,3);
 
     rotmat(1,1) = 1.0;  rotmat(1,2) =    0.0;  rotmat(1,3) = 0.0;
     rotmat(2,1) = 0.0;  rotmat(2,2) =      C;  rotmat(2,3) =   S;

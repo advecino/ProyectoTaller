@@ -8,10 +8,7 @@
 %    theta        - angle between the two vectors  -pi to pi
 %
 %--------------------------------------------------------------------------*/
-/**
- * @file angl.cpp
- * @brief Implementación de la función angl
- */
+
 
 #include "../include/angl.h"
 #include <cmath>

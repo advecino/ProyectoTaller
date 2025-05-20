@@ -1,7 +1,3 @@
-//
-// Created by advecino on 10/04/2025.
-//
-
 #include "../include/R_z.h"
 #include <valarray>
 
@@ -13,7 +9,6 @@ Matrix R_z(double angle)
 
     C = cos(angle);
     S = sin(angle);
-    // rotmat = zeros(3,3);
 
     rotmat(1,1) = C;  rotmat(1,2) =    S;  rotmat(1,3) = 0.0;
     rotmat(2,1) = -1.0*S;  rotmat(2,2) =      C;  rotmat(2,3) =   0.0;

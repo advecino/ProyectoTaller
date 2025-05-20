@@ -1,7 +1,3 @@
-//
-// Created by adria on 10/05/2025.
-//
-
 #include <cmath>
 #include "../include/gast.h"
 /*

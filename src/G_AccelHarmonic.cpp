@@ -26,7 +26,7 @@
 Matrix G_AccelHarmonic(Matrix& r, Matrix& U, int n_max, int m_max) {
 
 
-    // Sanity checks
+
     if (r.getFilas() != 3 || r.getColumnas() != 1)
         throw std::invalid_argument("r must be 3×1");
     if (U.getFilas() != 3 || U.getColumnas() != 3)
@@ -36,26 +36,24 @@ Matrix G_AccelHarmonic(Matrix& r, Matrix& U, int n_max, int m_max) {
 
     const double eps = 1e-16;
     if (r.norm() < eps) {
-        return Matrix(3,3);  // todos ceros
+        return Matrix(3,3);
     }
     const double delta = 1.0;
 
     Matrix G(3, 3);
-    // for each coordinate direction i
     for (int i = 1; i <= 3; ++i) {
-        // build offset vector dr = δ * e_i
+        // Set offset in i-th component of the position vector
         Matrix dr(3,1);
         dr(i,1) = delta;
 
-        // central points
         Matrix r_plus  = r + dr * 0.5;
         Matrix r_minus = r - dr * 0.5;
 
-        // compute accelerations
+        // cceleration difference
         Matrix a_plus  = AccelHarmonic(r_plus,  U, n_max, m_max);
         Matrix a_minus = AccelHarmonic(r_minus, U, n_max, m_max);
 
-        // finite‐difference derivative for column i
+        //  Derivative with respect to i-th axis
         Matrix da = a_plus - a_minus;
         for (int k = 1; k <= 3; ++k) {
             G(k, i) = da(k,1) / delta;

@@ -1,8 +1,7 @@
 #include <iostream>
-#include <cassert>
 #include <iomanip>
 #include <stdio.h>
-#include <math.h>
+#include <cmath>
 #include "./include/Mjday.h"
 #include "./include/Matrix.h"
 #include "./include/R_x.h"
@@ -2611,7 +2610,7 @@ int DEInteg_SHO_Test() {
 
 int all_tests()
 {
-/*
+
     _verify(Matrix_Basico);
     _verify(Mjday_01);
     _verify(Mjday_02);
@@ -2685,7 +2684,7 @@ int all_tests()
     _verify(Accel_05);
     _verify(Accel_06);
     _verify(AccelHarmonic_Central_Test);
-    _verify(AccelHarmonic_ZeroDistance_Test);*/
+    _verify(AccelHarmonic_ZeroDistance_Test);
     //_verify(anglesdr_BadSize_Test);
     //_verify(anglesdr_SyntheticCircular_Test);
     //_verify(anglesdr_DegenerateGeometry_Test);

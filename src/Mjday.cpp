@@ -1,7 +1,3 @@
-//
-// Created by advecino on 03/04/2025.
-//
-
 #include "../include/Mjday.h"
 #include <cmath>
 

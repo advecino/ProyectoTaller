@@ -1,7 +1,3 @@
-//
-// Created by adria on 11/05/2025.
-//
-
 #include "../include/NutMatrix.h"
 
 Matrix NutMatrix(double Mjd_TT) {

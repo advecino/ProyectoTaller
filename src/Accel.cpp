@@ -44,12 +44,10 @@ Matrix Accel(
         AuxParam& params,
         Matrix& eop
 ) {
-    // 1) Validación mínima de dimensiones
     if (Y.getFilas() != 6 || Y.getColumnas() != 1) {
         throw std::invalid_argument("Accel: Y must be 6×1");
     }
 
-    // 2) IERS: extraer polar motion y UT1-UTC
     double Mjd_UTC = params.Mjd_UTC + x/86400.0;
     IERSResult ires = IERS(eop, Mjd_UTC, 'l');
     double x_pole  = ires.x_pole;
@@ -57,15 +55,12 @@ Matrix Accel(
     double UT1_UTC = ires.UT1_UTC;
     double TAI_UTC = ires.TAI_UTC;
 
-    // 3) Diferencias de tiempo
     TimeDiffs td = timediff(UT1_UTC, TAI_UTC);
     double TT_UTC = td.TT_UTC;
 
-    // 4) Fechas UT1 y TT en MJD
     double Mjd_UT1 = params.Mjd_UTC + x/86400.0 + UT1_UTC/86400.0;
     double Mjd_TT  = params.Mjd_UTC + x/86400.0 + TT_UTC /86400.0;
 
-    // 5) Construcción de la matriz de transformación E (ICRF -> cuerpo fijo)
     Matrix P = PrecMatrix(MJD_J2000, Mjd_TT);
     Matrix N = NutMatrix(    Mjd_TT);
     Matrix Tmat = N * P;
@@ -73,19 +68,15 @@ Matrix Accel(
                * GHAMatrix(Mjd_UT1)
                * Tmat;
 
-    // 6) Extraer posición y velocidad del estado de entrada
     Matrix r(3,1), v(3,1);
     for (int i = 1; i <= 3; ++i) {
         r(i,1) = Y(i,   1);
         v(i,1) = Y(i+3, 1);
     }
 
-    // 7) Aceleración armónica terrestre
     Matrix a = AccelHarmonic(r, E, params.n, params.m);
 
-    // 8) Perturbaciones de Sol, Luna o planetas
     if (params.sun || params.moon || params.planets) {
-        // solo ahora invocamos JPL y PC
         double Mjd_TDB = Mjday_TDB(Mjd_TT);
         PlanetaryPositions jr = JPL_Eph_DE430(Mjd_TDB);
         if (params.sun)   a = a + AccelPointMass(r, jr.r_Sun,     GM_Sun);
@@ -102,11 +93,10 @@ Matrix Accel(
         }
     }
 
-    // 9) Construir la salida dY = [v; a]
     Matrix dY(6,1);
     for (int i = 1; i <= 3; ++i) {
-        dY(i,   1) = v(i,1);  // dr/dt = velocidad
-        dY(i+3, 1) = a(i,1);  // dv/dt = aceleración
+        dY(i,   1) = v(i,1);
+        dY(i+3, 1) = a(i,1);
     }
     return dY;
 }
