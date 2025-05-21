@@ -1,3 +1,46 @@
+Resumen de tiempos:
+               Accel: NaN s
+       AccelHarmonic: NaN s
+      AccelPointMass: 0.014459 s
+                angl: 0.028957 s
+            anglesdr: NaN s
+             anglesg: NaN s
+              AzElPa: 0.015078 s
+              Cheb3D: 0.013198 s
+             DEInteg: 0.097416 s
+             doubler: NaN s
+            elements: NaN s
+          EqnEquinox: 0.013179 s
+                Frac: 0.002577 s
+     G_AccelHarmonic: NaN s
+                gast: 0.006435 s
+            Geodetic: NaN s
+           GHAMatrix: 0.006416 s
+               gibbs: NaN s
+                gmst: 0.000372 s
+              hgibbs: NaN s
+                IERS: NaN s
+       JPL_Eph_DE430: NaN s
+            Legendre: 0.001474 s
+                 LTC: 0.009253 s
+       MeanObliquity: 0.000733 s
+          MeasUpdate: 0.324059 s
+               Mjday: 0.002687 s
+           Mjday_TDB: 0.001902 s
+           NutAngles: 0.000930 s
+           NutMatrix: 0.017490 s
+          PoleMatrix: 0.001778 s
+            Position: NaN s
+          PrecMatrix: 0.003810 s
+                 R_x: 0.000278 s
+                 R_y: 0.000307 s
+                 R_z: 0.000098 s
+               sign_: 0.000599 s
+            timediff: 0.047475 s
+          TimeUpdate: 0.003449 s
+                unit: 0.000454 s
+              VarEqn: NaN s
+
 %--------------------------------------------------------------------------
 %
 % Accel.m
