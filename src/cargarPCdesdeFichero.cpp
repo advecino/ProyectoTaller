@@ -20,6 +20,11 @@ void cargarPC(const std::string& filepath) {
         // Reemplazar comas por puntos (para convertir decimales europeos)
         std::replace(line.begin(), line.end(), ',', '.');
 
+        // Eliminar caracteres no imprimibles (incluido BOM o espacios raros)
+        line.erase(std::remove_if(line.begin(), line.end(), [](unsigned char c) {
+            return !std::isprint(c) && !std::isspace(c);
+        }), line.end());
+
         std::stringstream ss(line);
         std::vector<double> row;
         std::string token;
@@ -28,7 +33,7 @@ void cargarPC(const std::string& filepath) {
             try {
                 row.push_back(std::stod(token));
             } catch (...) {
-                std::cerr << "Error convirtiendo: " << token << std::endl;
+                std::cerr << "Error convirtiendo: [" << token << "]" << std::endl;
                 throw;
             }
         }

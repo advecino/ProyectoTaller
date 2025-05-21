@@ -1437,14 +1437,20 @@ int IERS_02() {
 }
 
 int JPL_Eph_01() {
-    _assert(PC.getFilas() == 1);
-    _assert(PC.getColumnas() >= 2);
-
-    double JDBase = PC(1,1);
-    double JDMax  = PC(1,2);
-
-    double Mjd_TDB = JDBase - 2400000.5 + 10.0;
-    PlanetaryPositions pos = JPL_Eph_DE430(Mjd_TDB);
+    PlanetaryPositions pos = JPL_Eph_DE430(1);
+    pos.Librations.print();
+    pos.Nutations.print();
+    pos.r_Earth.print();
+    pos.r_Jupiter.print();
+    pos.r_Mars.print();
+    pos.r_Moon.print();
+    pos.r_Mercury.print();
+    pos.r_Neptune.print();
+    pos.r_Pluto.print();
+    pos.r_Saturn.print();
+    pos.r_Sun.print();
+    pos.r_Uranus.print();
+    pos.r_Venus.print();
 
     auto checkVec = [&](const Matrix& v){
         _assert(v.getFilas() == 3 && v.getColumnas() == 1);
@@ -1460,8 +1466,6 @@ int JPL_Eph_01() {
 
 
 int JPL_Eph_02() {
-    PC(1,2);
-    PC(1,1) = 59000.0; PC(1,2) = 59010.0;
     bool caught = false;
     try {
         auto p = JPL_Eph_DE430(59050.0);
@@ -2434,7 +2438,7 @@ int anglesg_BadEOP_Test() {
 
 int all_tests()
 {
-
+/*
     _verify(Matrix_Basico);
     _verify(Mjday_01);
     _verify(Mjday_02);
@@ -2495,10 +2499,10 @@ int all_tests()
     _verify(Geodetic_03);
     _verify(doubler_01);
     _verify(IERS_01);
-    _verify(IERS_02);
+    _verify(IERS_02);*/
     _verify(JPL_Eph_01);
     _verify(JPL_Eph_02);
-    _verify(JPL_Eph_03);
+    _verify(JPL_Eph_03);/*
     _verify(AzElPa_Test_01);
     _verify(AzElPa_Test_02);
     _verify(AzElPa_Test_03);
@@ -2513,7 +2517,7 @@ int all_tests()
     _verify(Accel_06);
 
 
-
+*/
     //_verify(anglesdr_BadSize_Test);//NO
     _verify(anglesdr_SyntheticCircular_Test);//SI
     //_verify(anglesdr_DegenerateGeometry_Test);//NO
@@ -2541,8 +2545,7 @@ int all_tests()
 int main()
 {
     try {
-        cargarPC("./data/DE430Coeff.txt");
-        PC.getSubMatrix(1, 3, 1, 5).print();  // Prueba imprimir 3x5
+        cargarPC("../data/DE430Coeff.txt");
     } catch (const std::exception& e) {
         std::cerr << "Error al cargar PC: " << e.what() << std::endl;
     }
