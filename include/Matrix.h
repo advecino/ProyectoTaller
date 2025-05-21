@@ -61,6 +61,13 @@ public:
     */
     Matrix(int fil, int col, double v[]);
 
+
+    /**
+     * @brief Devuelve una fila específica de la matriz.
+     * @param fila Índice de la fila a obtener.
+     * @return Matriz fila correspondiente.
+     */
+    Matrix getFila(int fila) const;
     /**
      * @brief Devuelve una columna específica de la matriz.
      * @param col Índice de la columna a obtener.
@@ -76,13 +83,16 @@ public:
     void setColumn(int col, const Matrix& column);
 
 
+
     /**
-     * @brief Concatena esta matriz con otra a lo largo de un eje.
-     * @param other Matriz a concatenar.
-     * @param axis Eje de concatenación (0 = vertical, 1 = horizontal).
-     * @return Nueva matriz concatenada.
+     * @brief Conactenar 2 matrices verticalmente
+     * @param m1 matriz1
+     * @param m2 matriz2
+     * @return matrizconcatenada
      */
-    Matrix concatenate(const Matrix& other, int axis = 0) const;
+    static Matrix concatenar( Matrix& m1,  Matrix& m2);
+
+
 
     /**
   * @brief Destructor de la matriz.

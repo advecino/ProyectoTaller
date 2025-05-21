@@ -528,45 +528,47 @@ Matrix Matrix::getColumn(int col) const {
     return result;
 }
 
-Matrix Matrix::concatenate(const Matrix& other, int axis) const {
-    if (axis == 0) {
-        if (col != other.col) {
-            throw std::invalid_argument("El número de columnas debe coincidir para concatenar verticalmente");
-        }
+Matrix Matrix::getFila(int fila) const {
+    if (fila < 1 || fila > fil) {
+        throw std::out_of_range("Índice de fila fuera de rango");
+    }
 
-        Matrix result(fil + other.fil, col);
-        for (int i = 0; i < fil; ++i) {
-            for (int j = 0; j < col; ++j) {
-                result.matrix[i][j] = matrix[i][j];
-            }
-        }
-        for (int i = 0; i < other.fil; ++i) {
-            for (int j = 0; j < other.col; ++j) {
-                result.matrix[fil + i][j] = other.matrix[i][j];
-            }
-        }
-        return result;
+    Matrix resultado(1, col);
+    for (int j = 0; j < col; ++j) {
+        resultado(1, j + 1) = matrix[fila - 1][j];  // fila-1 porque internamente es 0-based
     }
-    else if (axis == 1) {
-        if (fil != other.fil) {
-            throw std::invalid_argument("El número de filas debe coincidir para concatenar horizontalmente");
-        }
 
-        Matrix result(fil, col + other.col);
-        for (int i = 0; i < fil; ++i) {
-            for (int j = 0; j < col; ++j) {
-                result.matrix[i][j] = matrix[i][j];
-            }
-            for (int j = 0; j < other.col; ++j) {
-                result.matrix[i][col + j] = other.matrix[i][j];
-            }
-        }
-        return result;
-    }
-    else {
-        throw std::invalid_argument("El eje debe ser 0 (vertical) o 1 (horizontal)");
-    }
+    return resultado;
 }
+
+Matrix Matrix::concatenar(Matrix& m1, Matrix& m2) {
+    if (m1.getColumnas() != m2.getColumnas()) {
+        throw std::invalid_argument("Las matrices deben tener el mismo número de columnas para concatenar");
+    }
+
+    int filas1 = m1.getFilas();
+    int filas2 = m2.getFilas();
+    int columnas = m1.getColumnas();
+
+    Matrix resultado(filas1 + filas2, columnas);
+
+    // Copiar m1
+    for (int i = 1; i <= filas1; ++i) {
+        for (int j = 1; j <= columnas; ++j) {
+            resultado(i, j) = m1(i, j);
+        }
+    }
+
+    // Copiar m2
+    for (int i = 1; i <= filas2; ++i) {
+        for (int j = 1; j <= columnas; ++j) {
+            resultado(filas1 + i, j) = m2(i, j);
+        }
+    }
+
+    return resultado;
+}
+
 
 void Matrix::setColumn(int col, const Matrix& column) {
     if (col < 1 || col > this->col) {

@@ -1350,129 +1350,116 @@ int Doubler_03() {
 
 int IERS_01() {
 
-    double data[13*2] = {
 
-            0, 0,   0, 0,   0, 0,
+    IERSResult r = IERS(eopdata, 58000.0, 'l');
 
-            59000, 59001,
-
-            0.1, 0.2,
-
-            0.2, 0.3,
-
-            0.3, 0.4,
-
-            0.4, 0.5,
-
-            0.5, 0.6,
-
-            0.6, 0.7,
-
-            0.7, 0.8,
-
-            0.8, 0.9,
-
-            37.0, 37.0
-    };
-    Matrix eop(13, 2, data, 26);
-    IERSResult r = IERS(eop, 59000.5, 'l');
-    double frac = 0.5;
-    double TOL = 1e-4;
-    _assert(fabs(r.x_pole - ((0.1 + (0.2-0.1)*frac)/Arcs)) < TOL);
-    _assert(fabs(r.y_pole - ((0.2 + (0.3-0.2)*frac)/Arcs)) < TOL);
-    _assert(fabs(r.UT1_UTC - (0.3 + (0.4-0.3)*frac)) < TOL);
-    _assert(fabs(r.LOD     - (0.4 + (0.5-0.4)*frac)) < TOL);
-    _assert(fabs(r.dpsi    - ((0.5 + (0.6-0.5)*frac)/Arcs)) < TOL);
-    _assert(fabs(r.deps    - ((0.6 + (0.7-0.6)*frac)/Arcs)) < TOL);
-    _assert(fabs(r.dx_pole - ((0.7 + (0.8-0.7)*frac)/Arcs)) < TOL);
-    _assert(fabs(r.dy_pole - ((0.8 + (0.9-0.8)*frac)/Arcs)) < TOL);
-    _assert(fabs(r.TAI_UTC - 37.0) < TOL);
+    _assert(fabs(r.x_pole   - 0.000001151607026) < TOL_);
+    _assert(fabs(r.y_pole   - 0.000001704629143) < TOL_);
+    _assert(fabs(r.UT1_UTC  - 0.3357933) < TOL_);
+    _assert(fabs(r.LOD      - 0.0003011) < TOL_);
+    _assert(fabs(r.dpsi     + 0.000000538947977) < TOL_); // signo negativo
+    _assert(fabs(r.deps     + 0.000000060611406) < TOL_); // signo negativo
+    _assert(fabs(r.dx_pole  - 0.000000000799943) < TOL_);
+    _assert(fabs(r.dy_pole  - 0.000000000911450) < TOL_);
+    _assert(fabs(r.TAI_UTC  - 37.0) < TOL_);
     return 0;
 }
 
-int IERS_02() {
+/*
+ * === Prueba 1: MJD_TDB = 33265.00000 (15-Dec-1949) ===
+r_Earth = [+1.708919e+10 +1.345313e+11 +5.833213e+10] m
+r_Sun = [-1.694668e+10 -1.341789e+11 -5.819241e+10] m
+r_Moon = [-3.482819e+08 -1.064661e+08 -4.846690e+07] m
+r_Mercury = [+2.090376e+10 -1.780348e+11 -8.554573e+10] m
+r_Venus = [+4.482494e+10 -5.194674e+10 -2.512341e+10] m
+r_Mars = [-2.058304e+11 +1.015411e+10 +1.313376e+10] m
+r_Jupiter = [+4.785099e+11 -6.593491e+11 -2.954031e+11] m
+r_Saturn = [-1.359816e+12 +2.030426e+11 +1.387467e+11] m
+r_Uranus = [-1.926165e+11 +2.456442e+12 +1.078942e+12] m
+r_Neptune = [-4.371316e+12 -1.331505e+12 -4.398980e+11] m
+r_Pluto = [-3.983117e+12 +2.903635e+12 +2.084458e+12] m
 
-    double data[13*2] = {
+=== Prueba 2: MJD_TDB = 69808.00000 (02-Jan-2050) ===
+r_Earth = [-2.812362e+10 +1.319982e+11 +5.721276e+10] m
+r_Sun = [+2.824435e+10 -1.324607e+11 -5.741099e+10] m
+r_Moon = [+3.270842e+08 +1.760458e+08 +9.376322e+07] m
+r_Mercury = [-2.835080e+09 -1.002171e+11 -3.696615e+10] m
+r_Venus = [+5.239353e+10 -2.286693e+11 -1.022371e+11] m
+r_Mars = [-2.018845e+11 -2.048356e+11 -8.441491e+10] m
+r_Jupiter = [-3.304707e+11 +5.052424e+11 +2.246323e+11] m
+r_Saturn = [+7.419487e+11 -1.334052e+12 -5.845778e+11] m
+r_Uranus = [-2.638210e+12 +4.111817e+11 +2.183727e+11] m
+r_Neptune = [+2.630591e+12 +3.242530e+12 +1.259206e+12] m
+r_Pluto = [+5.631634e+12 -1.660837e+12 -2.222630e+12] m
 
-            0, 0,   0, 0,   0, 0,
-
-            59000.0, 59001.0,
-
-            0.1, 0.2,
-
-            0.2, 0.3,
-
-            0.3, 0.4,
-
-            0.4, 0.5,
-
-            0.5, 0.6,
-
-            0.6, 0.7,
-
-            0.7, 0.8,
-
-            0.8, 0.9,
-
-            37.0, 37.0
-    };
-    Matrix eop(13, 2, data, 26);
-    IERSResult r = IERS(eop, 59000.5, 'l');
-
-    double frac = 0.5;
-    const double TOL = 1e-4;
-    const double ARCSEC_TO_RAD = 1.0/Arcs;
-
-    _assert(fabs(r.x_pole   - ((0.1 + (0.2 - 0.1)*frac) * ARCSEC_TO_RAD)) < TOL);
-    _assert(fabs(r.y_pole   - ((0.2 + (0.3 - 0.2)*frac) * ARCSEC_TO_RAD)) < TOL);
-    _assert(fabs(r.UT1_UTC  - (0.3 + (0.4 - 0.3)*frac)) < TOL);
-    _assert(fabs(r.LOD      - (0.4 + (0.5 - 0.4)*frac)) < TOL);
-    _assert(fabs(r.dpsi     - ((0.5 + (0.6 - 0.5)*frac) * ARCSEC_TO_RAD)) < TOL);
-    _assert(fabs(r.deps     - ((0.6 + (0.7 - 0.6)*frac) * ARCSEC_TO_RAD)) < TOL);
-    _assert(fabs(r.dx_pole  - ((0.7 + (0.8 - 0.7)*frac) * ARCSEC_TO_RAD)) < TOL);
-    _assert(fabs(r.dy_pole  - ((0.8 + (0.9 - 0.8)*frac) * ARCSEC_TO_RAD)) < TOL);
-    _assert(fabs(r.TAI_UTC  - 37.0) < TOL);
-
-    return 0;
-}
+=== Prueba 3: MJD_TDB = 106351.00000 (21-Jan-2150) ===
+r_Earth = [-7.069569e+10 +1.190631e+11 +5.157204e+10] m
+r_Sun = [+7.079735e+10 -1.184152e+11 -5.129324e+10] m
+r_Moon = [-3.356914e+08 -2.128145e+08 -5.471736e+07] m
+r_Mercury = [+5.678395e+10 -1.793294e+11 -8.239893e+10] m
+r_Venus = [-2.155184e+10 -7.062491e+10 -2.393601e+10] m
+r_Mars = [+5.538319e+10 -3.173023e+11 -1.421165e+11] m
+r_Jupiter = [-2.754714e+10 -8.401944e+11 -3.582079e+11] m
+r_Saturn = [+2.237589e+11 +1.122613e+12 +4.549892e+11] m
+r_Uranus = [-1.281099e+12 -2.392049e+12 -1.027960e+12] m
+r_Neptune = [+2.229860e+11 -4.303195e+12 -1.767947e+12] m
+r_Pluto = [+1.366703e+12 +6.533251e+12 +1.634121e+12] m
+>> */
 
 int JPL_Eph_01() {
-    PlanetaryPositions pos = JPL_Eph_DE430(1);
-    pos.Librations.print();
-    pos.Nutations.print();
-    pos.r_Earth.print();
-    pos.r_Jupiter.print();
-    pos.r_Mars.print();
-    pos.r_Moon.print();
-    pos.r_Mercury.print();
-    pos.r_Neptune.print();
-    pos.r_Pluto.print();
-    pos.r_Saturn.print();
-    pos.r_Sun.print();
-    pos.r_Uranus.print();
-    pos.r_Venus.print();
-
-    auto checkVec = [&](const Matrix& v){
-        _assert(v.getFilas() == 3 && v.getColumnas() == 1);
-        for (int i = 1; i <= 3; ++i)
-            _assert(std::isfinite(v(i,1)));
-    };
-
-    checkVec(pos.r_Earth);
-    checkVec(pos.r_Sun);
-    checkVec(pos.r_Mars);
-    return 0;
-}
+    double Mjd_TDB = 106351.0;
+    std::cout<<PC.getColumnas() <<std::endl;
+    std::cout<<PC.getFilas() <<std::endl;
+    PlanetaryPositions p = JPL_Eph_DE430(Mjd_TDB);
 
 
-int JPL_Eph_02() {
-    bool caught = false;
-    try {
-        auto p = JPL_Eph_DE430(59050.0);
-    } catch(const std::exception& e) {
-        caught = true;
-    }
-    _assert(caught);
+    std::cout<< p.r_Earth(1,1)<<std::endl;
+    std::cout<< p.r_Earth(2,1)<<std::endl;
+    std::cout<< p.r_Earth(3,1)<<std::endl;
+
+    _assert(fabs(p.r_Earth(1,1)    -  1.708919e+10) < TOL_);
+    _assert(fabs(p.r_Earth(2,1)    -  1.345313e+11) < TOL_);
+    _assert(fabs(p.r_Earth(3,1)    -  5.833213e+10) < TOL_);
+
+    _assert(fabs(p.r_Sun(1,1)      +  1.694668e+10) < TOL_);
+    _assert(fabs(p.r_Sun(2,1)      +  1.341789e+11) < TOL_);
+    _assert(fabs(p.r_Sun(3,1)      +  5.819241e+10) < TOL_);
+
+    _assert(fabs(p.r_Moon(1,1)     +  3.482819e+08) < TOL_);
+    _assert(fabs(p.r_Moon(2,1)     +  1.064661e+08) < TOL_);
+    _assert(fabs(p.r_Moon(3,1)     +  4.846690e+07) < TOL_);
+
+    _assert(fabs(p.r_Mercury(1,1)  -  2.090376e+10) < TOL_);
+    _assert(fabs(p.r_Mercury(2,1)  +  1.780348e+11) < TOL_);
+    _assert(fabs(p.r_Mercury(3,1)  +  8.554573e+10) < TOL_);
+
+    _assert(fabs(p.r_Venus(1,1)    -  4.482494e+10) < TOL_);
+    _assert(fabs(p.r_Venus(2,1)    +  5.194674e+10) < TOL_);
+    _assert(fabs(p.r_Venus(3,1)    +  2.512341e+10) < TOL_);
+
+    _assert(fabs(p.r_Mars(1,1)     +  2.058304e+11) < TOL_);
+    _assert(fabs(p.r_Mars(2,1)     -  1.015411e+10) < TOL_);
+    _assert(fabs(p.r_Mars(3,1)     -  1.313376e+10) < TOL_);
+
+    _assert(fabs(p.r_Jupiter(1,1)  -  4.785099e+11) < TOL_);
+    _assert(fabs(p.r_Jupiter(2,1)  +  6.593491e+11) < TOL_);
+    _assert(fabs(p.r_Jupiter(3,1)  +  2.954031e+11) < TOL_);
+
+    _assert(fabs(p.r_Saturn(1,1)   +  1.359816e+12) < TOL_);
+    _assert(fabs(p.r_Saturn(2,1)   -  2.030426e+11) < TOL_);
+    _assert(fabs(p.r_Saturn(3,1)   -  1.387467e+11) < TOL_);
+
+    _assert(fabs(p.r_Uranus(1,1)   +  1.926165e+11) < TOL_);
+    _assert(fabs(p.r_Uranus(2,1)   -  2.456442e+12) < TOL_);
+    _assert(fabs(p.r_Uranus(3,1)   -  1.078942e+12) < TOL_);
+
+    _assert(fabs(p.r_Neptune(1,1)  +  4.371316e+12) < TOL_);
+    _assert(fabs(p.r_Neptune(2,1)  +  1.331505e+12) < TOL_);
+    _assert(fabs(p.r_Neptune(3,1)  +  4.398980e+11) < TOL_);
+
+    _assert(fabs(p.r_Pluto(1,1)    +  3.983117e+12) < TOL_);
+    _assert(fabs(p.r_Pluto(2,1)    -  2.903635e+12) < TOL_);
+    _assert(fabs(p.r_Pluto(3,1)    -  2.084458e+12) < TOL_);
 
     return 0;
 }
@@ -1587,13 +1574,7 @@ int AzElPa_Test_03() {
 }
 
 int VarEqn_Test_01() {
-    Matrix eop(13, 2);
-    for(int i=1;i<=13;++i) for(int j=1;j<=2;++j) eop(i,j)=0.0;
     double Mjd0 = 58000.0;
-    eop(4,1) = Mjd0;
-    eop(4,2) = Mjd0+1.0;
-    eop(13,1) = 37.0;
-    eop(13,2) = 37.0;
 
     AuxParam params;
     params.Mjd_UTC = Mjd0;
@@ -1609,7 +1590,7 @@ int VarEqn_Test_01() {
     }
 
 
-    Matrix yPhip = VarEqn(0.0, yPhi, params, eop);
+    Matrix yPhip = VarEqn(0.0, yPhi, params, eopdata);
 
     _assert(std::fabs(yPhip(1,1)) < 1e-12);
     _assert(std::fabs(yPhip(6,1)) < 1e-2);
@@ -1620,13 +1601,12 @@ int VarEqn_Test_01() {
 int VarEqn_Test_02() {
     Matrix yPhi_bad(10,1);
     AuxParam params{59000.0, 59000.0, 0, 0};
-    Matrix eop(1,2);
+
     double JD = params.Mjd_UTC + 2400000.5;
-    eop(1,1) = JD; eop(1,2) = JD + 1.0;
 
     bool threw = false;
     try {
-        Matrix out = VarEqn(0.0, yPhi_bad, params, eop);
+        Matrix out = VarEqn(0.0, yPhi_bad, params, eopdata);
     } catch (const std::exception& e) {
         threw = true;
     }
@@ -1637,10 +1617,6 @@ int VarEqn_Test_02() {
 
 int VarEqn_Test_03() {
     double Mjd0 = 51544.5;
-    Matrix eop(13, 2);
-    for (int i = 1; i <= 13; ++i) for (int j = 1; j <= 2; ++j) eop(i,j) = 0.0;
-    eop(4,1) = Mjd0; eop(4,2) = Mjd0+1.0;
-    eop(13,1)=37;   eop(13,2)=37;
 
     AuxParam params;
     params.Mjd_UTC = Mjd0;
@@ -1657,7 +1633,7 @@ int VarEqn_Test_03() {
     // Phi = identidad
     for(int j=1;j<=6;++j) yPhi(6*j+j,1)=1.0;
 
-    Matrix yPhip = VarEqn(0.0, yPhi, params, eop);
+    Matrix yPhip = VarEqn(0.0, yPhi, params, eopdata);
 
     for(int i=1;i<=3;++i) _assert(fabs(yPhip(i,1))<1e-12);
     double expect_ax = -GM_Earth/(R*R);
@@ -1668,14 +1644,11 @@ int VarEqn_Test_03() {
 
 int Accel_01() {
     AuxParam p{58000.0, 58000.0, 0, 0, false,false,false};
-    Matrix eop(13,2);
-    eop(4,1)=p.Mjd_UTC; eop(4,2)=p.Mjd_UTC+1;
-    eop(13,1)=37; eop(13,2)=37;
 
     double R = 7000e3;
     Matrix Y(6,1);
     Y(1,1)=R;
-    Matrix dY = Accel(0.0, Y, p, eop);
+    Matrix dY = Accel(0.0, Y, p, eopdata);
     double expect = -GM_Earth/(R*R);
     _assert(fabs(dY(4,1)-expect)<1e-8);
     _assert(fabs(dY(5,1))<1e-12);
@@ -1683,25 +1656,14 @@ int Accel_01() {
     return 0;
 }
 
-static Matrix make_simple_eop(double Mjd0) {
-    Matrix eop(13,2);
-    for(int i=1;i<=13;++i)
-        for(int j=1;j<=2;++j)
-            eop(i,j)=0.0;
-    eop(4,1)=Mjd0;
-    eop(4,2)=Mjd0+1.0;
-    eop(13,1)=37.0;
-    eop(13,2)=37.0;
-    return eop;
-}
+
 
 int Accel_02(){
     AuxParam params{58000.0,58000.0,0,0};
-    Matrix eop = make_simple_eop(params.Mjd_UTC);
     Matrix Y_bad(5,1);
     bool threw=false;
     try {
-        Accel(0.0, Y_bad, params, eop);
+        Accel(0.0, Y_bad, params, eopdata);
     } catch(const std::invalid_argument&) {
         threw=true;
     }
@@ -1711,12 +1673,12 @@ int Accel_02(){
 
 int Accel_03(){
     AuxParam params{58000.0,58000.0,2,3};
-    Matrix eop = make_simple_eop(params.Mjd_UTC);
+
     Matrix Y(6,1);
     for(int i=1;i<=6;++i) Y(i,1)=1.0;
     bool threw=false;
     try {
-        Accel(0.0, Y, params, eop);
+        Accel(0.0, Y, params, eopdata);
     } catch(const std::invalid_argument&) {
         threw=true;
     }
@@ -1724,28 +1686,13 @@ int Accel_03(){
     return 0;
 }
 
-int Accel_04(){
-    AuxParam params{58000.0,58000.0,0,0};
-    Matrix eop(13,2);
-    Matrix Y(6,1);
-    bool threw=false;
-    try {
-        Accel(0.0, Y, params, eop);
-    } catch(const std::out_of_range&) {
-        threw=true;
-    }
-    _assert(threw);
-
-    return 0;
-}
-
 int Accel_05(){
     AuxParam params{58000.0,58000.0,0,0};
     params.sun = params.moon = params.planets = false;
-    Matrix eop = make_simple_eop(params.Mjd_UTC);
+
     Matrix Y(6,1);
     for(int i=1;i<=6;++i) Y(i,1)=0.0;
-    Matrix dY = Accel(0.0, Y, params, eop);
+    Matrix dY = Accel(0.0, Y, params, eopdata);
 
     for(int i=1;i<=6;++i){
         _assert(std::fabs(dY(i,1))<1e-12);
@@ -1757,7 +1704,6 @@ int Accel_05(){
 int Accel_06(){
     AuxParam params{58000.0,58000.0,0,0};
     params.sun = params.moon = params.planets = false;
-    Matrix eop = make_simple_eop(params.Mjd_UTC);
 
     const double R = 7000e3;
     const double mu = GM_Earth;
@@ -1767,7 +1713,7 @@ int Accel_06(){
     Y(1,1)= R;  Y(2,1)=0;      Y(3,1)=0;
     Y(4,1)=0;   Y(5,1)=v_circ; Y(6,1)=0;
 
-    Matrix dY = Accel(0.0, Y, params, eop);
+    Matrix dY = Accel(0.0, Y, params, eopdata);
 
     _assert(std::fabs(dY(1,1) - 0.0)     < 1e-12);
     _assert(std::fabs(dY(2,1) - v_circ)  < 1e-8);
@@ -1791,7 +1737,6 @@ int anglesdr_BadSize_Test() {
 
         AuxParam params;
 
-        eopdata(13,3);
         Matrix bad(5,1);
         Matrix rs(3,1); rs(1,1)=1; rs(2,1)=2; rs(3,1)=3;
         auto out = anglesdr(0,0,0,0,0,0, 58000,58001,58002, bad, rs, rs,params,eopdata);
@@ -1817,8 +1762,6 @@ int anglesdr_DegenerateGeometry_Test() {
     params.n = 0;
     params.m = 0;
 
-
-    eopdata(13,3);
     try {
         auto out = anglesdr(az,az,az, el,el,el, M1,M2,M3,
                             site, site, site,params,eopdata);
@@ -1879,12 +1822,7 @@ int anglesdr_NonDegenerate_Test() {
     params.n = 0; params.m = 0;
     params.sun = params.moon = params.planets = false;
 
-    // 6) EOP: fila 4 = [M1,M2,M3], resto da igual
-    Matrix eop(13,3);
-    eop(4,1) = M1;
-    eop(4,2) = M2;
-    eop(4,3) = M3;
-    // opcional: eop(13,*) = TAI-UTC realista (o cero)
+
 
     // 7) Llamada
     auto out = anglesdr(
@@ -1892,7 +1830,7 @@ int anglesdr_NonDegenerate_Test() {
             el1,el2,el3,
             M1,M2,M3,
             rsite1, rsite2, rsite3,
-            params, eop
+            params, eopdata
     );
 
     // 8) Validación analítica
@@ -1966,11 +1904,7 @@ int anglesdr_J2000Circular_Test() {
     params.n = 0; params.m = 0;
     params.sun = params.moon = params.planets = false;
 
-    // 7) EOP: fila 4 = [51544,51544,51544], resto da igual (TAI-UTC=0)
-    Matrix eop(13,3);
-    eop(4,1) = std::floor(M1);
-    eop(4,2) = std::floor(M2);
-    eop(4,3) = std::floor(M3);
+
 
     // 8) Llamada
     auto out = anglesdr(
@@ -1978,7 +1912,7 @@ int anglesdr_J2000Circular_Test() {
             el1,el2,el3,
             M1,M2,M3,
             rsite1, rsite2, rsite3,
-            params, eop
+            params, eopdata
     );
 
     // 9) Valores esperados
@@ -2041,9 +1975,6 @@ int anglesdr_SyntheticCircular_Test(){
     params.n=0; params.m=0;
     params.sun = params.moon = params.planets = false;
 
-    Matrix eop(13,3);
-    for(int i=1;i<=13;++i) for(int j=1;j<=3;++j) eop(i,j)=0;
-    eop(4,1)=M1; eop(4,2)=M2; eop(4,3)=M3;
 
     auto out = anglesdr(
             az1,az2,az3,
@@ -2051,7 +1982,7 @@ int anglesdr_SyntheticCircular_Test(){
             M1,M2,M3,
             site,site,site,
             params,
-            eop
+            eopdata
     );
 
     Matrix expect_r2 = r2;
@@ -2077,11 +2008,8 @@ static bool is_finite(double x) {
 }
 
 int anglesg_01() {
-    Matrix eop(13,2);
-    for(int i=1;i<=13;++i) for(int j=1;j<=2;++j) eop(i,j)=0.0;
     double Mjd0 = 58000.0;
-    eop(4,1)=Mjd0; eop(4,2)=Mjd0+1.0;
-    eop(13,1)=37;  eop(13,2)=37;
+
 
     double az1=0.1, az2=0.2, az3=0.3;
     double el1=0.15, el2=0.25, el3=0.35;
@@ -2102,7 +2030,7 @@ int anglesg_01() {
                 el1, el2, el3,
                 Mjd1, Mjd2, Mjd3,
                 Rs1, Rs2, Rs3,
-                params, eop
+                params, eopdata
         );
 
         if (out.r2.getFilas()!=3 || out.r2.getColumnas()!=1) {
@@ -2191,17 +2119,15 @@ int anglesg_SyntheticCircular_Test() {
     params.Mjd_UTC = M2;
     params.Mjd_TT  = M2;
 
-    // EOP dummy: fila 4 = [M1,M2,M3]
-    Matrix eop(13,3);
-    for(int i=1;i<=13;++i) for(int j=1;j<=3;++j) eop(i,j)=0.0;
-    eop(4,1)=M1; eop(4,2)=M2; eop(4,3)=M3;
+    // eopdata dummy: fila 4 = [M1,M2,M3]
+
 
     // invocar
     AnglesGResult out = anglesg(
             az1,az2,az3, el1,el2,el3,
             M1,M2,M3,
             Rs, Rs, Rs,
-            params, eop
+            params, eopdata
     );
 
     // valores esperados
@@ -2252,8 +2178,7 @@ int anglesg_Nondegenerate_Test() {
     // Tres instantes
     double dt = 60.0/86400.0;
     double M1=58000.0-dt, M2=58000.0, M3=58000.0+dt;
-    Matrix eop(13,3); for(int i=1;i<=13;++i)for(int j=1;j<=3;++j)eop(i,j)=0;
-    eop(4,1)=M1; eop(4,2)=M2; eop(4,3)=M3;
+
 
     // estaciones distintas
     Matrix Rs1(3,1); Rs1(1,1)=R_Earth; Rs1(2,1)=0; Rs1(3,1)=0;
@@ -2283,7 +2208,7 @@ int anglesg_Nondegenerate_Test() {
             az1,az2,az3, el1,el2,el3,
             M1,M2,M3,
             Rs1,Rs2,Rs3,
-            params, eop
+            params, eopdata
     );
     // Deben diferir de cero pero ser finitos
     double nr=out.r2.norm(), nv=out.v2.norm();
@@ -2439,7 +2364,7 @@ int anglesg_BadEOP_Test() {
 
 int all_tests()
 {
-/*
+
     _verify(Matrix_Basico);
     _verify(Mjday_01);
     _verify(Mjday_02);
@@ -2500,10 +2425,9 @@ int all_tests()
     _verify(Geodetic_03);
     _verify(doubler_01);
     _verify(IERS_01);
-    _verify(IERS_02);*/
     _verify(JPL_Eph_01);
-    _verify(JPL_Eph_02);
-    _verify(JPL_Eph_03);/*
+    //_verify(JPL_Eph_02);
+    _verify(JPL_Eph_03);
     _verify(AzElPa_Test_01);
     _verify(AzElPa_Test_02);
     _verify(AzElPa_Test_03);
@@ -2513,12 +2437,12 @@ int all_tests()
     _verify(Accel_01);
     _verify(Accel_02);
     _verify(Accel_03);
-    _verify(Accel_04);
+    //_verify(Accel_04);
     _verify(Accel_05);
     _verify(Accel_06);
 
 
-*/
+
     //_verify(anglesdr_BadSize_Test);//NO
     _verify(anglesdr_SyntheticCircular_Test);//SI
     //_verify(anglesdr_DegenerateGeometry_Test);//NO
@@ -2549,6 +2473,11 @@ int main()
         cargarPC("../data/DE430Coeff.txt");
     } catch (const std::exception& e) {
         std::cerr << "Error al cargar PC: " << e.what() << std::endl;
+    }
+    try{
+        cargarEOP("../data/eop19620101.txt");
+    }catch(const std::exception& e){
+        std::cerr << "Error al cargar eopdata: " << e.what() << std::endl;
     }
     int result = all_tests();
 

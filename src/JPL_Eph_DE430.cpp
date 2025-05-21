@@ -3,6 +3,7 @@
 #include <cmath>
 #include <stdexcept>
 #include <vector>
+#include <iostream>
 #include "../include/global.h"
 
 /*
@@ -27,184 +28,271 @@
 %--------------------------------------------------------------------------*/
 
 
-
-static void slice(const Matrix& row, int start, int len, std::vector<double>& out) {
-    out.reserve(out.size() + len);
-    for (int k = 0; k < len; ++k) {
-        out.push_back(row(1, start + k));
-    }
-}
-
-
 PlanetaryPositions JPL_Eph_DE430(double Mjd_TDB) {
-    PlanetaryPositions pos;
 
+    PlanetaryPositions positions;
     double JD = Mjd_TDB + 2400000.5;
-    int nRows = PC.getFilas(), nCols = PC.getColumnas();
-    int i = -1;
-    for (int r = 1; r <= nRows; ++r) {
-        if (PC(r,1) <= JD && JD <= PC(r,2)) { i = r; break; }
-    }
-    if (i < 1) throw std::runtime_error("JD fuera de rango en PC");
-    Matrix PCtemp = PC.getSubMatrix(i, i, 1, nCols);
 
-    double t1 = PCtemp(1,1) - 2400000.5;
+    int i = -1;
+    for (int r = 1; r <= PC.getFilas(); ++r) {
+        if (PC(r,1) <= JD && JD <= PC(r,2)) {
+            i = r;
+            break;
+        }
+    }
+    if (i < 1) {
+        throw std::runtime_error("No se encontró intervalo válido para JD en PC");
+    }
+
+    Matrix PCtemp = PC.getFila(i);
+
+    double t1 = PCtemp(1,1) - 2400000.5; // MJD al inicio del intervalo
     double dt = Mjd_TDB - t1;
 
+    // ========== TIERRA ==========
+    std::vector<int> temp = {231, 244, 257, 270}; // 231:13:270
+    Matrix Cx_Earth = PCtemp.getSubMatrix(1, 1, temp[0], temp[1] - 1);
+    Matrix Cy_Earth = PCtemp.getSubMatrix(1, 1, temp[1], temp[2] - 1);
+    Matrix Cz_Earth = PCtemp.getSubMatrix(1, 1, temp[2], temp[3] - 1);
 
-    std::vector<double> Cx_E, Cy_E, Cz_E, tmp;
-    int base = 231;
-    slice(PCtemp, base, 13, Cx_E);
-    slice(PCtemp, base+13, 13, Cy_E);
-    slice(PCtemp, base+26, 13, Cz_E);
-    slice(PCtemp, base+39, 13, tmp);  Cx_E.insert(Cx_E.end(), tmp.begin(), tmp.end()); tmp.clear();
-    slice(PCtemp, base+52, 13, tmp);  Cy_E.insert(Cy_E.end(), tmp.begin(), tmp.end()); tmp.clear();
-    slice(PCtemp, base+65, 13, tmp);  Cz_E.insert(Cz_E.end(), tmp.begin(), tmp.end());
-
-    int j= (dt>16 ? 1 : 0);
-    double Mjd0 = t1 + 16*j;
-    Matrix mCx_E(13*2,1), mCy_E(13*2,1), mCz_E(13*2,1);
-    for(int k=0;k<13*2;++k){
-        mCx_E(k+1,1)=Cx_E[k];
-        mCy_E(k+1,1)=Cy_E[k];
-        mCz_E(k+1,1)=Cz_E[k];
-    }
-    pos.r_Earth = 1e3 * Cheb3D(Mjd_TDB,13,Mjd0,Mjd0+16, mCx_E,mCy_E,mCz_E);
+    // Añadir segmentos adicionales
+    for (int seg = 1; seg <= 1; ++seg)  {
+        for (int j = 0; j < 4; ++j) {
+            temp[j] += 39;
+        }
+        Matrix Cx = PCtemp.getSubMatrix(1, 1, temp[0], temp[1] - 1);
+        Matrix Cy = PCtemp.getSubMatrix(1, 1, temp[1], temp[2] - 1);
+        Matrix Cz = PCtemp.getSubMatrix(1, 1, temp[2], temp[3] - 1);
 
 
-    std::vector<double> Cx_M, Cy_M, Cz_M;
-    base = 441;
-    slice(PCtemp, base, 13, Cx_M);
-    slice(PCtemp, base+13, 13, Cy_M);
-    slice(PCtemp, base+26, 13, Cz_M);
-    for(int rep=1;rep<8;++rep){
-        slice(PCtemp, base+39*rep, 13, tmp);  Cx_M.insert(Cx_M.end(), tmp.begin(), tmp.end()); tmp.clear();
-        slice(PCtemp, base+39*rep+13, 13, tmp); Cy_M.insert(Cy_M.end(), tmp.begin(), tmp.end()); tmp.clear();
-        slice(PCtemp, base+39*rep+26, 13, tmp); Cz_M.insert(Cz_M.end(), tmp.begin(), tmp.end()); tmp.clear();
+        Cx_Earth = Matrix::concatenar(Cx_Earth, Cx);
+        Cy_Earth = Matrix::concatenar(Cy_Earth, Cy);
+        Cz_Earth = Matrix::concatenar(Cz_Earth, Cz);
     }
 
-    j = int(dt/4); j = std::min(j,7);
+    int j;
+    double Mjd0;
+    if (dt >= 0 && dt <= 16) {
+        j = 0;
+        Mjd0 = t1;
+    } else if (dt > 16 && dt <= 32) {
+        j = 1;
+        Mjd0 = t1 + 16;
+    } else {
+        throw std::runtime_error("dt fuera del rango esperado [0,32]");
+    }
+
+    int c1 = 13*j + 1;
+    int c2 = 13*(j+1);
+    std::cout << "[DBG] Cx_Earth columnas antes de Cheb3D: " << Cx_Earth.getColumnas() << std::endl;
+    std::cout << "[DBG] c1 = " << c1 << ", c2 = " << c2 << std::endl;
+
+
+
+
+    positions.r_Earth = Cheb3D(Mjd_TDB, 13, Mjd0, Mjd0+16,
+                               Cx_Earth.getSubMatrix(1, 1, c1, c2),
+                               Cy_Earth.getSubMatrix(1, 1, c1, c2),
+                               Cz_Earth.getSubMatrix(1, 1, c1, c2)) * 1e3;
+
+    // ========== LUNA ==========
+    temp = {441, 454, 467, 480};
+    Matrix Cx_Moon = PCtemp.getSubMatrix(1, 1, temp[0], temp[1] - 1);
+    Matrix Cy_Moon = PCtemp.getSubMatrix(1, 1, temp[1], temp[2] - 1);
+    Matrix Cz_Moon = PCtemp.getSubMatrix(1, 1, temp[2], temp[3] - 1);
+
+
+    for (int seg = 1; seg <= 7; ++seg) {
+        for (int j = 0; j < 4; ++j) {
+            temp[j] += 39;
+        }
+        Matrix Cx = PCtemp.getSubMatrix(1, 1, temp[0], temp[1] - 1);
+        Matrix Cy = PCtemp.getSubMatrix(1, 1, temp[1], temp[2] - 1);
+        Matrix Cz = PCtemp.getSubMatrix(1, 1, temp[2], temp[3] - 1);
+
+
+        Cx_Moon = Matrix::concatenar(Cx_Moon, Cx);
+        Cy_Moon = Matrix::concatenar(Cy_Moon, Cy);
+        Cz_Moon = Matrix::concatenar(Cz_Moon, Cz);
+    }
+
+    if (dt <= 4) j = 0;
+    else if (dt <= 8) j = 1;
+    else if (dt <= 12) j = 2;
+    else if (dt <= 16) j = 3;
+    else if (dt <= 20) j = 4;
+    else if (dt <= 24) j = 5;
+    else if (dt <= 28) j = 6;
+    else j = 7;
+
     Mjd0 = t1 + 4*j;
-    Matrix mCx_M(13*8,1), mCy_M(13*8,1), mCz_M(13*8,1);
-    for(int k=0;k<13*8;++k){
-        mCx_M(k+1,1)=Cx_M[k];
-        mCy_M(k+1,1)=Cy_M[k];
-        mCz_M(k+1,1)=Cz_M[k];
-    }
-    pos.r_Moon = 1e3 * Cheb3D(Mjd_TDB,13,Mjd0,Mjd0+4,mCx_M,mCy_M,mCz_M);
+    positions.r_Moon = Cheb3D(Mjd_TDB, 13, Mjd0, Mjd0+4,
+                              Cx_Moon.getSubMatrix(1, 1, 13*j+1, 13*j+13),
+                              Cy_Moon.getSubMatrix(1, 1, 13*j+1, 13*j+13),
+                              Cz_Moon.getSubMatrix(1, 1, 13*j+1, 13*j+13)) * 1e3;
 
-    std::vector<double> Cx_Su, Cy_Su, Cz_Su; tmp.clear();
-    base = 753;
-    slice(PCtemp, base, 11, Cx_Su);
-    slice(PCtemp, base+11,11, Cy_Su);
-    slice(PCtemp, base+22,11, Cz_Su);
-    slice(PCtemp, base+33,11,tmp);  Cx_Su.insert(Cx_Su.end(), tmp.begin(), tmp.end()); tmp.clear();
-    slice(PCtemp, base+44,11,tmp);  Cy_Su.insert(Cy_Su.end(), tmp.begin(), tmp.end()); tmp.clear();
-    slice(PCtemp, base+55,11,tmp);  Cz_Su.insert(Cz_Su.end(), tmp.begin(), tmp.end());
-    j = (dt>16 ? 1 : 0);
+
+    // ========== SOL ==========
+    temp = {753, 764, 775, 786};
+    Matrix Cx_Sun = PCtemp.getSubMatrix(1, 1, temp[0], temp[1] - 1);
+    Matrix Cy_Sun = PCtemp.getSubMatrix(1, 1, temp[1], temp[2] - 1);
+    Matrix Cz_Sun = PCtemp.getSubMatrix(1, 1, temp[2], temp[3] - 1);
+
+
+    for (int j = 0; j < 4; ++j) {
+        temp[j] += 33;
+    }
+    Matrix Cx = PCtemp.getSubMatrix(1, 1, temp[0], temp[1] - 1);
+    Matrix Cy = PCtemp.getSubMatrix(1, 1, temp[1], temp[2] - 1);
+    Matrix Cz = PCtemp.getSubMatrix(1, 1, temp[2], temp[3] - 1);
+
+
+    Cx_Sun = Matrix::concatenar(Cx_Sun, Cx);
+    Cy_Sun = Matrix::concatenar(Cy_Sun, Cy);
+    Cz_Sun = Matrix::concatenar(Cz_Sun, Cz);
+
+    j = (dt <= 16) ? 0 : 1;
     Mjd0 = t1 + 16*j;
-    Matrix mCx_S(11*2,1), mCy_S(11*2,1), mCz_S(11*2,1);
-    for(int k=0;k<11*2;++k){
-        mCx_S(k+1,1)=Cx_Su[k];
-        mCy_S(k+1,1)=Cy_Su[k];
-        mCz_S(k+1,1)=Cz_Su[k];
-    }
-    pos.r_Sun = 1e3 * Cheb3D(Mjd_TDB,11,Mjd0,Mjd0+16,mCx_S,mCy_S,mCz_S);
+    positions.r_Sun = Cheb3D(Mjd_TDB, 11, Mjd0, Mjd0 + 16,
+                             Cx_Sun.getSubMatrix(1, 1, 11 * j + 1, 11 * j + 11),
+                             Cy_Sun.getSubMatrix(1, 1, 11 * j + 1, 11 * j + 11),
+                             Cz_Sun.getSubMatrix(1, 1, 11 * j + 1, 11 * j + 11)) * 1e3;
 
 
-    auto loadBody=[&](int bstart,int block,int reps,double span){
-        std::vector<double> Cx, Cy, Cz,tmp2;
-        slice(PCtemp, bstart, block, Cx);
-        slice(PCtemp, bstart+block, block, Cy);
-        slice(PCtemp, bstart+2*block, block, Cz);
-        for(int r=1;r<reps;++r){
-            slice(PCtemp,bstart+reps*block+ (r-1)*(block+block+block),block,tmp2);
-            Cx.insert(Cx.end(), tmp2.begin(), tmp2.end()); tmp2.clear();
-            slice(PCtemp,bstart+reps*block+block+(r-1)*(3*block),block,tmp2);
-            Cy.insert(Cy.end(), tmp2.begin(), tmp2.end()); tmp2.clear();
-            slice(PCtemp,bstart+reps*block+2*block+(r-1)*(3*block),block,tmp2);
-            Cz.insert(Cz.end(), tmp2.begin(), tmp2.end()); tmp2.clear();
+    // ========== MERCURIO ==========
+    temp = {3, 17, 31, 45};
+    Matrix Cx_Mercury = PCtemp.getSubMatrix(1, 1, temp[0], temp[1] - 1);
+    Matrix Cy_Mercury = PCtemp.getSubMatrix(1, 1, temp[1], temp[2] - 1);
+    Matrix Cz_Mercury = PCtemp.getSubMatrix(1, 1, temp[2], temp[3] - 1);
+
+
+    for (int seg = 1; seg <= 3; ++seg) {
+        for (int j = 0; j < 4; ++j) {
+            temp[j] += 42;
         }
-        int jj = int(dt/span); jj = std::min(jj, reps-1);
-        double M0 = t1 + span*jj;
-        Matrix mCx(Cx.size(),1), mCy(Cy.size(),1), mCz(Cz.size(),1);
-        for(int k=0;k<(int)Cx.size();++k){
-            mCx(k+1,1)=Cx[k];
-            mCy(k+1,1)=Cy[k];
-            mCz(k+1,1)=Cz[k];
-        }
-        return 1e3 * Cheb3D(Mjd_TDB, block, M0, M0+span, mCx,mCy,mCz);
-    };
-
-    pos.r_Mercury = loadBody(   3,14,4, 8);
-    pos.r_Venus   = loadBody( 171,10,2,16);
-    pos.r_Mars    = loadBody( 309,11,1,32);
-    pos.r_Jupiter = loadBody( 342, 8,1,32);
-    pos.r_Saturn  = loadBody( 366, 7,1,32);
-    pos.r_Uranus  = loadBody( 387, 6,1,32);
-    pos.r_Neptune = loadBody( 405, 6,1,32);
-    pos.r_Pluto   = loadBody( 423, 6,1,32);
+        Matrix Cx = PCtemp.getSubMatrix(1, 1, temp[0], temp[1] - 1);
+        Matrix Cy = PCtemp.getSubMatrix(1, 1, temp[1], temp[2] - 1);
+        Matrix Cz = PCtemp.getSubMatrix(1, 1, temp[2], temp[3] - 1);
 
 
-    {
-        std::vector<double> Cx, Cy, tmp;
-        std::vector<double> Cz;
-        int base = 819;
-        slice(PCtemp, base,     10, Cx);
-        slice(PCtemp, base+10,  10, Cy);
-        Cz.resize(10, 0.0);
-        for (int rep = 1; rep < 4; ++rep) {
-            slice(PCtemp, base + rep*20,    10, Cx);
-            slice(PCtemp, base + rep*20+10, 10, Cy);
-        }
-        int jn = std::min(int(dt/8), 3);
-        double M0n = t1 + 8*jn;
-        Matrix mCx(40,1), mCy(40,1), mCz(40,1);
-        for (int k = 0; k < 40; ++k) {
-            mCx(k+1,1) = Cx[k];
-            mCy(k+1,1) = Cy[k];
-            mCz(k+1,1) = 0.0;
-        }
-        pos.Nutations = Cheb3D(Mjd_TDB, 10, M0n, M0n+8, mCx, mCy, mCz);
+        Cx_Mercury = Matrix::concatenar(Cx_Mercury, Cx);
+        Cy_Mercury = Matrix::concatenar(Cy_Mercury, Cy);
+        Cz_Mercury = Matrix::concatenar(Cz_Mercury, Cz);
     }
 
+    if (dt <= 8) j = 0;
+    else if (dt <= 16) j = 1;
+    else if (dt <= 24) j = 2;
+    else j = 3;
 
-    {
-        std::vector<double> Cx, Cy, Cz, tmp;
-        int base = 899;
-        slice(PCtemp, base,     10, Cx);
-        slice(PCtemp, base+10,  10, Cy);
-        slice(PCtemp, base+20,  10, Cz);
-        for (int rep = 1; rep < 4; ++rep) {
-            slice(PCtemp, base + rep*30,    10, Cx);
-            slice(PCtemp, base + rep*30+10, 10, Cy);
-            slice(PCtemp, base + rep*30+20, 10, Cz);
-        }
-        int jl = std::min(int(dt/8), 3);
-        double M0l = t1 + 8*jl;
-        Matrix mCx(40,1), mCy(40,1), mCz(40,1);
-        for (int k = 0; k < 40; ++k) {
-            mCx(k+1,1) = Cx[k];
-            mCy(k+1,1) = Cy[k];
-            mCz(k+1,1) = Cz[k];
-        }
-        pos.Librations = Cheb3D(Mjd_TDB, 10, M0l, M0l+8, mCx, mCy, mCz);
-    }
+    Mjd0 = t1 + 8*j;
+    positions.r_Mercury = Cheb3D(Mjd_TDB, 14, Mjd0, Mjd0 + 8,
+                                 Cx_Mercury.getSubMatrix(1, 1, 14 * j + 1, 14 * j + 14),
+                                 Cy_Mercury.getSubMatrix(1, 1, 14 * j + 1, 14 * j + 14),
+                                 Cz_Mercury.getSubMatrix(1, 1, 14 * j + 1, 14 * j + 14)) * 1e3;
+
+    // ========== VENUS ==========
+    temp = {171, 181, 191, 201};
+    Matrix Cx_Venus = PCtemp.getSubMatrix(1, 1, temp[0], temp[1] - 1);
+    Matrix Cy_Venus = PCtemp.getSubMatrix(1, 1, temp[1], temp[2] - 1);
+    Matrix Cz_Venus = PCtemp.getSubMatrix(1, 1, temp[2], temp[3] - 1);
+
+    for (int j = 0; j < 4; ++j) temp[j] += 30;
+    Cx = PCtemp.getSubMatrix(1, 1, temp[0], temp[1] - 1);
+    Cy = PCtemp.getSubMatrix(1, 1, temp[1], temp[2] - 1);
+    Cz = PCtemp.getSubMatrix(1, 1, temp[2], temp[3] - 1);
+    Cx_Venus = Matrix::concatenar(Cx_Venus, Cx);
+    Cy_Venus = Matrix::concatenar(Cy_Venus, Cy);
+    Cz_Venus = Matrix::concatenar(Cz_Venus, Cz);
+
+    j = (dt <= 16) ? 0 : 1;
+    Mjd0 = t1 + 16 * j;
+    positions.r_Venus = Cheb3D(Mjd_TDB, 10, Mjd0, Mjd0+16,
+                               Cx_Venus.getSubMatrix(1, 1, 10*j+1, 10*j+10),
+                               Cy_Venus.getSubMatrix(1, 1, 10*j+1, 10*j+10),
+                               Cz_Venus.getSubMatrix(1, 1, 10*j+1, 10*j+10)) * 1e3;
+
+// ========== MARTE ==========
+    temp = {309, 320, 331, 342};
+    Matrix Cx_Mars = PCtemp.getSubMatrix(1, 1, temp[0], temp[1] - 1);
+    Matrix Cy_Mars = PCtemp.getSubMatrix(1, 1, temp[1], temp[2] - 1);
+    Matrix Cz_Mars = PCtemp.getSubMatrix(1, 1, temp[2], temp[3] - 1);
+
+    positions.r_Mars = Cheb3D(Mjd_TDB, 11, t1, t1+32,
+                              Cx_Mars.getSubMatrix(1, 1, 1, 11),
+                              Cy_Mars.getSubMatrix(1, 1, 1, 11),
+                              Cz_Mars.getSubMatrix(1, 1, 1, 11)) * 1e3;
+
+// ========== JUPITER ==========
+    temp = {342, 350, 358, 366};
+    Matrix Cx_Jupiter = PCtemp.getSubMatrix(1, 1, temp[0], temp[1] - 1);
+    Matrix Cy_Jupiter = PCtemp.getSubMatrix(1, 1, temp[1], temp[2] - 1);
+    Matrix Cz_Jupiter = PCtemp.getSubMatrix(1, 1, temp[2], temp[3] - 1);
+
+    positions.r_Jupiter = Cheb3D(Mjd_TDB, 8, t1, t1+32,
+                                 Cx_Jupiter.getSubMatrix(1, 1, 1, 8),
+                                 Cy_Jupiter.getSubMatrix(1, 1, 1, 8),
+                                 Cz_Jupiter.getSubMatrix(1, 1, 1, 8)) * 1e3;
+
+// ========== SATURNO ==========
+    temp = {366, 373, 380, 387};
+    Matrix Cx_Saturn = PCtemp.getSubMatrix(1, 1, temp[0], temp[1] - 1);
+    Matrix Cy_Saturn = PCtemp.getSubMatrix(1, 1, temp[1], temp[2] - 1);
+    Matrix Cz_Saturn = PCtemp.getSubMatrix(1, 1, temp[2], temp[3] - 1);
+
+    positions.r_Saturn = Cheb3D(Mjd_TDB, 7, t1, t1+32,
+                                Cx_Saturn.getSubMatrix(1, 1, 1, 7),
+                                Cy_Saturn.getSubMatrix(1, 1, 1, 7),
+                                Cz_Saturn.getSubMatrix(1, 1, 1, 7)) * 1e3;
+
+// ========== URANO ==========
+    temp = {387, 393, 399, 405};
+    Matrix Cx_Uranus = PCtemp.getSubMatrix(1, 1, temp[0], temp[1] - 1);
+    Matrix Cy_Uranus = PCtemp.getSubMatrix(1, 1, temp[1], temp[2] - 1);
+    Matrix Cz_Uranus = PCtemp.getSubMatrix(1, 1, temp[2], temp[3] - 1);
+
+    positions.r_Uranus = Cheb3D(Mjd_TDB, 6, t1, t1+32,
+                                Cx_Uranus.getSubMatrix(1, 1, 1, 6),
+                                Cy_Uranus.getSubMatrix(1, 1, 1, 6),
+                                Cz_Uranus.getSubMatrix(1, 1, 1, 6)) * 1e3;
+
+// ========== NEPTUNO ==========
+    temp = {405, 411, 417, 423};
+    Matrix Cx_Neptune = PCtemp.getSubMatrix(1, 1, temp[0], temp[1] - 1);
+    Matrix Cy_Neptune = PCtemp.getSubMatrix(1, 1, temp[1], temp[2] - 1);
+    Matrix Cz_Neptune = PCtemp.getSubMatrix(1, 1, temp[2], temp[3] - 1);
+
+    positions.r_Neptune = Cheb3D(Mjd_TDB, 6, t1, t1+32,
+                                 Cx_Neptune.getSubMatrix(1, 1, 1, 6),
+                                 Cy_Neptune.getSubMatrix(1, 1, 1, 6),
+                                 Cz_Neptune.getSubMatrix(1, 1, 1, 6)) * 1e3;
+
+// ========== PLUTÓN ==========
+    temp = {423, 429, 435, 441};
+    Matrix Cx_Pluto = PCtemp.getSubMatrix(1, 1, temp[0], temp[1] - 1);
+    Matrix Cy_Pluto = PCtemp.getSubMatrix(1, 1, temp[1], temp[2] - 1);
+    Matrix Cz_Pluto = PCtemp.getSubMatrix(1, 1, temp[2], temp[3] - 1);
+
+    positions.r_Pluto = Cheb3D(Mjd_TDB, 6, t1, t1+32,
+                               Cx_Pluto.getSubMatrix(1, 1, 1, 6),
+                               Cy_Pluto.getSubMatrix(1, 1, 1, 6),
+                               Cz_Pluto.getSubMatrix(1, 1, 1, 6)) * 1e3;
 
 
+    // ========== AJUSTES FINALES ==========
+    const double EMRAT = 81.30056907419062; // DE430
+    const double EMRAT1 = 1.0/(1.0 + EMRAT);
 
-    const double EMRAT=81.30056907419062;
-    pos.r_Earth = pos.r_Earth - (1.0/(1.0+EMRAT)) * pos.r_Moon;
-    auto rel=[&](const Matrix& v){ return -1*pos.r_Earth + v; };
-    pos.r_Mercury=rel(pos.r_Mercury);
-    pos.r_Venus  =rel(pos.r_Venus);
-    pos.r_Mars   =rel(pos.r_Mars);
-    pos.r_Jupiter=rel(pos.r_Jupiter);
-    pos.r_Saturn =rel(pos.r_Saturn);
-    pos.r_Uranus =rel(pos.r_Uranus);
-    pos.r_Neptune=rel(pos.r_Neptune);
-    pos.r_Pluto  =rel(pos.r_Pluto);
-    pos.r_Sun    =rel(pos.r_Sun);
+    positions.r_Earth = positions.r_Earth - positions.r_Moon * EMRAT1;
+    positions.r_Mercury = -1*positions.r_Earth + positions.r_Mercury;
+    positions.r_Venus = -1*positions.r_Earth + positions.r_Venus;
+    positions.r_Mars = -1*positions.r_Earth + positions.r_Mars;
+    positions.r_Jupiter = -1*positions.r_Earth + positions.r_Jupiter;
+    positions.r_Saturn = -1*positions.r_Earth + positions.r_Saturn;
+    positions.r_Uranus = -1*positions.r_Earth + positions.r_Uranus;
+    positions.r_Neptune = -1*positions.r_Earth + positions.r_Neptune;
+    positions.r_Pluto = -1*positions.r_Earth + positions.r_Pluto;
+    positions.r_Sun = -1*positions.r_Earth + positions.r_Sun;
 
-    return pos;
+    return positions;
 }

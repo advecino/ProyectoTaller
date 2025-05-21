@@ -16,38 +16,56 @@
 
 
 IERSResult IERS(Matrix& eop, double Mjd_UTC, char interp) {
-    if (interp!='l' && interp!='n') interp='n';
+    if (interp != 'l' && interp != 'n') {
+        interp = 'n';
+    }
 
-    double mjd_floor = std::floor(Mjd_UTC);
-    int cols = eop.getColumnas();
+    const double mjd_floor = std::floor(Mjd_UTC);
+    const int cols = eop.getColumnas();
+
+    // Encontrar el índice correspondiente a la fecha
     int idx = -1;
+    const double TOL = 1e-6;  // Tolerancia para comparación de fechas
+
     for (int j = 1; j <= cols; ++j) {
-        if (std::floor(eop(4, j)) == mjd_floor) { idx = j; break; }
-    }
-    if (idx < 1 || idx > cols)
-        throw std::out_of_range("Mjd_UTC fuera de rango en eop");
-
-    if (interp=='l' && idx==cols) interp='n';
-
-    Matrix pre = eop.getSubMatrix(1,13,idx,idx);
-
-    Matrix nxt(0,0);
-    double fixf = 0.0;
-    if (interp=='l') {
-        nxt   = eop.getSubMatrix(1,13,idx+1,idx+1);
-        fixf  = Mjd_UTC - mjd_floor;
-    }
-
-    auto lerp = [&](int row)->double {
-        double v0 = pre(row,1);
-        if (interp=='l') {
-            double v1 = nxt(row,1);
-            return v0 + (v1 - v0)*fixf;
-        } else {
-            return v0;
+        if (std::abs(eop(4, j) - mjd_floor) < TOL) {
+            idx = j;
+            break;
         }
+    }
+
+    if (idx < 1 || idx > cols) {
+        throw std::out_of_range("Mjd_UTC fuera de rango en eop");
+    }
+
+    // Si es interpolación lineal pero estamos en el último punto, cambiar a no interpolación
+    if (interp == 'l' && idx == cols) {
+        interp = 'n';
+    }
+
+    // Obtener datos del punto anterior
+    Matrix pre = eop.getSubMatrix(1, 13, idx, idx);
+
+    // Preparar interpolación si es necesario
+    double lerp_factor = 0.0;
+    Matrix nxt(0,0);
+
+    if (interp == 'l') {
+        nxt = eop.getSubMatrix(1, 13, idx + 1, idx + 1);
+        lerp_factor = Mjd_UTC - mjd_floor;
+    }
+
+    // Función lambda para interpolación lineal o selección directa
+    auto lerp = [&](int row) -> double {
+        const double v0 = pre(row, 1);
+        if (interp == 'l') {
+            const double v1 = nxt(row, 1);
+            return v0 + (v1 - v0) * lerp_factor;
+        }
+        return v0;
     };
 
+    // Construir resultado
     IERSResult res;
     res.x_pole  = lerp(5)/Arcs;
     res.y_pole  = lerp(6)/Arcs;

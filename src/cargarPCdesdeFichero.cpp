@@ -57,3 +57,67 @@ void cargarPC(const std::string& filepath) {
 
     std::cout << "Matriz PC cargada: " << filas << "x" << cols << std::endl;
 }
+
+/**
+ * @brief Carga la matriz eopdata desde un archivo .txt con formato europeo.
+ * @param filepath Ruta al archivo eop19620101.txt
+ */
+void cargarEOP(const std::string& filepath) {
+    std::ifstream file(filepath);
+    if (!file.is_open()) {
+        throw std::runtime_error("No se pudo abrir el fichero EOP");
+    }
+
+    std::vector<std::vector<double>> columnas(13); // 13 filas → cada vector representa una fila
+
+    std::string line;
+    int lineCount = 0;
+
+    while (std::getline(file, line)) {
+        ++lineCount;
+        // Reemplazar comas por puntos
+        std::replace(line.begin(), line.end(), ',', '.');
+
+        // Limpiar caracteres no imprimibles
+        line.erase(std::remove_if(line.begin(), line.end(), [](unsigned char c) {
+            return !std::isprint(c) && !std::isspace(c);
+        }), line.end());
+
+        std::stringstream ss(line);
+        std::string token;
+        std::vector<double> values;
+
+        while (ss >> token) {
+            try {
+                values.push_back(std::stod(token));
+            } catch (...) {
+                std::cerr << "Error en línea " << lineCount << " al convertir: [" << token << "]" << std::endl;
+                throw;
+            }
+        }
+
+        if (values.size() != 13) {
+            throw std::runtime_error("Línea " + std::to_string(lineCount) + ": se esperaban 13 valores.");
+        }
+
+        // Almacenar cada valor en su fila correspondiente
+        for (int i = 0; i < 13; ++i) {
+            columnas[i].push_back(values[i]);
+        }
+    }
+
+    file.close();
+
+    // Crear la matriz global
+    int filas = 13;
+    int cols = columnas[0].size();
+    eopdata = Matrix(filas, cols);
+
+    for (int i = 1; i <= filas; ++i) {
+        for (int j = 1; j <= cols; ++j) {
+            eopdata(i, j) = columnas[i - 1][j - 1];
+        }
+    }
+
+    std::cout << "Matriz EOP cargada: " << filas << "x" << cols << std::endl;
+}
