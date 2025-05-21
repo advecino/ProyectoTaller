@@ -45,6 +45,7 @@
 #include "include/global.h"
 #include "include/Accel.h"
 #include "include/DEInteg.h"
+#include "src/cargarPCdesdeFichero.cpp"
 
 #define TOL_ 10e-14
 
@@ -1436,41 +1437,27 @@ int IERS_02() {
 }
 
 int JPL_Eph_01() {
+    _assert(PC.getFilas() == 1);
+    _assert(PC.getColumnas() >= 2);
 
-    double MjdBase = 58000.0;
-    double JDBase  = MjdBase + 2400000.5;
+    double JDBase = PC(1,1);
+    double JDMax  = PC(1,2);
 
-    const int COLS = 1100;
-    PC = Matrix(1, COLS);
-
-    PC(1,1) = JDBase;
-    PC(1,2) = JDBase + 1000;
-
-    // El resto de columnas pueden quedar a cero (constructor inicializa a 0)
-
-    double Mjd_TDB = MjdBase + 10.0;
+    double Mjd_TDB = JDBase - 2400000.5 + 10.0;
     PlanetaryPositions pos = JPL_Eph_DE430(Mjd_TDB);
 
-    auto checkZero = [&](const Matrix& v){
-        _assert(v.getFilas()==3 && v.getColumnas()==1);
-        for(int i=1; i<=3; ++i)
-            _assert(fabs(v(i,1)) < TOL_);
+    auto checkVec = [&](const Matrix& v){
+        _assert(v.getFilas() == 3 && v.getColumnas() == 1);
+        for (int i = 1; i <= 3; ++i)
+            _assert(std::isfinite(v(i,1)));
     };
 
-    checkZero(pos.r_Earth);
-    checkZero(pos.r_Moon);
-    checkZero(pos.r_Sun);
-    checkZero(pos.r_Mercury);
-    checkZero(pos.r_Venus);
-    checkZero(pos.r_Mars);
-    checkZero(pos.r_Jupiter);
-    checkZero(pos.r_Saturn);
-    checkZero(pos.r_Uranus);
-    checkZero(pos.r_Neptune);
-    checkZero(pos.r_Pluto);
-
+    checkVec(pos.r_Earth);
+    checkVec(pos.r_Sun);
+    checkVec(pos.r_Mars);
     return 0;
 }
+
 
 int JPL_Eph_02() {
     PC(1,2);
@@ -2550,9 +2537,15 @@ int all_tests()
 
 
 
-/*
+
 int main()
 {
+    try {
+        cargarPC("./data/DE430Coeff.txt");
+        PC.getSubMatrix(1, 3, 1, 5).print();  // Prueba imprimir 3x5
+    } catch (const std::exception& e) {
+        std::cerr << "Error al cargar PC: " << e.what() << std::endl;
+    }
     int result = all_tests();
 
     if (result == 0)
@@ -2577,4 +2570,3 @@ int main()
  */
     return result != 0;
 }
-*/

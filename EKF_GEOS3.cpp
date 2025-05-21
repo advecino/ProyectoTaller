@@ -21,7 +21,7 @@
 // Last modified:   2020/03/16   Meysam Mahooti
 //--------------------------------------------------------------------------
 using namespace std;
-
+/*
 int main(){
 	//double Cnm[362][362], Snm[362][362], **eopdata;
     double  **eopdata;
@@ -153,4 +153,4 @@ int main(){
     return 0;
 
 }
-	
+	*/
