@@ -1,5 +1,5 @@
-#include "DEInteg.h"
-#include "sign_.h"
+#include "../include/DEInteg.h"
+#include "../include/sign_.h"
 
 /*
 %----------------------------------------------------------------------------

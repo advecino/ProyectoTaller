@@ -2,7 +2,7 @@
 // Created by adria on 12/05/2025.
 //
 
-#include "anglesdr.h"
+#include "../include/anglesdr.h"
 #include <cmath>
 #include <stdexcept>
 

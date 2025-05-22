@@ -11,7 +11,8 @@ Proyecto/
 ├── src/                    # Código fuente en C++
 ├── include/                # Archivos de cabecera
 ├── data/                   # Datos de entrada y archivos de prueba
-├── EkF_test.cpp            # Archivo de prueba del filtro EKF
+├── EKF_Test.cpp            # Archivo de pruebas Unitarias
+├── EKF_GEOS3.cpp           # Archivo principal
 └── README.md               # Este archivo
 ```
 
@@ -19,4 +20,25 @@ Proyecto/
 ## Autor
 Este proyecto ha sido desarrollado por Adrian Vecino Durán
 
+## Requisitos
+- Compilador C++ compatible con C++11 o superior (`g++`, `clang++`, etc.)
+- Sistema compatible con POSIX (Linux o WSL en Windows recomendado para entorno GCC online)
 
+## Instrucciones iniciales
+Descarga el archivo del proyecto.
+
+Descomprimir el contenido en una carpeta local.
+
+
+
+## Compilación (GCC en línea o terminal)
+
+Para compilar la **aplicación principal**:
+
+```bash
+g++ -std=c++11 -Iinclude src/*.cpp EKF_GEOS3.cpp -o EKF_GEOS3
+```
+Para compilar los **Test Unitarios**:
+```bash
+g++ -std=c++11 -Iinclude src/*.cpp EKF_Test.cpp -o EKF_Test
+```

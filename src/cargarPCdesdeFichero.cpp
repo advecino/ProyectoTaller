@@ -17,10 +17,8 @@ void cargarPC(const std::string& filepath) {
     std::string line;
 
     while (std::getline(file, line)) {
-        // Reemplazar comas por puntos (para convertir decimales europeos)
         std::replace(line.begin(), line.end(), ',', '.');
 
-        // Eliminar caracteres no imprimibles (incluido BOM o espacios raros)
         line.erase(std::remove_if(line.begin(), line.end(), [](unsigned char c) {
             return !std::isprint(c) && !std::isspace(c);
         }), line.end());
@@ -54,8 +52,6 @@ void cargarPC(const std::string& filepath) {
             PC(i, j) = rows[i - 1][j - 1];
         }
     }
-
-    std::cout << "Matriz PC cargada: " << filas << "x" << cols << std::endl;
 }
 
 /**
@@ -75,10 +71,8 @@ void cargarEOP(const std::string& filepath) {
 
     while (std::getline(file, line)) {
         ++lineCount;
-        // Reemplazar comas por puntos
         std::replace(line.begin(), line.end(), ',', '.');
 
-        // Limpiar caracteres no imprimibles
         line.erase(std::remove_if(line.begin(), line.end(), [](unsigned char c) {
             return !std::isprint(c) && !std::isspace(c);
         }), line.end());
@@ -100,7 +94,6 @@ void cargarEOP(const std::string& filepath) {
             throw std::runtime_error("Línea " + std::to_string(lineCount) + ": se esperaban 13 valores.");
         }
 
-        // Almacenar cada valor en su fila correspondiente
         for (int i = 0; i < 13; ++i) {
             columnas[i].push_back(values[i]);
         }
@@ -108,7 +101,6 @@ void cargarEOP(const std::string& filepath) {
 
     file.close();
 
-    // Crear la matriz global
     int filas = 13;
     int cols = columnas[0].size();
     eopdata = Matrix(filas, cols);
@@ -119,5 +111,4 @@ void cargarEOP(const std::string& filepath) {
         }
     }
 
-    std::cout << "Matriz EOP cargada: " << filas << "x" << cols << std::endl;
 }

@@ -1,7 +1,7 @@
-#include "anglesg.h"
-#include "gibbs.h"
-#include "elements.h"
-#include "hgibbs.h"
+#include "../include/anglesg.h"
+#include "../include/gibbs.h"
+#include "../include/elements.h"
+#include "../include/hgibbs.h"
 #include <cmath>
 #include <complex>
 #include <stdexcept>

@@ -60,14 +60,12 @@ public:
     * @param v Array con los datos a cargar.
     */
     Matrix(int fil, int col, double v[]);
-
-
     /**
-     * @brief Devuelve una fila específica de la matriz.
-     * @param fila Índice de la fila a obtener.
-     * @return Matriz fila correspondiente.
-     */
-    Matrix getFila(int fila) const;
+    * @brief Constructor de la matriz con dimensiones especificadas.
+    * @param fil Número de filas.
+    * @param col Número de columnas.
+    */
+    static Matrix Matrixx(int fil, int col);
 
     /**
      * @brief Devuelve una columna específica de la matriz.
@@ -76,6 +74,7 @@ public:
      */
     Matrix getColumn(int col) const;
 
+
     /**
      * @brief Asigna una matriz columna a una columna específica.
      * @param col Índice de la columna a modificar.
@@ -83,14 +82,6 @@ public:
      */
     void setColumn(int col, const Matrix &column);
 
-
-    /**
-     * @brief Conactenar 2 matrices verticalmente
-     * @param m1 matriz1
-     * @param m2 matriz2
-     * @return matrizconcatenada
-     */
-    static Matrix concatenar(Matrix &m1, Matrix &m2);
 
 /**
  * @brief Concatena dos matrices a lo largo de un eje.
@@ -209,6 +200,18 @@ public:
      * @return Submatriz extraída.
      */
     Matrix getSubMatrix(int startRow, int endRow, int startCol, int endCol) const;
+
+    /**
+ * @brief Obtiene una submatriz de la matriz actual
+ * @param startRow Fila inicial (basado en 1)
+ * @param endRow Fila final (basado en 1)
+ * @param startCol Columna inicial (basado en 1)
+ * @param endCol Columna final (basado en 1)
+ * @return Nueva matriz con la submatriz extraída
+ * @throw std::out_of_range Si los índices están fuera de rango
+ */
+    Matrix getSubMatrix2(int startRow, int endRow, int startCol, int endCol) const;
+
 
 private:
     /**

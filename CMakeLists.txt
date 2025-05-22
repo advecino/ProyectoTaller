@@ -87,11 +87,11 @@ add_executable(ProyectoTaller
         include/AzElPa.h
         src/VarEqn.cpp
         include/VarEqn.h
-        include/anglesdr.cpp
+        src/anglesdr.cpp
         include/anglesdr.h
-        include/anglesg.cpp
+        src/anglesg.cpp
         include/anglesg.h
-        include/DEInteg.cpp
+        src/DEInteg.cpp
         include/DEInteg.h
         src/Accel.cpp
         include/Accel.h
