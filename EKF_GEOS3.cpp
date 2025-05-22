@@ -198,8 +198,10 @@ int main() {
         s = LT * (U * r - Rs);
         double Dist = s.norm();
         Matrix dDdY = (s / Dist).transpuesta() * LT * U;
-        dDdY = dDdY.concatenate(Matrix(1,3), 2);
-        MeasUpdate(Y, P, Matrix(0,0), Matrix(1,1,obs(i,4)), Matrix(1,1,Dist), Matrix(1,1,sigma_range), dDdY, 6);
+        Matrix zero(1,3);
+        dDdY = Matrix::concatenate(dDdY,zero, 2);
+        Matrix obs14(1,1,&obs(i,4));
+        MeasUpdate(Y, P, Matrix(0,0),obs14, Matrix(1,1,Dist), Matrix(1,1,sigma_range), dDdY, 6);
     }
 
     Matrix Y0 = integrator.integrate(Accel, 0.0, -(obs(46,1) - obs(1,1))*86400.0, 1e-13, 1e-6, Y);
