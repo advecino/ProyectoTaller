@@ -4,7 +4,7 @@
 
 #include <cmath>
 #include "Matrix.h"
-#include "SAT_Const.h"
+#include "Sat_const.h"
 
 struct KeplerianElements {
     double p;      ///< Semilatus rectum [m]
