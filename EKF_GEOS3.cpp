@@ -135,7 +135,10 @@ int main() {
     DEInteg integrator;
     Matrix Y = integrator.integrate(Accel, 0.0, -(obs(9,1)-Mjd0)*86400.0, 1e-13, 1e-6, Y0_apr);
 
-    Matrix P = Matrix::identity(6);
+    Matrix P(6, 6);
+    for (int i = 1; i <= 6; ++i)
+        for (int j = 1; j <= 6; ++j)
+            P(i, j) = (i == j) ? 1.0 : 0.0;
     for (int i = 1; i <= 3; ++i) P(i,i) = 1e8;
     for (int i = 4; i <= 6; ++i) P(i,i) = 1e3;
 
