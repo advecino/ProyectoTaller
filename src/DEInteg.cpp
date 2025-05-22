@@ -1,5 +1,6 @@
 #include "../include/DEInteg.h"
 #include "../include/sign_.h"
+#include <limits>
 
 /*
 %----------------------------------------------------------------------------
