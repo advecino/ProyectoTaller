@@ -232,7 +232,6 @@ int R_z_01()
     return 0;
 }
 
-
 int Legendre_01()
 {
     int n = 2, m = 2;

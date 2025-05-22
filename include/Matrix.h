@@ -31,26 +31,26 @@ public:
      * @param v Array de valores para inicializar la matriz.
      * @param n Número de elementos en el array.
      */
-    Matrix(int fil, int col, double v[],int n);
+    Matrix(int fil, int col, double v[], int n);
 
     /**
     * @brief Constructor de copia.
     * @param m Objeto Matrix a copiar.
     */
-    Matrix(const Matrix& m);
+    Matrix(const Matrix &m);
 
     /**
     * @brief Constructor que inicializa una matriz columna a partir de un vector de valores.
     * @param values Vector con los valores de la matriz.
     */
-    explicit Matrix(const std::vector<double>& values);
+    explicit Matrix(const std::vector<double> &values);
 
     /**
      * @brief Constructor que inicializa una matriz con una lista de inicialización.
      * @param values Lista de valores para inicializar la matriz.
      * @param cols Número de columnas (por defecto 1).
      */
-    Matrix(const std::initializer_list<double>& values, int cols = 1);
+    Matrix(const std::initializer_list<double> &values, int cols = 1);
 
 
     /**
@@ -68,6 +68,7 @@ public:
      * @return Matriz fila correspondiente.
      */
     Matrix getFila(int fila) const;
+
     /**
      * @brief Devuelve una columna específica de la matriz.
      * @param col Índice de la columna a obtener.
@@ -80,8 +81,7 @@ public:
      * @param col Índice de la columna a modificar.
      * @param column Matriz columna a asignar.
      */
-    void setColumn(int col, const Matrix& column);
-
+    void setColumn(int col, const Matrix &column);
 
 
     /**
@@ -90,8 +90,17 @@ public:
      * @param m2 matriz2
      * @return matrizconcatenada
      */
-    static Matrix concatenar( Matrix& m1,  Matrix& m2);
+    static Matrix concatenar(Matrix &m1, Matrix &m2);
 
+/**
+ * @brief Concatena dos matrices a lo largo de un eje.
+ * @param A Primera matriz.
+ * @param B Segunda matriz.
+ * @param axis 0 para concatenación vertical (filas), 1 para horizontal (columnas).
+ * @return Nueva matriz resultado de la concatenación.
+ * @throw std::invalid_argument Si las dimensiones no son compatibles.
+ */
+    static Matrix concatenate(Matrix &A, Matrix &B, int axis = 0);
 
 
     /**
@@ -102,25 +111,39 @@ public:
     /** @name Operadores */
     ///@{
 
-    Matrix& operator= (const Matrix& matrix2);
-    Matrix operator+ (const Matrix& matrix2);
-    Matrix operator- (const Matrix& matrix2);
-    Matrix operator* (const Matrix& matrix2) const;
-    Matrix& operator/=(double scalar);
-    double& operator()(int i, int j) const;
+    Matrix &operator=(const Matrix &matrix2);
 
-    Matrix& operator+=(double scalar);
-    Matrix& operator-=(double scalar);
-    Matrix& operator*=(double scalar);
+    Matrix operator+(const Matrix &matrix2);
 
-    friend Matrix operator+(const Matrix& m, double scalar);
-    friend Matrix operator+(double scalar, const Matrix& m);
-    friend Matrix operator-(const Matrix& m, double scalar);
-    friend Matrix operator-(double scalar, const Matrix& m);
-    friend Matrix operator*(const Matrix& m, double scalar);
-    friend Matrix operator*(double scalar, const Matrix& m);
-    friend Matrix operator/(const Matrix& m, double scalar);
-    friend Matrix operator/(double scalar, const Matrix& m);
+    Matrix operator-(const Matrix &matrix2);
+
+    Matrix operator*(const Matrix &matrix2) const;
+
+    Matrix &operator/=(double scalar);
+
+    double &operator()(int i, int j) const;
+
+    Matrix &operator+=(double scalar);
+
+    Matrix &operator-=(double scalar);
+
+    Matrix &operator*=(double scalar);
+
+    friend Matrix operator+(const Matrix &m, double scalar);
+
+    friend Matrix operator+(double scalar, const Matrix &m);
+
+    friend Matrix operator-(const Matrix &m, double scalar);
+
+    friend Matrix operator-(double scalar, const Matrix &m);
+
+    friend Matrix operator*(const Matrix &m, double scalar);
+
+    friend Matrix operator*(double scalar, const Matrix &m);
+
+    friend Matrix operator/(const Matrix &m, double scalar);
+
+    friend Matrix operator/(double scalar, const Matrix &m);
 
     ///@}
 
@@ -166,7 +189,7 @@ public:
      * @return Resultado del producto escalar.
      * @throw std::invalid_argument Si las dimensiones no son compatibles.
      */
-    static double dot(const Matrix& a, const Matrix& b);
+    static double dot(const Matrix &a, const Matrix &b);
 
     /**
      * @brief Calcula el producto cruz entre dos vectores tridimensionales.
@@ -175,7 +198,7 @@ public:
      * @return Vector resultante del producto cruz.
      * @throw std::invalid_argument Si los vectores no son tridimensionales.
      */
-    static Matrix cross(const Matrix& a, const Matrix& b);
+    static Matrix cross(const Matrix &a, const Matrix &b);
 
     /**
      * @brief Obtiene una submatriz.
@@ -195,7 +218,7 @@ private:
 
     int fil; ///< Número de filas.
     int col; ///< Número de columnas.
-    double** matrix; ///< Puntero a la memoria de los elementos de la matriz.
+    double **matrix; ///< Puntero a la memoria de los elementos de la matriz.
 };
 
 

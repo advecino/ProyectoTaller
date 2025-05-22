@@ -569,6 +569,37 @@ Matrix Matrix::concatenar(Matrix& m1, Matrix& m2) {
     return resultado;
 }
 
+Matrix Matrix::concatenate(Matrix& A, Matrix& B, int axis) {
+    if (axis == 0) { // Vertical
+        if (A.col != B.col) {
+            throw std::invalid_argument("Concatenación vertical requiere mismo número de columnas.");
+        }
+        Matrix result(A.fil + B.fil, A.col);
+        for (int i = 1; i <= A.fil; ++i)
+            for (int j = 1; j <= A.col; ++j)
+                result(i, j) = A(i, j);
+        for (int i = 1; i <= B.fil; ++i)
+            for (int j = 1; j <= B.col; ++j)
+                result(i + A.fil, j) = B(i, j);
+        return result;
+    } else if (axis == 1) { // Horizontal
+        if (A.fil != B.fil) {
+            throw std::invalid_argument("Concatenación horizontal requiere mismo número de filas.");
+        }
+        Matrix result(A.fil, A.col + B.col);
+        for (int i = 1; i <= A.fil; ++i) {
+            for (int j = 1; j <= A.col; ++j)
+                result(i, j) = A(i, j);
+            for (int j = 1; j <= B.col; ++j)
+                result(i, j + A.col) = B(i, j);
+        }
+        return result;
+    } else {
+        throw std::invalid_argument("El parámetro 'axis' debe ser 0 (vertical) o 1 (horizontal).");
+    }
+}
+
+
 
 void Matrix::setColumn(int col, const Matrix& column) {
     if (col < 1 || col > this->col) {
