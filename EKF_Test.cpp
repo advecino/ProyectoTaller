@@ -32,7 +32,7 @@
 #include "include/PoleMatrix.h"
 #include "include/NutMatrix.h"
 #include "include/PrecMatrix.h"
-#include "include/timediff.h"
+#include "include/TimeDiff.h"
 #include "include/Geodetic.h"
 #include "include/doubler.h"
 #include "include/IERS.h"

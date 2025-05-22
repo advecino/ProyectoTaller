@@ -1,6 +1,6 @@
 #include "../include/Accel.h"
 #include "../include/IERS.h"
-#include "../include/timediff.h"
+#include "../include/TimeDiff.h"
 #include "../include/Mjday_TDB.h"
 #include "../include/JPL_Eph_DE430.h"
 #include "../include/AccelHarmonic.h"

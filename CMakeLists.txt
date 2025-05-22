@@ -76,7 +76,7 @@ add_executable(ProyectoTaller
         src/PrecMatrix.cpp
         include/PrecMatrix.h
         src/timediff.cpp
-        include/timediff.h
+        include/TimeDiff.h
         src/Geodetic.cpp
         include/Geodetic.h
         src/doubler.cpp

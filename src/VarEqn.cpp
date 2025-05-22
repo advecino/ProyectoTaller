@@ -1,7 +1,7 @@
 #include "../include/VarEqn.h"
 #include "../include/global.h"
 #include "../include/IERS.h"
-#include "../include/timediff.h"
+#include "../include/TimeDiff.h"
 #include "../include/PrecMatrix.h"
 #include "../include/NutMatrix.h"
 #include "../include/PoleMatrix.h"
