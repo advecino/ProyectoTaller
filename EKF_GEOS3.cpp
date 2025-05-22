@@ -20,11 +20,11 @@
 #include "include/MeasUpdate.h"
 #include "include/Accel.h"
 #include "include/global.h"
+#include "include/VarEqn.h"
 
 using namespace std;
 
 int main() {
-    // Constantes y estructuras
     Matrix Cnm(181,181), Snm(181,181);
 
     // Leer GGM03S.txt
@@ -176,7 +176,7 @@ int main() {
         Matrix r = Y.getSubMatrix(1,3,1,1);
         Matrix s = LT * (U * r - Rs);
 
-        P = TimeUpdate(P, Phi);
+        TimeUpdate(P, Phi);
 
         AzElPaResult azel = AzElPa(s);
         Matrix dAdY = azel.dAds * LT * U;
@@ -196,7 +196,7 @@ int main() {
         double Dist = s.norm();
         Matrix dDdY = (s / Dist).transpuesta() * LT * U;
         dDdY = dDdY.concatenate(Matrix(1,3), 2);
-        MeasUpdate(Y, P, Matrix(), Matrix(1,1,obs(i,4)), Matrix(1,1,Dist), Matrix(1,1,sigma_range), dDdY, 6);
+        MeasUpdate(Y, P, Matrix(0,0), Matrix(1,1,obs(i,4)), Matrix(1,1,Dist), Matrix(1,1,sigma_range), dDdY, 6);
     }
 
     Matrix Y0 = integrator.integrate(Accel, 0.0, -(obs(46,1) - obs(1,1))*86400.0, 1e-13, 1e-6, Y);
