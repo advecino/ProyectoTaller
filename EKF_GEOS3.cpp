@@ -183,9 +183,13 @@ int main() {
 
         AzElPaResult azel = AzElPa(s);
         Matrix dAdY = azel.dAds * LT * U;
-        dAdY = dAdY.concatenate(Matrix(1,3), 2);
-
-        MeasUpdate(Y, P, Matrix(), Matrix(1,1,obs(i,2)), Matrix(1,1,azel.Az), Matrix(1,1,sigma_az), dAdY, 6);
+        Matrix zero0 (1,3);
+        dAdY = Matrix::concatenate(dAdY,zero0, 2);
+        Matrix zero00{};
+        Matrix obsi2(1,1,&obs(i,2));
+        Matrix azelAz(1,1,&azel.Az);
+        Matrix sigmaAz (1,1,&sigma_az);
+        MeasUpdate(Y, P, zero00, obsi2, azelAz, sigmaAz, dAdY, 6);
 
         r = Y.getSubMatrix(1,3,1,1);
         s = LT * (U * r - Rs);
