@@ -124,7 +124,6 @@ int main() {
     aux.sun = true;
     aux.moon = true;
     aux.planets = true;
-    std::cout << "Hola0" << std::endl;
     AnglesGResult ag = anglesg(obs(1, 2), obs(9, 2), obs(18, 2),
                                obs(1, 3), obs(9, 3), obs(18, 3),
                                Mjd1, Mjd2, Mjd3,
@@ -132,7 +131,6 @@ int main() {
                                aux, eopdata);
 
     Matrix Y0_apr = Matrix::concatenate(ag.r2, ag.v2, 0);
-    std::cout << "Hola1" << std::endl;
     double Mjd0 = Mjday(1995, 1, 29, 2, 38, 0);
     aux.Mjd_UTC = obs(9, 1);
     aux.Mjd_TT = aux.Mjd_UTC;
@@ -155,7 +153,6 @@ int main() {
                 P(i, j) = (i == j) ? 1.0 : 0.0;
         for (int i = 1; i <= 3; ++i) P(i, i) = 1e8;
         for (int i = 4; i <= 6; ++i) P(i, i) = 1e3;
-        std::cout << "Hola2" << std::endl;
         Matrix LT = LTC(-158.2706 * Rad, 21.5748 * Rad);
 
         Matrix yPhi(42, 1);
@@ -167,11 +164,8 @@ int main() {
             Matrix Y_old = Y;
             aux.Mjd_UTC = obs(i, 1);
             t = (obs(i, 1) - Mjd0) * 86400.0;
-            std::cout << "Hola3" << std::endl;
             IERSResult eop = IERS(eopdata, aux.Mjd_UTC, 'l');
-            std::cout << "Hola4" << std::endl;
             TimeDiffs dT = timediff(eop.UT1_UTC, eop.TAI_UTC);
-            std::cout << "Hola5" << std::endl;
             double Mjd_TT = aux.Mjd_UTC + dT.TT_UTC / 86400.0;
             double Mjd_UT1 = Mjd_TT + (eop.UT1_UTC - dT.TT_UTC) / 86400.0;
             aux.Mjd_TT = Mjd_TT;
