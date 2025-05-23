@@ -22,7 +22,7 @@
 #include "include/VarEqn.h"
 
 using namespace std;
-/*
+
 int main() {
     Matrix Cnm(181, 181), Snm(181, 181);
 
@@ -295,4 +295,4 @@ int main() {
               endl;
 
     return 0;
-}*/
+}
