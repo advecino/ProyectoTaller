@@ -1974,14 +1974,22 @@ int all_tests()
 int main()
 {
     try {
-        cargarPC("../data/DE430Coeff.txt");
-    } catch (const std::exception& e) {
-        std::cerr << "Error al cargar PC: " << e.what() << std::endl;
+        cargarPC("./data/DE430Coeff.txt");
+    } catch (...) {
+        try {
+            cargarPC("../data/DE430Coeff.txt");
+        } catch (const std::exception& e) {
+            std::cerr << "Error al cargar PC: " << e.what() << std::endl;
+        }
     }
-    try{
-        cargarEOP("../data/eop19620101.txt");
-    }catch(const std::exception& e){
-        std::cerr << "Error al cargar eopdata: " << e.what() << std::endl;
+    try {
+        cargarEOP("./data/eop19620101.txt");
+    } catch (...) {
+        try {
+            cargarEOP("../data/eop19620101.txt");
+        } catch (const std::exception& e) {
+            std::cerr << "Error al cargar EOP: " << e.what() << std::endl;
+        }
     }
     int result = all_tests();
 

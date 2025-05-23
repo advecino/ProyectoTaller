@@ -33,12 +33,16 @@ Descomprimir el contenido en una carpeta local.
 
 ## Compilación (GCC en línea o terminal)
 
-Para compilar la **aplicación principal**:
+Para compilar la **aplicación principal** y ejecutar:
 
 ```bash
 g++ -std=c++11 -Iinclude src/*.cpp EKF_GEOS3.cpp -o EKF_GEOS3
+
+./EKF_GEOS3
 ```
-Para compilar los **Test Unitarios**:
+Para compilar los **Test Unitarios** y ejecutar:
 ```bash
 g++ -std=c++11 -Iinclude src/*.cpp EKF_Test.cpp -o EKF_Test
+
+./EKF_Test
 ```

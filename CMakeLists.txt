@@ -100,4 +100,5 @@ add_executable(ProyectoTaller
         src/rpoly.cpp
         include/rpoly.h
         include/cargarDesdeFichero.h
+        src/cargarDesdeFichero.cpp
 )
