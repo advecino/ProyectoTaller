@@ -99,4 +99,5 @@ add_executable(ProyectoTaller
         include/AuxParam.h
         src/rpoly.cpp
         include/rpoly.h
+        include/cargarDesdeFichero.h
 )

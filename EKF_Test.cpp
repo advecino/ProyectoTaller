@@ -45,7 +45,7 @@
 #include "include/global.h"
 #include "include/Accel.h"
 #include "include/DEInteg.h"
-#include "src/cargarPCdesdeFichero.cpp"
+#include "include/cargarDesdeFichero.h"
 
 #define TOL_ 10e-14
 
