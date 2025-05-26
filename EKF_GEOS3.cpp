@@ -257,9 +257,10 @@ int main() {
         }
 
 
-    } catch (...) {
-        Y0 = Matrix::Matrixx(0, 0);
+    } catch (...) {Y0 = Matrix::Matrixx(0, 0);
     }
+
+
 
     Matrix Y_true(6, 1);
     Y_true(1, 1) = 5753.173e3;

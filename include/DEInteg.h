@@ -14,7 +14,7 @@
  */
 class DEInteg {
 private:
-    // Constantes de estado
+
     enum DE_STATE {
         DE_INIT = 1,    ///< Reinicio de integración
         DE_DONE = 2,    ///< Paso exitoso
@@ -24,7 +24,7 @@ private:
         DE_INVPARAM = 6 ///< Parámetros inválidos
     };
 
-    // Variables miembro
+
     DE_STATE State_;
     bool PermitTOUT;
     double told;
@@ -46,7 +46,7 @@ private:
     int ifail;
     bool crash;
 
-    // Vectores de trabajo
+
     Matrix wt;
     Matrix p;
     Matrix yp;
@@ -60,7 +60,7 @@ private:
     std::vector<double> v;
     std::vector<double> psi_;
 
-    // Constantes
+
     static const std::vector<double> two;
     static const std::vector<double> gstr;
 

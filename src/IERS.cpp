@@ -23,9 +23,8 @@ IERSResult IERS(Matrix& eop, double Mjd_UTC, char interp) {
     const double mjd_floor = std::floor(Mjd_UTC);
     const int cols = eop.getColumnas();
 
-    // Encontrar el índice correspondiente a la fecha
     int idx = -1;
-    const double TOL = 1e-6;  // Tolerancia para comparación de fechas
+    const double TOL = 1e-6;
 
     for (int j = 1; j <= cols; ++j) {
         if (std::abs(eop(4, j) - mjd_floor) < TOL) {
@@ -38,15 +37,15 @@ IERSResult IERS(Matrix& eop, double Mjd_UTC, char interp) {
         throw std::out_of_range("Mjd_UTC fuera de rango en eop");
     }
 
-    // Si es interpolación lineal pero estamos en el último punto, cambiar a no interpolación
+
     if (interp == 'l' && idx == cols) {
         interp = 'n';
     }
 
-    // Obtener datos del punto anterior
+
     Matrix pre = eop.getSubMatrix(1, 13, idx, idx);
 
-    // Preparar interpolación si es necesario
+
     double lerp_factor = 0.0;
     Matrix nxt(0,0);
 
@@ -55,7 +54,7 @@ IERSResult IERS(Matrix& eop, double Mjd_UTC, char interp) {
         lerp_factor = Mjd_UTC - mjd_floor;
     }
 
-    // Función lambda para interpolación lineal o selección directa
+
     auto lerp = [&](int row) -> double {
         const double v0 = pre(row, 1);
         if (interp == 'l') {
@@ -65,7 +64,7 @@ IERSResult IERS(Matrix& eop, double Mjd_UTC, char interp) {
         return v0;
     };
 
-    // Construir resultado
+
     IERSResult res;
     res.x_pole  = lerp(5)/Arcs;
     res.y_pole  = lerp(6)/Arcs;

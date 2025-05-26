@@ -4,10 +4,7 @@
 #include <algorithm>
 #include "../include/global.h"
 
-/**
- * @brief Carga la matriz PC desde un archivo .txt con formato europeo
- * @param filepath Ruta al archivo DE430Coeff.txt
- */
+
 void cargarPC(const std::string& filepath) {
     std::ifstream file(filepath);
     if (!file.is_open()) {

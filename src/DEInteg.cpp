@@ -59,12 +59,12 @@ Matrix DEInteg::integrate(std::function<Matrix(double, const Matrix&)> func,doub
     yp = Matrix(n_eqn, 1);
     phi = Matrix(n_eqn, 17);
 
-    // Return if output time equals input time
+
     if (t == tout) {
         return y;
     }
 
-    // Test for improper parameters
+
     double epsilon = std::max(relerr, abserr);
 
     if ((relerr < 0.0) || (abserr < 0.0) || (epsilon <= 0.0) ||
@@ -73,7 +73,7 @@ Matrix DEInteg::integrate(std::function<Matrix(double, const Matrix&)> func,doub
         return y;
     }
 
-    // Set interval of integration and counter for number of steps
+
     double del = tout - t;
     double absdel = std::abs(del);
 
@@ -98,8 +98,7 @@ Matrix DEInteg::integrate(std::function<Matrix(double, const Matrix&)> func,doub
 
 
 
-    while (true) { // Start step loop
-        // If already past output point, interpolate solution and return
+    while (true) {
         if (std::abs(x - t) >= absdel) {
             Matrix yout(n_eqn, 1);
             Matrix ypout(n_eqn, 1);
@@ -108,13 +107,11 @@ Matrix DEInteg::integrate(std::function<Matrix(double, const Matrix&)> func,doub
             double hi = tout - x;
             int ki = kold + 1;
 
-            // Initialize w[*] for computing g[*]
             for (int i = 0; i < ki; i++) {
                 double temp1 = i + 1;
                 w[i] = 1.0 / temp1;
             }
 
-            // Compute g[*]
             double term = 0.0;
             for (int j = 1; j < ki; j++) {
                 double psijm1 = psi_[j];
@@ -128,7 +125,6 @@ Matrix DEInteg::integrate(std::function<Matrix(double, const Matrix&)> func,doub
                 term = psijm1;
             }
 
-            // Interpolate for the solution yout and for the derivative ypout
             for (int j = 0; j < ki; j++) {
                 int i = ki - j;
                 yout = yout + g[i] * phi.getColumn(i);
@@ -141,7 +137,6 @@ Matrix DEInteg::integrate(std::function<Matrix(double, const Matrix&)> func,doub
             return yout;
         }
 
-        // If cannot go past output point and sufficiently close, extrapolate and return
         if (!PermitTOUT && (std::abs(tout - x) < fouru * std::abs(x))) {
             h = tout - x;
             yp = func(x, yy);
@@ -152,13 +147,11 @@ Matrix DEInteg::integrate(std::function<Matrix(double, const Matrix&)> func,doub
             return result;
         }
 
-        // Limit step size, set weight vector and take a step
         h = sign_(std::min(std::abs(h), std::abs(tend - x)), h);
         for (int l = 1; l <= n_eqn; ++l) {
             wt(l, 1) = releps * std::abs(yy(l, 1)) + abseps;
         }
 
-        // Begin block 0
         if (std::abs(h) < fouru * std::abs(x)) {
             h = sign_(fouru * std::abs(x), h);
             crash = true;
@@ -195,7 +188,7 @@ Matrix DEInteg::integrate(std::function<Matrix(double, const Matrix&)> func,doub
         }
 
         if (start) {
-            // Initialize. Compute appropriate step size for first step.
+
             yp = func(x, y);
             double sum = 0.0;
             for (int l = 1; l <= n_eqn; ++l) {
@@ -226,11 +219,10 @@ Matrix DEInteg::integrate(std::function<Matrix(double, const Matrix&)> func,doub
 
             }
         }
-        // End block 0
 
         bool success = false;
         while (!success) {
-            // Begin block 1
+
             kp1 = k + 1;
             kp2 = k + 2;
             km1 = k - 1;
@@ -246,7 +238,7 @@ Matrix DEInteg::integrate(std::function<Matrix(double, const Matrix&)> func,doub
             int nsp1 = ns + 1;
 
             if (k >= ns) {
-                // Compute components of alpha, beta, psi, sig which are changed
+
                 beta[ns] = 1.0;
                 double realns = ns;
                 alpha[ns] = 1.0 / realns;
@@ -267,9 +259,7 @@ Matrix DEInteg::integrate(std::function<Matrix(double, const Matrix&)> func,doub
                 }
                 psi_[k] = temp1;
 
-                // Compute coefficients g[*]; initialize v[*] and set w[*]
                 if (ns > 0) {
-                    // If order was raised, update diagonal part of v[*]
                     if (k > kold) {
                         double temp4 = k * kp1;
                         v[k] = 1.0 / temp4;
@@ -279,8 +269,6 @@ Matrix DEInteg::integrate(std::function<Matrix(double, const Matrix&)> func,doub
                             v[i] = v[i] - alpha[j + 1] * v[i + 1];
                         }
                     }
-
-                    // Update V[*] and set W[*]
                     int limit1 = kp1 - ns;
                     double temp5 = alpha[ns];
                     for (int iq = 0; iq < limit1; iq++) {
@@ -296,7 +284,6 @@ Matrix DEInteg::integrate(std::function<Matrix(double, const Matrix&)> func,doub
                     }
                 }
 
-                // Compute the g[*] in the work vector w[*]
                 int nsp2 = ns + 1;
                 if (kp1 >= nsp2) {
                     for (int i = nsp2; i <= kp1; i++) {
@@ -308,11 +295,8 @@ Matrix DEInteg::integrate(std::function<Matrix(double, const Matrix&)> func,doub
                         g[i] = w[0];
                     }
                 }
-            } // if K>=NS
-            // End block 1
+            }
 
-            // Begin block 2
-            // Predict a solution, evaluate derivatives using predicted solution
             if (k >= nsp1) {
                 for (int i = nsp1; i <= k; i++) {
                     double temp1 = beta[i];
@@ -322,7 +306,6 @@ Matrix DEInteg::integrate(std::function<Matrix(double, const Matrix&)> func,doub
                 }
             }
 
-            // Predict solution and differences
             for (int l = 1; l <= n_eqn; ++l) {
                 phi(l, kp1+1) = phi(l, k+1);
                 phi(l, k+1)   = 0.0;
@@ -356,7 +339,7 @@ Matrix DEInteg::integrate(std::function<Matrix(double, const Matrix&)> func,doub
             double absh = std::abs(h);
             yp = func(x, p);
 
-            // Estimate errors at orders k, k-1, k-2
+
             double erkm2 = 0.0;
             erkm1 = 0.0;
             erk = 0.0;
@@ -386,7 +369,6 @@ Matrix DEInteg::integrate(std::function<Matrix(double, const Matrix&)> func,doub
             erk = temp5 * sig[kp1] * gstr[k];
             knew = k;
 
-            // Test if order should be lowered
             if (km2 >= 0) {
                 if (std::max(erkm1, erkm2) <= erk) {
                     knew = km1;
@@ -397,17 +379,16 @@ Matrix DEInteg::integrate(std::function<Matrix(double, const Matrix&)> func,doub
                     knew = km1;
                 }
             }
-            // End block 2
+
 
             success = (err <= epsilon);
 
             if (!success) {
-                // Begin block 3
-                // The step is unsuccessful. Restore x, phi, psi.
+
                 phase1 = false;
                 x = xold;
                 for (int i = 0; i < k; ++i) {
-                    double temp1 = 1.0 / beta[i + 1];  // stays zero-based for vector
+                    double temp1 = 1.0 / beta[i + 1];
                     for (int l = 1; l <= n_eqn; ++l) {
                         phi(l, i+2) = temp1 * (phi(l, i+2) - phi(l, i+3));
                     }
@@ -420,8 +401,6 @@ Matrix DEInteg::integrate(std::function<Matrix(double, const Matrix&)> func,doub
                     }
                 }
 
-                // On third failure, set order to one.
-                // Thereafter, use optimal step size
                 ifail = ifail + 1;
                 double temp2 = 0.5;
                 if (ifail > 2) {
@@ -445,16 +424,13 @@ Matrix DEInteg::integrate(std::function<Matrix(double, const Matrix&)> func,doub
                     OldPermit = true;
                     return yy;
                 }
-                // End block 3
-            }
-        } // while (!success)
 
-        // Begin block 4
-        // The step is successful. Correct the predicted solution
+            }
+        }
+
         kold = k;
         hold = h;
 
-        // Correct and evaluate
         double temp1 = h * g[kp1];
         if (nornd) {
             for (int l = 1; l <= n_eqn; ++l) {
@@ -471,7 +447,6 @@ Matrix DEInteg::integrate(std::function<Matrix(double, const Matrix&)> func,doub
         }
         yp = func(x, y);
 
-        // Update differences for next step
         for (int l = 1; l <= n_eqn; ++l) {
             phi(l, kp1+1) = yp(l, 1) - phi(l, 2);
             phi(l, kp2+1) = phi(l, kp1+1) - phi(l, kp2+1);
@@ -483,11 +458,6 @@ Matrix DEInteg::integrate(std::function<Matrix(double, const Matrix&)> func,doub
             }
         }
 
-
-        // Estimate error at order k+1 unless:
-        // - in first phase when always raise order
-        // - already decided to lower order
-        // - step size not constant so estimate unreliable
         double erkp1 = 0.0;
         if ((knew == km1) || (k == 11)) {
             phase1 = false;
@@ -498,7 +468,6 @@ Matrix DEInteg::integrate(std::function<Matrix(double, const Matrix&)> func,doub
             erk = erkp1;
         } else {
             if (knew == km1) {
-                // lower order
                 k = km1;
                 erk = erkm1;
             } else {
@@ -510,21 +479,19 @@ Matrix DEInteg::integrate(std::function<Matrix(double, const Matrix&)> func,doub
 
                     erkp1 = absh * gstr[kp1] * std::sqrt(erkp1);
 
-                    // Using estimated error at order k+1, determine appropriate order
                     if (k > 0) {
                         if (erkm1 <= std::min(erk, erkp1)) {
-                            // lower order
+
                             k = km1;
                             erk = erkm1;
                         } else {
                             if ((erkp1 < erk) && (k != 11)) {
-                                // raise order
+
                                 k = kp1;
                                 erk = erkp1;
                             }
                         }
                     } else if (erkp1 < 0.5 * erk) {
-                        // raise order
                         k = kp1;
                         erk = erkp1;
                     }
@@ -532,7 +499,6 @@ Matrix DEInteg::integrate(std::function<Matrix(double, const Matrix&)> func,doub
             }
         }
 
-        // With new order determine appropriate step size for next step
         if (phase1 || (p5eps >= erk * two[k + 1])) {
             hnew = 2.0 * h;
         } else {
@@ -546,9 +512,8 @@ Matrix DEInteg::integrate(std::function<Matrix(double, const Matrix&)> func,doub
             }
         }
         h = hnew;
-        // End block 4
 
-        // Test for too small tolerances
+
         if (crash) {
             State_ = DE_BADACC;
             relerr = epsilon * releps;
@@ -560,7 +525,7 @@ Matrix DEInteg::integrate(std::function<Matrix(double, const Matrix&)> func,doub
 
         nostep = nostep + 1;
 
-        // Count number of consecutive steps taken with order <= 4
+
         kle4 = kle4 + 1;
         if (kold > 3) {
             kle4 = 0;
@@ -568,5 +533,5 @@ Matrix DEInteg::integrate(std::function<Matrix(double, const Matrix&)> func,doub
         if (kle4 >= 49) {
             stiff = true;
         }
-    } // End step loop
+    }
 }
