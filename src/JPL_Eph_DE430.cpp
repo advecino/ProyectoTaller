@@ -1,10 +1,12 @@
+
 #include "../include/JPL_Eph_DE430.h"
 #include "../include/Cheb3D.h"
-#include <cmath>
-#include <stdexcept>
+#include "../include/Sat_const.h"
 #include <vector>
+#include <stdexcept>
+#include <algorithm>
+#include <cmath>
 #include <iostream>
-#include "../include/global.h"
 
 /*
 %--------------------------------------------------------------------------
@@ -25,178 +27,326 @@
 %
 % Last modified:   2018/01/11   M. Mahooti
 %
-%--------------------------------------------------------------------------*/
+%--------------------------------------------------------------------------
+*/
 
-extern Matrix PC;
+#include "../include/Matrix.h"
+#include "../include/global.h"
 
 
-static void slice(const Matrix& row, int start, int len, std::vector<double>& out) {
-    out.reserve(out.size() + len);
-    for (int k = 0; k < len; ++k) {
-        out.push_back(row(1, start + k));
+static std::vector<double> getCoeffs(const std::vector<double>& pc,
+                                     int startIndex,
+                                     int blockCount,
+                                     int step,
+                                     int blockLen)
+{
+    int maxIdx = (startIndex - 1) + (blockCount - 1) * step + (blockLen - 1);
+    if (maxIdx >= (int)pc.size()) {
+        std::cerr << "Error en getCoeffs: intento de acceso fuera de rango.\n";
+        std::cerr << "startIndex=" << startIndex << ", blockCount=" << blockCount
+                  << ", step=" << step << ", blockLen=" << blockLen << "\n";
+        std::cerr << "maxIdx=" << maxIdx << ", pc.size()=" << pc.size() << "\n";
+        throw std::runtime_error("getCoeffs: acceso fuera de rango");
     }
+
+    bool hayDatos = false;
+    for (int i = (startIndex-1); i <= maxIdx; ++i) {
+        if (pc[i] != 0.0) {
+            hayDatos = true;
+            break;
+        }
+    }
+    if (!hayDatos) {
+        std::cerr << "Advertencia: getCoeffs encontró solo ceros en el rango ("
+                  << startIndex << " - " << maxIdx+1 << ")\n";
+    }
+
+    std::vector<double> out;
+    out.reserve(blockCount * blockLen);
+    for (int b = 0; b < blockCount; ++b) {
+        int base = (startIndex - 1) + b * step;
+        for (int k = 0; k < blockLen; ++k) {
+            out.push_back(pc[base + k]);
+        }
+    }
+    return out;
 }
 
-
 PlanetaryPositions JPL_Eph_DE430(double Mjd_TDB) {
-    PlanetaryPositions pos;
+
     double JD = Mjd_TDB + 2400000.5;
-    int nRows = PC.getFilas(), nCols = PC.getColumnas();
-    int i = -1;
-    for (int r = 1; r <= nRows; ++r) {
-        if (PC(r,1) <= JD && JD <= PC(r,2)) { i = r; break; }
+    int rows = PC.getFilas(), cols = PC.getColumnas();
+    int idx = 1;
+    for (; idx <= rows; ++idx) {
+        if (PC(idx,1) <= JD && JD <= PC(idx,2)) break;
     }
-    if (i < 1) throw std::runtime_error("JD fuera de rango en PC");
-    Matrix PCtemp = PC.getSubMatrix2(i, i, 1, nCols);
+    if (idx > rows)
+        throw std::invalid_argument("JPL_Eph_DE430: Mjd_TDB fuera de rango en PC.");
 
-    double t1 = PCtemp(1,1) - 2400000.5;
+    std::vector<double> PCrow(cols);
+    for (int c = 1; c <= cols; ++c)
+        PCrow[c-1] = PC(idx, c);
+
+    double t1 = PCrow[0] - 2400000.5;
     double dt = Mjd_TDB - t1;
-    std::vector<double> Cx_E, Cy_E, Cz_E, tmp;
-    int base = 231;
-    slice(PCtemp, base, 13, Cx_E);
-    slice(PCtemp, base+13, 13, Cy_E);
-    slice(PCtemp, base+26, 13, Cz_E);
-    slice(PCtemp, base+39, 13, tmp);  Cx_E.insert(Cx_E.end(), tmp.begin(), tmp.end()); tmp.clear();
-    slice(PCtemp, base+52, 13, tmp);  Cy_E.insert(Cy_E.end(), tmp.begin(), tmp.end()); tmp.clear();
-    slice(PCtemp, base+65, 13, tmp);  Cz_E.insert(Cz_E.end(), tmp.begin(), tmp.end());
 
+    PlanetaryPositions eph;
 
-
-    int j= (dt>16 ? 1 : 0);
-    double Mjd0 = t1 + 16*j;
-    Matrix mCx_E(13*2,1), mCy_E(13*2,1), mCz_E(13*2,1);
-    for(int k=0;k<13*2;++k){
-        mCx_E(k+1,1)=Cx_E[k];
-        mCy_E(k+1,1)=Cy_E[k];
-        mCz_E(k+1,1)=Cz_E[k];
-    }
-    pos.r_Earth = 1e3 * Cheb3D(Mjd_TDB,13,Mjd0,Mjd0+16, mCx_E,mCy_E,mCz_E);
-
-
-    std::vector<double> Cx_M, Cy_M, Cz_M;
-    base = 441;
-    slice(PCtemp, base, 13, Cx_M);
-    slice(PCtemp, base+13, 13, Cy_M);
-    slice(PCtemp, base+26, 13, Cz_M);
-    for(int rep=1;rep<8;++rep){
-        slice(PCtemp, base+39*rep, 13, tmp);  Cx_M.insert(Cx_M.end(), tmp.begin(), tmp.end()); tmp.clear();
-        slice(PCtemp, base+39*rep+13, 13, tmp); Cy_M.insert(Cy_M.end(), tmp.begin(), tmp.end()); tmp.clear();
-        slice(PCtemp, base+39*rep+26, 13, tmp); Cz_M.insert(Cz_M.end(), tmp.begin(), tmp.end()); tmp.clear();
-    }
-
-    j = int(dt/4); j = std::min(j,7);
-    Mjd0 = t1 + 4*j;
-    Matrix mCx_M(13*8,1), mCy_M(13*8,1), mCz_M(13*8,1);
-    for(int k=0;k<13*8;++k){
-        mCx_M(k+1,1)=Cx_M[k];
-        mCy_M(k+1,1)=Cy_M[k];
-        mCz_M(k+1,1)=Cz_M[k];
-    }
-    pos.r_Moon = 1e3 * Cheb3D(Mjd_TDB,13,Mjd0,Mjd0+4,mCx_M,mCy_M,mCz_M);
-    std::vector<double> Cx_Su, Cy_Su, Cz_Su; tmp.clear();
-    base = 753;
-    slice(PCtemp, base, 11, Cx_Su);
-    slice(PCtemp, base+11,11, Cy_Su);
-    slice(PCtemp, base+22,11, Cz_Su);
-    slice(PCtemp, base+33,11,tmp);  Cx_Su.insert(Cx_Su.end(), tmp.begin(), tmp.end()); tmp.clear();
-    slice(PCtemp, base+44,11,tmp);  Cy_Su.insert(Cy_Su.end(), tmp.begin(), tmp.end()); tmp.clear();
-    slice(PCtemp, base+55,11,tmp);  Cz_Su.insert(Cz_Su.end(), tmp.begin(), tmp.end());
-    j = (dt>16 ? 1 : 0);
-    Mjd0 = t1 + 16*j;
-    Matrix mCx_S(11*2,1), mCy_S(11*2,1), mCz_S(11*2,1);
-    for(int k=0;k<11*2;++k){
-        mCx_S(k+1,1)=Cx_Su[k];
-        mCy_S(k+1,1)=Cy_Su[k];
-        mCz_S(k+1,1)=Cz_Su[k];
-    }
-    pos.r_Sun = 1e3 * Cheb3D(Mjd_TDB,11,Mjd0,Mjd0+16,mCx_S,mCy_S,mCz_S);
-    auto loadBody=[&](int bstart,int block,int reps,double span){
-        std::vector<double> Cx, Cy, Cz,tmp2;
-        slice(PCtemp, bstart, block, Cx);
-        slice(PCtemp, bstart+block, block, Cy);
-        slice(PCtemp, bstart+2*block, block, Cz);
-        for(int r=1;r<reps;++r){
-            slice(PCtemp,bstart+reps*block+ (r-1)*(block+block+block),block,tmp2);
-            Cx.insert(Cx.end(), tmp2.begin(), tmp2.end()); tmp2.clear();
-            slice(PCtemp,bstart+reps*block+block+(r-1)*(3*block),block,tmp2);
-            Cy.insert(Cy.end(), tmp2.begin(), tmp2.end()); tmp2.clear();
-            slice(PCtemp,bstart+reps*block+2*block+(r-1)*(3*block),block,tmp2);
-            Cz.insert(Cz.end(), tmp2.begin(), tmp2.end()); tmp2.clear();
-        }
-        int jj = int(dt/span); jj = std::min(jj, reps-1);
-        double M0 = t1 + span*jj;
-        Matrix mCx(Cx.size(),1), mCy(Cy.size(),1), mCz(Cz.size(),1);
-        for(int k=0;k<(int)Cx.size();++k){
-            mCx(k+1,1)=Cx[k];
-            mCy(k+1,1)=Cy[k];
-            mCz(k+1,1)=Cz[k];
-        }
-        return 1e3 * Cheb3D(Mjd_TDB, block, M0, M0+span, mCx,mCy,mCz);
-    };
-
-    pos.r_Mercury = loadBody(   3,14,4, 8);
-    pos.r_Venus   = loadBody( 171,10,2,16);
-    pos.r_Mars    = loadBody( 309,11,1,32);
-    pos.r_Jupiter = loadBody( 342, 8,1,32);
-    pos.r_Saturn  = loadBody( 366, 7,1,32);
-    pos.r_Uranus  = loadBody( 387, 6,1,32);
-    pos.r_Neptune = loadBody( 405, 6,1,32);
-    pos.r_Pluto   = loadBody( 423, 6,1,32);
+    // Earth
     {
-        std::vector<double> Cx, Cy, tmp;
-        std::vector<double> Cz;
-        int base = 819;
-        slice(PCtemp, base,     10, Cx);
-        slice(PCtemp, base+10,  10, Cy);
-        Cz.resize(10, 0.0);
-        for (int rep = 1; rep < 4; ++rep) {
-            slice(PCtemp, base + rep*20,    10, Cx);
-            slice(PCtemp, base + rep*20+10, 10, Cy);
-        }
-        int jn = std::min(int(dt/8), 3);
-        double M0n = t1 + 8*jn;
-        Matrix mCx(40,1), mCy(40,1), mCz(40,1);
-        for (int k = 0; k < 40; ++k) {
-            mCx(k+1,1) = Cx[k];
-            mCy(k+1,1) = Cy[k];
-            mCz(k+1,1) = 0.0;
-        }
-        pos.Nutations = Cheb3D(Mjd_TDB, 10, M0n, M0n+8, mCx, mCy, mCz);
+        auto Cx = getCoeffs(PCrow, 231, 2, 39, 13);
+        auto Cy = getCoeffs(PCrow, 244, 2, 39, 13);
+        auto Cz = getCoeffs(PCrow, 257, 2, 39, 13);
+
+        int blocks = 2; double interval = 16.0;
+        int j = std::min(int(dt/interval), blocks-1);
+        double Mjd0 = t1 + j*interval;
+
+        Matrix Cx_mat(13,1);
+        for(int k=0;k<13;++k) Cx_mat(k+1,1) = Cx[j*13+k];
+
+        Matrix Cy_mat(13,1);
+        for(int k=0;k<13;++k) Cy_mat(k+1,1) = Cy[j*13+k];
+
+        Matrix Cz_mat(13,1);
+        for(int k=0;k<13;++k) Cz_mat(k+1,1) = Cz[j*13+k];
+
+        Matrix v = Cheb3D(Mjd_TDB, 13, Mjd0, Mjd0+interval, Cx_mat, Cy_mat, Cz_mat);
+        eph.r_Earth = v * 1e3;
     }
+
+    // Moon
     {
-        std::vector<double> Cx, Cy, Cz, tmp;
-        int base = 899;
-        slice(PCtemp, base,     10, Cx);
-        slice(PCtemp, base+10,  10, Cy);
-        slice(PCtemp, base+20,  10, Cz);
-        for (int rep = 1; rep < 4; ++rep) {
-            slice(PCtemp, base + rep*30,    10, Cx);
-            slice(PCtemp, base + rep*30+10, 10, Cy);
-            slice(PCtemp, base + rep*30+20, 10, Cz);
-        }
-        int jl = std::min(int(dt/8), 3);
-        double M0l = t1 + 8*jl;
-        Matrix mCx(40,1), mCy(40,1), mCz(40,1);
-        for (int k = 0; k < 40; ++k) {
-            mCx(k+1,1) = Cx[k];
-            mCy(k+1,1) = Cy[k];
-            mCz(k+1,1) = Cz[k];
-        }
-        pos.Librations = Cheb3D(Mjd_TDB, 10, M0l, M0l+8, mCx, mCy, mCz);
+        auto Cx = getCoeffs(PCrow, 441, 8, 39, 13);
+        auto Cy = getCoeffs(PCrow, 454, 8, 39, 13);
+        auto Cz = getCoeffs(PCrow, 467, 8, 39, 13);
+
+        int blocks = 8;
+        double interval = 4.0;
+        int j = std::min(int(dt/interval), blocks-1);
+        double Mjd0 = t1 + j * interval;
+
+        // Crear Matrix desde std::vector
+        Matrix Cx_mat(13,1);
+        for(int k=0;k<13;++k) Cx_mat(k+1,1) = Cx[j*13+k];
+
+        Matrix Cy_mat(13,1);
+        for(int k=0;k<13;++k) Cy_mat(k+1,1) = Cy[j*13+k];
+
+        Matrix Cz_mat(13,1);
+        for(int k=0;k<13;++k) Cz_mat(k+1,1) = Cz[j*13+k];
+
+        Matrix v = Cheb3D(Mjd_TDB, 13, Mjd0, Mjd0 + interval, Cx_mat, Cy_mat, Cz_mat);
+        eph.r_Moon = v * 1e3;
     }
 
-    const double EMRAT=81.30056907419062;
-    pos.r_Earth = pos.r_Earth - (1.0/(1.0+EMRAT)) * pos.r_Moon;
-    auto rel=[&](const Matrix& v){ return -1*pos.r_Earth + v; };
-    pos.r_Mercury=rel(pos.r_Mercury);
-    pos.r_Venus  =rel(pos.r_Venus);
-    pos.r_Mars   =rel(pos.r_Mars);
-    pos.r_Jupiter=rel(pos.r_Jupiter);
-    pos.r_Saturn =rel(pos.r_Saturn);
-    pos.r_Uranus =rel(pos.r_Uranus);
-    pos.r_Neptune=rel(pos.r_Neptune);
-    pos.r_Pluto  =rel(pos.r_Pluto);
-    pos.r_Sun    =rel(pos.r_Sun);
 
-    return pos;
+    // Sun
+    {
+        auto Cx = getCoeffs(PCrow, 753, 2, 33, 11);
+        auto Cy = getCoeffs(PCrow, 764, 2, 33, 11);
+        auto Cz = getCoeffs(PCrow, 775, 2, 33, 11);
+
+        int blocks = 2;
+        double interval = 16.0;
+        int j = std::min(int(dt/interval), blocks-1);
+        double Mjd0 = t1 + j * interval;
+
+        // Convertir los std::vector a Matrix
+        Matrix Cx_mat(11,1);
+        for(int k=0; k<11; ++k) Cx_mat(k+1,1) = Cx[j*11+k];
+
+        Matrix Cy_mat(11,1);
+        for(int k=0; k<11; ++k) Cy_mat(k+1,1) = Cy[j*11+k];
+
+        Matrix Cz_mat(11,1);
+        for(int k=0; k<11; ++k) Cz_mat(k+1,1) = Cz[j*11+k];
+
+        Matrix v = Cheb3D(Mjd_TDB, 11, Mjd0, Mjd0 + interval, Cx_mat, Cy_mat, Cz_mat);
+        eph.r_Sun = v * 1e3;
+    }
+
+
+    // Mercury
+    {
+        auto Cx = getCoeffs(PCrow, 3, 4, 42, 14);
+        auto Cy = getCoeffs(PCrow, 17, 4, 42, 14);
+        auto Cz = getCoeffs(PCrow, 31, 4, 42, 14);
+
+        int blocks = 4;
+        double interval = 8.0;
+        int j = std::min(int(dt/interval), blocks-1);
+        double Mjd0 = t1 + j * interval;
+
+        // Convertir los std::vector a Matrix
+        Matrix Cx_mat(14,1);
+        for(int k=0; k<14; ++k) Cx_mat(k+1,1) = Cx[j*14+k];
+
+        Matrix Cy_mat(14,1);
+        for(int k=0; k<14; ++k) Cy_mat(k+1,1) = Cy[j*14+k];
+
+        Matrix Cz_mat(14,1);
+        for(int k=0; k<14; ++k) Cz_mat(k+1,1) = Cz[j*14+k];
+
+        Matrix v = Cheb3D(Mjd_TDB, 14, Mjd0, Mjd0 + interval, Cx_mat, Cy_mat, Cz_mat);
+        eph.r_Mercury = v * 1e3;
+    }
+
+
+    // Venus
+    {
+        auto Cx = getCoeffs(PCrow, 171, 2, 30, 10);
+        auto Cy = getCoeffs(PCrow, 181, 2, 30, 10);
+        auto Cz = getCoeffs(PCrow, 191, 2, 30, 10);
+
+        int blocks = 2;
+        double interval = 16.0;
+        int j = std::min(int(dt/interval), blocks-1);
+        double Mjd0 = t1 + j * interval;
+
+        // Convertir los std::vector a Matrix
+        Matrix Cx_mat(10,1);
+        for(int k=0; k<10; ++k) Cx_mat(k+1,1) = Cx[j*10+k];
+
+        Matrix Cy_mat(10,1);
+        for(int k=0; k<10; ++k) Cy_mat(k+1,1) = Cy[j*10+k];
+
+        Matrix Cz_mat(10,1);
+        for(int k=0; k<10; ++k) Cz_mat(k+1,1) = Cz[j*10+k];
+
+        Matrix v = Cheb3D(Mjd_TDB, 10, Mjd0, Mjd0 + interval, Cx_mat, Cy_mat, Cz_mat);
+        eph.r_Venus = v * 1e3;
+    }
+
+
+    // Mars
+    {
+        auto Cx = getCoeffs(PCrow, 309, 1, 0, 11);
+        auto Cy = getCoeffs(PCrow, 320, 1, 0, 11);
+        auto Cz = getCoeffs(PCrow, 331, 1, 0, 11);
+
+        double interval = 32.0;
+
+        // Convertir std::vector a Matrix
+        Matrix Cx_mat(11,1);
+        for(int k=0; k<11; ++k) Cx_mat(k+1,1) = Cx[k];
+
+        Matrix Cy_mat(11,1);
+        for(int k=0; k<11; ++k) Cy_mat(k+1,1) = Cy[k];
+
+        Matrix Cz_mat(11,1);
+        for(int k=0; k<11; ++k) Cz_mat(k+1,1) = Cz[k];
+
+        Matrix v = Cheb3D(Mjd_TDB, 11, t1, t1 + interval, Cx_mat, Cy_mat, Cz_mat);
+        eph.r_Mars = v * 1e3;
+    }
+
+
+    // Jupiter
+    {
+        auto Cx = getCoeffs(PCrow, 342, 1, 0, 8);
+        auto Cy = getCoeffs(PCrow, 350, 1, 0, 8);
+        auto Cz = getCoeffs(PCrow, 358, 1, 0, 8);
+
+        double interval = 32.0;
+
+        // Convertir std::vector a Matrix
+        Matrix Cx_mat(8,1);
+        for(int k=0; k<8; ++k) Cx_mat(k+1,1) = Cx[k];
+
+        Matrix Cy_mat(8,1);
+        for(int k=0; k<8; ++k) Cy_mat(k+1,1) = Cy[k];
+
+        Matrix Cz_mat(8,1);
+        for(int k=0; k<8; ++k) Cz_mat(k+1,1) = Cz[k];
+
+        Matrix v = Cheb3D(Mjd_TDB, 8, t1, t1 + interval, Cx_mat, Cy_mat, Cz_mat);
+        eph.r_Jupiter = v * 1e3;
+    }
+
+
+    // Saturn
+    {
+        auto Cx = getCoeffs(PCrow, 366, 1, 0, 7);
+        auto Cy = getCoeffs(PCrow, 373, 1, 0, 7);
+        auto Cz = getCoeffs(PCrow, 380, 1, 0, 7);
+        double interval = 32.0;
+
+        Matrix Cx_mat(7,1);
+        for(int k=0; k<7; ++k) Cx_mat(k+1,1) = Cx[k];
+        Matrix Cy_mat(7,1);
+        for(int k=0; k<7; ++k) Cy_mat(k+1,1) = Cy[k];
+        Matrix Cz_mat(7,1);
+        for(int k=0; k<7; ++k) Cz_mat(k+1,1) = Cz[k];
+
+        eph.r_Saturn = Cheb3D(Mjd_TDB, 7, t1, t1+interval, Cx_mat, Cy_mat, Cz_mat) * (1e3);
+    }
+
+    // Uranus
+    {
+        auto Cx = getCoeffs(PCrow, 387, 1, 0, 6);
+        auto Cy = getCoeffs(PCrow, 393, 1, 0, 6);
+        auto Cz = getCoeffs(PCrow, 399, 1, 0, 6);
+        double interval = 32.0;
+
+        Matrix Cx_mat(6,1);
+        for(int k=0; k<6; ++k) Cx_mat(k+1,1) = Cx[k];
+        Matrix Cy_mat(6,1);
+        for(int k=0; k<6; ++k) Cy_mat(k+1,1) = Cy[k];
+        Matrix Cz_mat(6,1);
+        for(int k=0; k<6; ++k) Cz_mat(k+1,1) = Cz[k];
+
+        eph.r_Uranus = Cheb3D(Mjd_TDB, 6, t1, t1+interval, Cx_mat, Cy_mat, Cz_mat) * (1e3);
+    }
+
+    // Neptune
+    {
+        auto Cx = getCoeffs(PCrow, 405, 1, 0, 6);
+        auto Cy = getCoeffs(PCrow, 411, 1, 0, 6);
+        auto Cz = getCoeffs(PCrow, 417, 1, 0, 6);
+        double interval = 32.0;
+
+        Matrix Cx_mat(6,1);
+        for(int k=0; k<6; ++k) Cx_mat(k+1,1) = Cx[k];
+        Matrix Cy_mat(6,1);
+        for(int k=0; k<6; ++k) Cy_mat(k+1,1) = Cy[k];
+        Matrix Cz_mat(6,1);
+        for(int k=0; k<6; ++k) Cz_mat(k+1,1) = Cz[k];
+
+        eph.r_Neptune = Cheb3D(Mjd_TDB, 6, t1, t1+interval, Cx_mat, Cy_mat, Cz_mat) * (1e3);
+    }
+
+    // Pluto
+    {
+        auto Cx = getCoeffs(PCrow, 423, 1, 0, 6);
+        auto Cy = getCoeffs(PCrow, 429, 1, 0, 6);
+        auto Cz = getCoeffs(PCrow, 435, 1, 0, 6);
+        double interval = 32.0;
+
+        Matrix Cx_mat(6,1);
+        for(int k=0; k<6; ++k) Cx_mat(k+1,1) = Cx[k];
+        Matrix Cy_mat(6,1);
+        for(int k=0; k<6; ++k) Cy_mat(k+1,1) = Cy[k];
+        Matrix Cz_mat(6,1);
+        for(int k=0; k<6; ++k) Cz_mat(k+1,1) = Cz[k];
+
+        eph.r_Pluto = Cheb3D(Mjd_TDB, 6, t1, t1+interval, Cx_mat, Cy_mat, Cz_mat) * (1e3);
+    }
+
+
+    double EMRAT  = 81.30056907419062;
+    double EMRAT1 = 1.0 / (1.0 + EMRAT);
+
+    eph.r_Earth   = eph.r_Earth   - eph.r_Moon * (EMRAT1);
+    eph.r_Mercury = eph.r_Mercury - eph.r_Earth;
+    eph.r_Venus   = eph.r_Venus   - eph.r_Earth;
+    eph.r_Mars    = eph.r_Mars    - eph.r_Earth;
+    eph.r_Jupiter = eph.r_Jupiter - eph.r_Earth;
+    eph.r_Saturn  = eph.r_Saturn  - eph.r_Earth;
+    eph.r_Uranus  = eph.r_Uranus  - eph.r_Earth;
+    eph.r_Neptune = eph.r_Neptune - eph.r_Earth;
+    eph.r_Pluto   = eph.r_Pluto   - eph.r_Earth;
+    eph.r_Sun     = eph.r_Sun     - eph.r_Earth;
+
+    return eph;
 }

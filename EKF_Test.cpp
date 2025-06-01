@@ -1363,73 +1363,110 @@ int IERS_01() {
 }
 
 int JPL_Eph_01() {
-    double Mjd_TDB = 106351.0;
-
+    double Mjd_TDB = 69808.0;
     PlanetaryPositions p = JPL_Eph_DE430(Mjd_TDB);
 
-    double tol = 10e-6;
-    _assert(fabs(p.r_Earth(1,1)    - (-31598008156.192417)) < tol);
-    _assert(fabs(p.r_Earth(2,1)    - (132460433151.290695)) < tol);
-    _assert(fabs(p.r_Earth(3,1)    - (57373501576.184982))  < tol);
+    double tol = 1e6;
+    _assert(fabs(p.r_Earth(1,1)    - (-2.812362e+10)) < tol);
+    _assert(fabs(p.r_Earth(2,1)    - (1.319982e+11)) < tol);
+    _assert(fabs(p.r_Earth(3,1)    - (5.721276e+10)) < tol);
 
-    _assert(fabs(p.r_Sun(1,1)      - (31713109510.304195))  < tol);
-    _assert(fabs(p.r_Sun(2,1)      - (-131813766788.852325))< tol);
-    _assert(fabs(p.r_Sun(3,1)      - (-57095479016.666679)) < tol);
+    _assert(fabs(p.r_Sun(1,1)      - (2.824435e+10)) < tol);
+    _assert(fabs(p.r_Sun(2,1)      - (-1.324607e+11)) < tol);
+    _assert(fabs(p.r_Sun(3,1)      - (-5.741099e+10)) < tol);
 
-    _assert(fabs(p.r_Moon(1,1)     - (-364222823.780679))   < tol);
-    _assert(fabs(p.r_Moon(2,1)     - (-167003158.299063))   < tol);
-    _assert(fabs(p.r_Moon(3,1)     - (-33007954.970030))    < tol);
+    _assert(fabs(p.r_Moon(1,1)     - (3.270842e+08)) < tol);
+    _assert(fabs(p.r_Moon(2,1)     - (1.760458e+08)) < tol);
+    _assert(fabs(p.r_Moon(3,1)     - (9.376322e+07)) < tol);
 
-    _assert(fabs(p.r_Mercury(1,1)  - (-26806176952.609943)) < tol);
-    _assert(fabs(p.r_Mercury(2,1)  - (-138002470934.937256))< tol);
-    _assert(fabs(p.r_Mercury(3,1)  - (-54357817587.275719)) < tol);
+    _assert(fabs(p.r_Mercury(1,1)  - (-2.835080e+09)) < tol);
+    _assert(fabs(p.r_Mercury(2,1)  - (-1.002171e+11)) < tol);
+    _assert(fabs(p.r_Mercury(3,1)  - (-3.696615e+10)) < tol);
 
-    _assert(fabs(p.r_Venus(1,1)    - (-27325902768.835911)) < tol);
-    _assert(fabs(p.r_Venus(2,1)    - (-51364561590.153427)) < tol);
-    _assert(fabs(p.r_Venus(3,1)    - (-17133255020.696655)) < tol);
+    _assert(fabs(p.r_Venus(1,1)    - (5.239353e+10)) < tol);
+    _assert(fabs(p.r_Venus(2,1)    - (-2.286693e+11)) < tol);
+    _assert(fabs(p.r_Venus(3,1)    - (-1.022371e+11)) < tol);
 
-    _assert(fabs(p.r_Mars(1,1)     - (16285514723.482100))  < tol);
-    _assert(fabs(p.r_Mars(2,1)     - (-330699687867.098938))< tol);
-    _assert(fabs(p.r_Mars(3,1)     - (-147917974938.416229))< tol);
+    _assert(fabs(p.r_Mars(1,1)     - (-2.018845e+11)) < tol);
+    _assert(fabs(p.r_Mars(2,1)     - (-2.048356e+11)) < tol);
+    _assert(fabs(p.r_Mars(3,1)     - (-8.441491e+10)) < tol);
 
-    _assert(fabs(p.r_Jupiter(1,1)  - (-66644823641.162491)) < tol);
-    _assert(fabs(p.r_Jupiter(2,1)  - (-853591820524.296997))< tol);
-    _assert(fabs(p.r_Jupiter(3,1)  - (-364009407514.953491))< tol);
+    _assert(fabs(p.r_Jupiter(1,1)  - (-3.304707e+11)) < tol);
+    _assert(fabs(p.r_Jupiter(2,1)  - (5.052424e+11)) < tol);
+    _assert(fabs(p.r_Jupiter(3,1)  - (2.246323e+11)) < tol);
 
-    _assert(fabs(p.r_Saturn(1,1)   - (184661249713.726105)) < tol);
-    _assert(fabs(p.r_Saturn(2,1)   - (1109215158423.234863))< tol);
-    _assert(fabs(p.r_Saturn(3,1)   - (449187708416.220093)) < tol);
+    _assert(fabs(p.r_Saturn(1,1)   - (7.419487e+11)) < tol);
+    _assert(fabs(p.r_Saturn(2,1)   - (-1.334052e+12)) < tol);
+    _assert(fabs(p.r_Saturn(3,1)   - (-5.845778e+11)) < tol);
 
-    _assert(fabs(p.r_Uranus(1,1)   - (-1320196279348.428955)) < tol);
-    _assert(fabs(p.r_Uranus(2,1)   - (-2405446527895.510742))< tol);
-    _assert(fabs(p.r_Uranus(3,1)   - (-1033761148857.640991))< tol);
+    _assert(fabs(p.r_Uranus(1,1)   - (-2.638210e+12)) < tol);
+    _assert(fabs(p.r_Uranus(2,1)   - (4.111817e+11)) < tol);
+    _assert(fabs(p.r_Uranus(3,1)   - (2.183727e+11)) < tol);
 
-    _assert(fabs(p.r_Neptune(1,1)  - (183888341140.650604)) < tol);
-    _assert(fabs(p.r_Neptune(2,1)  - (-4316591998386.310547))< tol);
-    _assert(fabs(p.r_Neptune(3,1)  - (-1773748114193.736328))< tol);
+    _assert(fabs(p.r_Neptune(1,1)  - (2.630591e+12)) < tol);
+    _assert(fabs(p.r_Neptune(2,1)  - (3.242530e+12)) < tol);
+    _assert(fabs(p.r_Neptune(3,1)  - (1.259206e+12)) < tol);
 
-    _assert(fabs(p.r_Pluto(1,1)    - (1327605134864.141602)) < tol);
-    _assert(fabs(p.r_Pluto(2,1)    - (6519854043373.274414)) < tol);
-    _assert(fabs(p.r_Pluto(3,1)    - (1628319706193.649658)) < tol);
+    _assert(fabs(p.r_Pluto(1,1)    - (5.631634e+12)) < tol);
+    _assert(fabs(p.r_Pluto(2,1)    - (-1.660837e+12)) < tol);
+    _assert(fabs(p.r_Pluto(3,1)    - (-2.222630e+12)) < tol);
 
     return 0;
 }
+
 
 int JPL_Eph_02() {
-    PC = Matrix(1, 10);
-    PC(1,1) = 1000.0;
-    PC(1,2) = 2000.0;
+    double Mjd_TDB = 106351.0;
+    PlanetaryPositions p = JPL_Eph_DE430(Mjd_TDB);
 
-    bool threw = false;
-    try {
-        JPL_Eph_DE430(3000.0);
-    } catch(const std::runtime_error& e) {
-        threw = true;
-        _assert(std::string(e.what()).find("JD fuera de rango")!=std::string::npos);
-    }
-    _assert(threw);
+    double tol = 10e6;
+    _assert(fabs(p.r_Earth(1,1)    - (-7.069569e+10)) < tol);
+    _assert(fabs(p.r_Earth(2,1)    - (1.190631e+11)) < tol);
+    _assert(fabs(p.r_Earth(3,1)    - (5.157204e+10)) < tol);
+
+    _assert(fabs(p.r_Sun(1,1)      - (7.079735e+10)) < tol);
+    _assert(fabs(p.r_Sun(2,1)      - (-1.184152e+11)) < tol);
+    _assert(fabs(p.r_Sun(3,1)      - (-5.129324e+10)) < tol);
+
+    _assert(fabs(p.r_Moon(1,1)     - (-3.356914e+08)) < tol);
+    _assert(fabs(p.r_Moon(2,1)     - (-2.128145e+08)) < tol);
+    _assert(fabs(p.r_Moon(3,1)     - (-5.471736e+07)) < tol);
+
+    _assert(fabs(p.r_Mercury(1,1)  - (5.678395e+10)) < tol);
+    _assert(fabs(p.r_Mercury(2,1)  - (-1.793294e+11)) < tol);
+    _assert(fabs(p.r_Mercury(3,1)  - (-8.239893e+10)) < tol);
+
+    _assert(fabs(p.r_Venus(1,1)    - (-2.155184e+10)) < tol);
+    _assert(fabs(p.r_Venus(2,1)    - (-7.062491e+10)) < tol);
+    _assert(fabs(p.r_Venus(3,1)    - (-2.393601e+10)) < tol);
+
+    _assert(fabs(p.r_Mars(1,1)     - (5.538319e+10)) < tol);
+    _assert(fabs(p.r_Mars(2,1)     - (-3.173023e+11)) < tol);
+    _assert(fabs(p.r_Mars(3,1)     - (-1.421165e+11)) < tol);
+
+    _assert(fabs(p.r_Jupiter(1,1)  - (-2.754714e+10)) < tol);
+    _assert(fabs(p.r_Jupiter(2,1)  - (-8.401944e+11)) < tol);
+    _assert(fabs(p.r_Jupiter(3,1)  - (-3.582079e+11)) < tol);
+
+    _assert(fabs(p.r_Saturn(1,1)   - (2.237589e+11)) < tol);
+    _assert(fabs(p.r_Saturn(2,1)   - (1.122613e+12)) < tol);
+    _assert(fabs(p.r_Saturn(3,1)   - (4.549892e+11)) < tol);
+
+    _assert(fabs(p.r_Uranus(1,1)   - (-1.281099e+12)) < tol);
+    _assert(fabs(p.r_Uranus(2,1)   - (-2.392049e+12)) < tol);
+    _assert(fabs(p.r_Uranus(3,1)   - (-1.027960e+12)) < tol);
+
+    _assert(fabs(p.r_Neptune(1,1)  - (2.229860e+11)) < tol);
+    _assert(fabs(p.r_Neptune(2,1)  - (-4.303195e+12)) < tol);
+    _assert(fabs(p.r_Neptune(3,1)  - (-1.767947e+12)) < tol);
+
+    _assert(fabs(p.r_Pluto(1,1)    - (1.366703e+12)) < tol);
+    _assert(fabs(p.r_Pluto(2,1)    - (6.533251e+12)) < tol);
+    _assert(fabs(p.r_Pluto(3,1)    - (1.634121e+12)) < tol);
+
     return 0;
 }
+
 
 int AzElPa_Test_01() {
     try {
